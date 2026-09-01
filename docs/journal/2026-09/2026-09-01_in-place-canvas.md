@@ -56,22 +56,24 @@ first (increment 0).
 
 ## Increments
 
-| #   | Increment                                                                       | Status | Commit | Notes |
-| --- | ------------------------------------------------------------------------------- | ------ | ------ | ----- |
-| 0   | ADR-004 — decoration architecture + v1 scope                                    | ☐      |        |       |
-| 1   | Plugin skeleton, viewport decoration builder, cursor-reveal mechanism, headings | ☐      |        |       |
-| 2   | Emphasis — bold / italic / strikethrough / inline code                          | ☐      |        |       |
-| 3   | Links + wikilinks                                                               | ☐      |        |       |
-| 4   | Block and inline math widgets (KaTeX)                                           | ☐      |        |       |
-| 5   | Horizontal rule, blockquote, list markers                                       | ☐      |        |       |
-| 6   | Cursor-reveal edge cases + `atomicRanges` pass                                  | ☐      |        |       |
-| 7   | Flip default `mode` to `in-place`; ADR-002 amendment; wiki + props updates      | ☐      |        |       |
+| #   | Increment                                                                       | Status | Commit | Notes                                                                                        |
+| --- | ------------------------------------------------------------------------------- | ------ | ------ | -------------------------------------------------------------------------------------------- |
+| 0   | ADR-004 — decoration architecture + v1 scope                                    | ✅     | —      | Merged into this tracker; see [ADR-004](./2026-09-01_adr-004-in-place-decoration-canvas.md). |
+| 1   | Plugin skeleton, viewport decoration builder, cursor-reveal mechanism, headings | ☐      |        |                                                                                              |
+| 2   | Emphasis — bold / italic / strikethrough / inline code                          | ☐      |        |                                                                                              |
+| 3   | Links + wikilinks                                                               | ☐      |        |                                                                                              |
+| 4   | Block and inline math widgets (KaTeX)                                           | ☐      |        |                                                                                              |
+| 5   | Horizontal rule, blockquote, list markers                                       | ☐      |        |                                                                                              |
+| 6   | Cursor-reveal edge cases + `atomicRanges` pass                                  | ☐      |        |                                                                                              |
+| 7   | Flip default `mode` to `in-place`; ADR-002 amendment; wiki + props updates      | ☐      |        |                                                                                              |
 
 Mark a row `✅` and fill in the commit hash as it lands.
 
 ## Log
 
 - 2026-09-01 — tracker created; v1 scope and standing decisions agreed.
+- 2026-09-01 — increment 0: ADR-004 written; ADR-002 §1 given a rollout pointer;
+  index and wiki tables synced.
 
 ## After in-place
 
