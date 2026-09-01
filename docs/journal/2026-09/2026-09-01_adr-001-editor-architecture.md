@@ -57,6 +57,13 @@ Adopt approach **3**. Specifically:
   > per-language highlighting becomes an opt-in `codeLanguages` pass-through prop.
   > See
   > [the journal note](./2026-09-01_drop-codemirror-language-data.md).
+  >
+  > **Amended 2026-09-02:** the `codeLanguages` prop now exists. It is forwarded
+  > verbatim to `@codemirror/lang-markdown` and covers all three CodeMirror
+  > surfaces (`source`, `split`, `in-place`); the consumer supplies the grammar
+  > set, so the package bundles none. See
+  > [the journal note](./2026-09-02_code-languages-prop.md) and
+  > [the wiki reference](../../wiki/reference/code-languages.md).
 
 - **Render pipeline:** `react-markdown` + `remark-gfm` + `remark-math` +
   `rehype-katex` + `katex`.

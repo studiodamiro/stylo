@@ -30,6 +30,8 @@ _Pending first release._
   and math setup.
 - [[reference/in-place-config|In-place canvas configuration]] — the `inPlace`
   prop and its decoration toggles.
+- [[reference/code-languages|Fenced-code highlighting]] — the `codeLanguages`
+  prop and how to opt into language grammars.
 
 ## Engineering journal
 

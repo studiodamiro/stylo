@@ -24,6 +24,7 @@ export function Stylo({
   placeholder,
   className,
   inPlace,
+  codeLanguages,
 }: StyloProps) {
   const resolved = mode === "preview" || mode === "split" || mode === "in-place" ? mode : "source"
 
@@ -37,6 +38,7 @@ export function Stylo({
           onChange={onChange}
           readOnly={readOnly}
           placeholder={placeholder}
+          codeLanguages={codeLanguages}
         />
       )}
 
@@ -53,6 +55,7 @@ export function Stylo({
           onWikiLinkClick={onWikiLinkClick}
           readOnly={readOnly}
           placeholder={placeholder}
+          codeLanguages={codeLanguages}
         />
       )}
 
@@ -65,6 +68,7 @@ export function Stylo({
             placeholder={placeholder}
             onWikiLinkClick={onWikiLinkClick}
             inPlace={inPlace}
+            codeLanguages={codeLanguages}
           />
         </Suspense>
       )}

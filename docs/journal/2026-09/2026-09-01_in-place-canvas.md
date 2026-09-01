@@ -42,9 +42,12 @@ first (increment 0).
 
 ### Explicitly out of v1 (stay source-styled)
 
-- Highlighted code fences (waits on the `codeLanguages` pass-through prop)
 - Image inline previews
 - Embeds / transclusions
+
+_Highlighted code fences were listed here until 2026-09-02: the `codeLanguages`
+prop ([note](./2026-09-02_code-languages-prop.md)) feeds the in-place canvas too,
+so a fenced block is grammar-highlighted when the consumer opts in._
 
 ## Standing decisions
 
@@ -167,6 +170,11 @@ onChange />` with no `mode` now lazy-loads the in-place chunk (and the shared
   fenced-code fence rows collapse to zero height again off-caret, giving a
   compact `preview`-sized container. Full write-up:
   [click-to-position accuracy](./2026-09-02_in-place-click-mapping.md).
+- 2026-09-02 — `codeLanguages` prop. Forwarded to `markdown()` through the shared
+  `useCodeMirror` / `baseExtensions` path, so the in-place canvas gets
+  grammar-highlighted fenced code when a consumer opts in — no in-place-specific
+  code. Container styling unchanged. Full write-up:
+  [`codeLanguages` prop](./2026-09-02_code-languages-prop.md).
 
 ## After in-place
 

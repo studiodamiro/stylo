@@ -1,7 +1,7 @@
 import { useRef, useState } from "react"
 import { useCodeMirror } from "../editor/useCodeMirror"
 import styles from "../styles/stylo.module.css"
-import type { InPlaceConfig } from "../types"
+import type { CodeLanguages, InPlaceConfig } from "../types"
 import { inPlaceExtension } from "./extension"
 
 export interface InPlaceViewProps {
@@ -12,6 +12,8 @@ export interface InPlaceViewProps {
   onWikiLinkClick?: (target: string) => void
   /** Read once, when the canvas mounts — see ADR-005. */
   inPlace?: InPlaceConfig
+  /** Fenced-code grammars, forwarded to the Markdown language. Read once. */
+  codeLanguages?: CodeLanguages
 }
 
 /**
@@ -30,6 +32,7 @@ export function InPlaceView({
   placeholder,
   onWikiLinkClick,
   inPlace,
+  codeLanguages,
 }: InPlaceViewProps) {
   const clickRef = useRef(onWikiLinkClick)
   clickRef.current = onWikiLinkClick
@@ -39,6 +42,6 @@ export function InPlaceView({
     inPlaceExtension({ onWikiLinkClick: (target) => clickRef.current?.(target), inPlace }),
   ])
 
-  const ref = useCodeMirror({ value, onChange, readOnly, placeholder, extensions })
+  const ref = useCodeMirror({ value, onChange, readOnly, placeholder, extensions, codeLanguages })
   return <div className={styles.inplace} ref={ref} />
 }

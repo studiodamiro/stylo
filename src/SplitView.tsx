@@ -3,6 +3,7 @@ import type { EditorView } from "@codemirror/view"
 import { SourceView } from "./editor/SourceView"
 import { LazyPreview } from "./render/lazyPreview"
 import styles from "./styles/stylo.module.css"
+import type { CodeLanguages } from "./types"
 
 export interface SplitViewProps {
   value: string
@@ -10,6 +11,7 @@ export interface SplitViewProps {
   onWikiLinkClick?: (target: string) => void
   readOnly?: boolean
   placeholder?: string
+  codeLanguages?: CodeLanguages
 }
 
 /**
@@ -24,6 +26,7 @@ export function SplitView({
   onWikiLinkClick,
   readOnly,
   placeholder,
+  codeLanguages,
 }: SplitViewProps) {
   const [view, setView] = useState<EditorView | null>(null)
   const previewPane = useRef<HTMLDivElement | null>(null)
@@ -63,6 +66,7 @@ export function SplitView({
           onChange={onChange}
           readOnly={readOnly}
           placeholder={placeholder}
+          codeLanguages={codeLanguages}
           onViewChange={setView}
         />
       </div>
