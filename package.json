@@ -1,0 +1,86 @@
+{
+  "name": "@damiro/stylo",
+  "version": "0.0.0",
+  "description": "A plain-text-first Markdown editor for React, with first-class LaTeX (KaTeX) support.",
+  "type": "module",
+  "license": "MIT",
+  "author": "damiro",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/studiodamiro/stylo.git"
+  },
+  "homepage": "https://github.com/studiodamiro/stylo#readme",
+  "bugs": "https://github.com/studiodamiro/stylo/issues",
+  "keywords": [
+    "react",
+    "markdown",
+    "editor",
+    "codemirror",
+    "katex",
+    "latex",
+    "wikilinks",
+    "obsidian"
+  ],
+  "sideEffects": [
+    "*.css"
+  ],
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/stylo.js"
+    },
+    "./styles.css": "./dist/styles.css",
+    "./katex.css": "./dist/katex.css"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "vite build && tsc -p tsconfig.build.json && cp katex.css dist/katex.css",
+    "format": "prettier --write ."
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.11.0",
+    "@codemirror/lang-markdown": "^6.5.2",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/language-data": "^6.5.2",
+    "@codemirror/state": "^6.7.2",
+    "@codemirror/view": "^6.43.10",
+    "katex": "^0.16.47",
+    "react-markdown": "^10.1.0",
+    "rehype-katex": "^7.0.1",
+    "remark-frontmatter": "^5.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "unist-util-visit": "^5.1.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^26.4.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "@vitejs/plugin-react": "^6.1.1",
+    "jsdom": "^29.1.1",
+    "prettier": "^3.9.6",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
+  }
+}

@@ -1,0 +1,3 @@
+/* Re-export of the KaTeX stylesheet so consumers can `import "@damiro/stylo/katex.css"`.
+   Kept separate from the library's own styles.css, which stays KaTeX-font-free (ADR-003). */
+@import "katex/dist/katex.min.css";

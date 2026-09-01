@@ -29,5 +29,6 @@ pnpm-debug.log*
 .agents/
 .cursor/
 
+
 # test / coverage
 coverage/
