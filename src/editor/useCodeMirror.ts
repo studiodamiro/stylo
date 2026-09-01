@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react"
 import { Annotation, Compartment, EditorState, type Extension } from "@codemirror/state"
 import { EditorView } from "@codemirror/view"
+import type { CodeLanguages } from "../types"
 import { baseExtensions, dynamicConfig } from "./extensions"
 
 /** Marks doc changes that came from the `value` prop, so they don't echo back through `onChange`. */
@@ -18,6 +19,8 @@ export interface UseCodeMirrorOptions {
    * layer). Captured once — pass a stable, module-level array.
    */
   extensions?: Extension[]
+  /** Fenced-code grammars, forwarded to the Markdown language. Read once. */
+  codeLanguages?: CodeLanguages
 }
 
 /**
@@ -31,6 +34,7 @@ export function useCodeMirror({
   placeholder,
   onViewChange,
   extensions,
+  codeLanguages,
 }: UseCodeMirrorOptions) {
   const parent = useRef<HTMLDivElement | null>(null)
   const viewRef = useRef<EditorView | null>(null)
@@ -51,7 +55,7 @@ export function useCodeMirror({
       state: EditorState.create({
         doc: value,
         extensions: [
-          baseExtensions(),
+          baseExtensions(codeLanguages),
           dynamic.current.of(dynamicConfig({ readOnly, placeholder })),
           ...(extensions ?? []),
           EditorView.updateListener.of((update) => {
