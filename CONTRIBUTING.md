@@ -73,8 +73,8 @@ negative / costs), and **Alternatives rejected**. The rejected-alternatives
 section is mandatory — name each option that was genuinely on the table and why
 it lost. An ADR without it is a proposal, not a decision record.
 
-**Scope discipline.** When an ADR covers a feature set, split it into *"Accepted
-for the first release"* and *"Deferred (post-v1, additive)"*. Deferred items must
+**Scope discipline.** When an ADR covers a feature set, split it into _"Accepted
+for the first release"_ and _"Deferred (post-v1, additive)"_. Deferred items must
 not gate the first release. If a decision is time-boxed for re-evaluation (a
 browser capability maturing, an ecosystem stabilising), record the revisit
 trigger explicitly.
@@ -100,7 +100,7 @@ files (`README.md`, `CONTRIBUTING.md`, `LICENSE`) are exempt.
 
 ```yaml
 ---
-title: 'Article Title'
+title: "Article Title"
 created: YYYY-MM-DD
 type: wiki-architecture # wiki-architecture | wiki-guides | wiki-reference | journal | adr
 parent: index
@@ -112,12 +112,12 @@ tags:
 
 Use a controlled tag vocabulary; do not invent per-file variants:
 
-| Content | Tags |
-| --- | --- |
-| Wiki — architecture | `stylo/architecture`, `engineering/standard` |
-| Wiki — guides / reference / home | `stylo/wiki`, `engineering/standard` |
-| ADR | `stylo/architecture`, `engineering/adr` |
-| Journal milestone | `stylo/journal`, `engineering/milestone` |
+| Content                          | Tags                                         |
+| -------------------------------- | -------------------------------------------- |
+| Wiki — architecture              | `stylo/architecture`, `engineering/standard` |
+| Wiki — guides / reference / home | `stylo/wiki`, `engineering/standard`         |
+| ADR                              | `stylo/architecture`, `engineering/adr`      |
+| Journal milestone                | `stylo/journal`, `engineering/milestone`     |
 
 ### Portfolio-safe contents
 
@@ -135,7 +135,7 @@ read it.
   never committed. Standards that belong to the project live here and in `docs/`,
   not in .
 - **Commit messages**: imperative subject, prefixed by area
-  (`docs:`, `feat:`, `fix:`, `chore:`). Explain the *why* in the body.
+  (`docs:`, `feat:`, `fix:`, `chore:`). Explain the _why_ in the body.
 - **Branches**: work on a topic branch off `main`; open a PR.
 
 ## Commands
@@ -143,9 +143,9 @@ read it.
 > The build is not scaffolded yet; these are the intended scripts (Vite library
 > mode + TypeScript).
 
-| Task | Command |
-| --- | --- |
-| Dev / playground | `npm run dev` |
-| Typecheck | `npm run typecheck` |
-| Build library bundle | `npm run build` |
-| Run tests | `npm run test` |
+| Task                 | Command             |
+| -------------------- | ------------------- |
+| Dev / playground     | `npm run dev`       |
+| Typecheck            | `npm run typecheck` |
+| Build library bundle | `npm run build`     |
+| Run tests            | `npm run test`      |

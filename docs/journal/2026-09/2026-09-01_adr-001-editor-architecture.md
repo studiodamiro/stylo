@@ -1,5 +1,5 @@
 ---
-title: 'ADR-001 — Editor architecture: compose from primitives, plain text is canonical'
+title: "ADR-001 — Editor architecture: compose from primitives, plain text is canonical"
 created: 2026-09-01
 type: adr
 parent: index

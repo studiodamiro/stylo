@@ -1,5 +1,5 @@
 ---
-title: 'ADR-003 — Math rendering engine and KaTeX asset delivery'
+title: "ADR-003 — Math rendering engine and KaTeX asset delivery"
 created: 2026-09-01
 type: adr
 parent: index
@@ -36,13 +36,13 @@ Two questions therefore need settling:
 
 ### Engine options considered
 
-| Option | What it is | Assessment |
-| --- | --- | --- |
-| **KaTeX** | Synchronous LaTeX → HTML + CSS, self-contained webfonts, supports a subset of LaTeX | Fast, no layout jitter, proven in the same class of tool (Obsidian, Khan Academy, GitHub). The LaTeX subset is sufficient for note-grade math. |
-| **MathJax v3** | Much fuller LaTeX (AMS packages, custom macros, mhchem), SVG or HTML output | Async typesetting causes layout shift on every keystroke in the in-place canvas; ~1 MB+; heavier to drive from CodeMirror. The extra LaTeX coverage is not needed for notes. |
-| **Temml → native MathML** | LaTeX → MathML converter (KaTeX family); the browser renders it with no runtime fonts or CSS | Would remove the asset-delivery problem entirely. But MathML rendering fidelity still varies by browser and installed math fonts in 2026 — too risky to stake "first-class LaTeX" on today. |
-| **Build / server pre-render** | Run a typesetter ahead of time, ship HTML | Inapplicable — the author is typing math live. |
-| **Hand-rolled typesetter** | Implement the box-and-glue model and font metrics | Multi-year effort; same reasoning as ADR-001's rejection of a from-scratch parser. |
+| Option                        | What it is                                                                                   | Assessment                                                                                                                                                                                  |
+| ----------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **KaTeX**                     | Synchronous LaTeX → HTML + CSS, self-contained webfonts, supports a subset of LaTeX          | Fast, no layout jitter, proven in the same class of tool (Obsidian, Khan Academy, GitHub). The LaTeX subset is sufficient for note-grade math.                                              |
+| **MathJax v3**                | Much fuller LaTeX (AMS packages, custom macros, mhchem), SVG or HTML output                  | Async typesetting causes layout shift on every keystroke in the in-place canvas; ~1 MB+; heavier to drive from CodeMirror. The extra LaTeX coverage is not needed for notes.                |
+| **Temml → native MathML**     | LaTeX → MathML converter (KaTeX family); the browser renders it with no runtime fonts or CSS | Would remove the asset-delivery problem entirely. But MathML rendering fidelity still varies by browser and installed math fonts in 2026 — too risky to stake "first-class LaTeX" on today. |
+| **Build / server pre-render** | Run a typesetter ahead of time, ship HTML                                                    | Inapplicable — the author is typing math live.                                                                                                                                              |
+| **Hand-rolled typesetter**    | Implement the box-and-glue model and font metrics                                            | Multi-year effort; same reasoning as ADR-001's rejection of a from-scratch parser.                                                                                                          |
 
 The realistic contest is KaTeX vs. MathJax, and MathJax loses on bundle size and
 async reflow for this workload.

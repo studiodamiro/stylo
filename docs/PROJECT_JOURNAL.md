@@ -15,14 +15,14 @@ milestones and Architectural Decision Records, newest first.
 
 ## Architectural Decision Records
 
-| ADR | Title | Status | Date |
-| --- | ----- | ------ | ---- |
-| [ADR-003](./journal/2026-09/2026-09-01_adr-003-katex-math-rendering.md) | Math rendering engine and KaTeX asset delivery | Accepted | 2026-09-01 |
-| [ADR-002](./journal/2026-09/2026-09-01_adr-002-editor-ux-and-customization.md) | Editor UX, Customization API, and Design System | Accepted | 2026-09-01 |
-| [ADR-001](./journal/2026-09/2026-09-01_adr-001-editor-architecture.md) | Editor architecture: compose from primitives, plain text is canonical | Accepted | 2026-09-01 |
+| ADR                                                                            | Title                                                                 | Status   | Date       |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------- | -------- | ---------- |
+| [ADR-003](./journal/2026-09/2026-09-01_adr-003-katex-math-rendering.md)        | Math rendering engine and KaTeX asset delivery                        | Accepted | 2026-09-01 |
+| [ADR-002](./journal/2026-09/2026-09-01_adr-002-editor-ux-and-customization.md) | Editor UX, Customization API, and Design System                       | Accepted | 2026-09-01 |
+| [ADR-001](./journal/2026-09/2026-09-01_adr-001-editor-architecture.md)         | Editor architecture: compose from primitives, plain text is canonical | Accepted | 2026-09-01 |
 
 ## Milestones
 
-| Date | Entry |
-| ---- | ----- |
+| Date       | Entry                                                                                             |
+| ---------- | ------------------------------------------------------------------------------------------------- |
 | 2026-09-01 | [Project Genesis — Stylo extracted from Sympose](./journal/2026-09/2026-09-01_project-genesis.md) |

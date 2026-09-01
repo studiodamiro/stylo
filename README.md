@@ -35,14 +35,14 @@ truth.** The editor is a thin, composable surface over it.
 
 ## Planned stack
 
-| Concern          | Library                                                                    |
-| ---------------- | ------------------------------------------------------------------------- |
-| Editing surface  | CodeMirror 6 (`@codemirror/lang-markdown`, `@codemirror/language-data`)   |
-| Render / preview | `react-markdown` + `remark-gfm` + `remark-math` + `rehype-katex` + `katex` |
-| `[[wikilinks]]`  | small custom `remark` plugin                                              |
-| Frontmatter      | `remark-frontmatter` (render) + `gray-matter` (parse)                     |
+| Concern          | Library                                                                     |
+| ---------------- | --------------------------------------------------------------------------- |
+| Editing surface  | CodeMirror 6 (`@codemirror/lang-markdown`, `@codemirror/language-data`)     |
+| Render / preview | `react-markdown` + `remark-gfm` + `remark-math` + `rehype-katex` + `katex`  |
+| `[[wikilinks]]`  | small custom `remark` plugin                                                |
+| Frontmatter      | `remark-frontmatter` (render) + `gray-matter` (parse)                       |
 | Styling          | CSS Modules + `--stylo-*` CSS custom properties — no Tailwind, no CSS-in-JS |
-| Icons            | inline SVG, swappable via the `icons` prop — no icon-package dependency   |
+| Icons            | inline SVG, swappable via the `icons` prop — no icon-package dependency     |
 
 Styling and icon decisions are recorded in
 [ADR-002](./docs/journal/2026-09/2026-09-01_adr-002-editor-ux-and-customization.md);
@@ -54,7 +54,7 @@ the math engine and KaTeX asset delivery in
 ```tsx
 import { Stylo } from "@damiro/stylo"
 import "@damiro/stylo/styles.css"
-import "@damiro/stylo/katex.css"   // KaTeX stylesheet + fonts (or import "katex/dist/katex.min.css")
+import "@damiro/stylo/katex.css" // KaTeX stylesheet + fonts (or import "katex/dist/katex.min.css")
 
 function Editor() {
   const [doc, setDoc] = useState("# Hello\n\nInline math: $e^{i\\pi} + 1 = 0$")
@@ -63,7 +63,7 @@ function Editor() {
     <Stylo
       value={doc}
       onChange={setDoc}
-      mode="in-place"             // default — also "source" | "preview" | "split"
+      mode="in-place" // default — also "source" | "preview" | "split"
       onWikiLinkClick={(target) => navigate(target)}
     />
   )

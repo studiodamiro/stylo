@@ -1,5 +1,5 @@
 ---
-title: 'ADR-002 — Editor UX, Customization API, and Design System'
+title: "ADR-002 — Editor UX, Customization API, and Design System"
 created: 2026-09-01
 type: adr
 parent: index
@@ -142,7 +142,7 @@ untouched, and must not gate v1.
   (config, `content` globs, purge step) is disproportionate for a small, bounded
   UI. CSS Modules produce the same static `dist/styles.css` and the same
   "consumer needs no Tailwind" guarantee with no build-time dependency. Tailwind
-  and shadcn/ui's *visual conventions* are kept as a reference; the tooling is
+  and shadcn/ui's _visual conventions_ are kept as a reference; the tooling is
   not.
 - **`lucide-react` (or any icon package) as a dependency.** A package for ~12
   glyphs is a cost on every consumer. Inline SVG paths plus the `icons` override
