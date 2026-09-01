@@ -154,19 +154,21 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
     for (let n = first; n <= last && !blockRevealed; n++) {
       if (revealed.has(n)) blockRevealed = true
     }
+    // Off-caret, a fence line's ``` text is replaced with nothing and the row
+    // collapsed to zero line-height, so the container reads as just its padding
+    // and the code. Safe for click-to-position because the padding lives on the
+    // same line decoration CodeMirror measures — no margin escapes its height map.
+    const emptyFences = fenced && last > first && !blockRevealed
 
     for (let n = first; n <= last; n++) {
       const isFence = fenced && (n === first || n === last)
       let cls = "cm-inplace-mono"
       if (n === first) cls += " cm-inplace-code-top"
       if (n === last) cls += " cm-inplace-code-bottom"
-      if (isFence) cls += " cm-inplace-fence"
+      if (isFence) cls += emptyFences ? " cm-inplace-code-pad" : " cm-inplace-fence"
       const line = doc.line(n)
       out.push(Decoration.line({ class: cls }).range(line.from))
-      // Hide the ``` fence text while the caret is outside the block, but keep
-      // the row at full height — collapsing it (line-height: 0) desyncs
-      // click-to-position for everything below.
-      if (isFence && !blockRevealed && line.to > line.from) {
+      if (isFence && emptyFences && line.to > line.from) {
         out.push(Decoration.replace({}).range(line.from, line.to))
       }
     }

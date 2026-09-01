@@ -233,11 +233,12 @@ test("fenced code: mono container, fences emptied off-block and shown on-caret",
 
   expect(hasClass(view, "cm-inplace-mono")).toBe(true)
   expect(hasClass(view, "cm-inplace-code-top")).toBe(true)
-  expect(hasClass(view, "cm-inplace-fence")).toBe(true)
-  expect(emptiedFenceLines()).toBe(2) // ``` text hidden, rows kept at full height
+  expect(hasClass(view, "cm-inplace-code-pad")).toBe(true) // fence rows collapsed off-block
+  expect(emptiedFenceLines()).toBe(2) // ``` text hidden
 
   view.dispatch({ selection: { anchor: view.state.doc.line(4).from } })
   expect(emptiedFenceLines()).toBe(0)
+  expect(hasClass(view, "cm-inplace-fence")).toBe(true) // fences shown, muted, on-caret
 })
 
 test("a dash bullet is swapped for a glyph; a task item gets a checkbox instead", async () => {
