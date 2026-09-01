@@ -1,5 +1,6 @@
 import { Prec, type Extension } from "@codemirror/state"
 import { EditorView } from "@codemirror/view"
+import { blockMathField } from "./math"
 import { inPlaceDecorations } from "./plugin"
 import { inPlaceTheme } from "./theme"
 
@@ -19,6 +20,7 @@ export interface InPlaceOptions {
 export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
   return [
     inPlaceDecorations(),
+    blockMathField,
     Prec.high(inPlaceTheme),
     EditorView.domEventHandlers({
       click(event) {

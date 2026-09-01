@@ -56,16 +56,16 @@ first (increment 0).
 
 ## Increments
 
-| #   | Increment                                                                       | Status | Commit | Notes                                                                                                                                 |
-| --- | ------------------------------------------------------------------------------- | ------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 0   | ADR-004 — decoration architecture + v1 scope                                    | ✅     | —      | Merged into this tracker; see [ADR-004](./2026-09-01_adr-004-in-place-decoration-canvas.md).                                          |
-| 1   | Plugin skeleton, viewport decoration builder, cursor-reveal mechanism, headings | ✅     | —      | `src/inplace/*`; lazy `InPlaceView`; ATX headings at display size, `#` hidden off the caret line.                                     |
-| 2   | Emphasis — bold / italic / strikethrough / inline code                          | ✅     | —      | Inline rule table in `decorate.ts`; canvas switched to a proportional font (code stays monospace).                                    |
-| 3   | Links + wikilinks                                                               | ✅     | —      | `Link` case + regex `[[…]]` scan with a code-context guard; shared pattern in `src/wikilink.ts`; delegated click → `onWikiLinkClick`. |
-| 4   | Block and inline math widgets (KaTeX)                                           | ☐      |        |                                                                                                                                       |
-| 5   | Horizontal rule, blockquote, list markers                                       | ☐      |        |                                                                                                                                       |
-| 6   | Cursor-reveal edge cases + `atomicRanges` pass                                  | ☐      |        |                                                                                                                                       |
-| 7   | Flip default `mode` to `in-place`; ADR-002 amendment; wiki + props updates      | ☐      |        |                                                                                                                                       |
+| #   | Increment                                                                       | Status | Commit | Notes                                                                                                                                                       |
+| --- | ------------------------------------------------------------------------------- | ------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0   | ADR-004 — decoration architecture + v1 scope                                    | ✅     | —      | Merged into this tracker; see [ADR-004](./2026-09-01_adr-004-in-place-decoration-canvas.md).                                                                |
+| 1   | Plugin skeleton, viewport decoration builder, cursor-reveal mechanism, headings | ✅     | —      | `src/inplace/*`; lazy `InPlaceView`; ATX headings at display size, `#` hidden off the caret line.                                                           |
+| 2   | Emphasis — bold / italic / strikethrough / inline code                          | ✅     | —      | Inline rule table in `decorate.ts`; canvas switched to a proportional font (code stays monospace).                                                          |
+| 3   | Links + wikilinks                                                               | ✅     | —      | `Link` case + regex `[[…]]` scan with a code-context guard; shared pattern in `src/wikilink.ts`; delegated click → `onWikiLinkClick`.                       |
+| 4   | Block and inline math widgets (KaTeX)                                           | ✅     | —      | `math.ts` split out: inline / one-line `$$` in the plugin, multi-line `$$` in a `StateField` (plugins can't replace line breaks); `atomicRanges` from both. |
+| 5   | Horizontal rule, blockquote, list markers, hide frontmatter                     | ☐      |        |                                                                                                                                                             |
+| 6   | Cursor-reveal edge cases + `atomicRanges` pass                                  | ☐      |        |                                                                                                                                                             |
+| 7   | Flip default `mode` to `in-place`; ADR-002 amendment; wiki + props updates      | ☐      |        |                                                                                                                                                             |
 
 Mark a row `✅` and fill in the commit hash as it lands.
 
@@ -93,6 +93,15 @@ Mark a row `✅` and fill in the commit hash as it lands.
   handler in `inPlaceExtension` calls `onWikiLinkClick`, threaded from `Stylo`
   through `InPlaceView` via a ref. Also fixed: the heading branch no longer
   stops the tree walk, so emphasis and links inside a heading are decorated.
+- 2026-09-01 — increment 4: the in-place module was split for the 200-line
+  ceiling — `scan.ts` (shared `inCodeContext` / `rangeRevealed`), `wikilinks.ts`,
+  `math.ts`. `math.ts` renders `$…$` and single-line `$$…$$` from the viewport
+  plugin and multi-line `$$…$$` blocks from a `StateField` (a `ViewPlugin` may
+  not emit a replacement that spans line breaks); the field scans the whole
+  document, acceptable because `$$` blocks are few. Widgets call
+  `katex.render` directly. `atomicRanges` are provided from both the plugin and
+  the field so the caret steps over rendered math. `katex` is now shared
+  (deduplicated) between the preview and in-place chunks.
 
 ## After in-place
 

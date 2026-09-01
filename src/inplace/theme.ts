@@ -44,4 +44,11 @@ export const inPlaceTheme = EditorView.theme({
     cursor: "pointer",
   },
   ".cm-inplace-wikilink": { textDecoration: "none" },
+
+  ".cm-inplace-math-block": {
+    display: "block",
+    margin: "0.6em 0",
+    textAlign: "center",
+  },
+  ".cm-inplace-math-block .katex-display": { margin: "0" },
 })
