@@ -1,5 +1,6 @@
-import { Suspense, useRef } from "react"
+import { Suspense } from "react"
 import { SourceView } from "./editor/SourceView"
+import { LazyInPlaceView } from "./inplace/lazyInPlace"
 import { LazyPreview } from "./render/lazyPreview"
 import { SplitView } from "./SplitView"
 import styles from "./styles/stylo.module.css"
@@ -10,27 +11,20 @@ import type { StyloProps } from "./types"
  * Plain-text-first Markdown editor. `value` is the canonical Markdown string;
  * every view is a pure function of it.
  *
- * This milestone implements `source`, `preview`, and `split`; `in-place` falls
- * back to `source` for now.
+ * `source`, `preview`, and `split` are complete. `in-place` is opt-in while the
+ * decoration canvas is built increment by increment (ADR-004); the default stays
+ * `source` until it is finished.
  */
 export function Stylo({
   value,
   onChange,
-  mode = "source", // TODO(ADR-002): default becomes "in-place"
+  mode = "source",
   onWikiLinkClick,
   readOnly,
   placeholder,
   className,
 }: StyloProps) {
-  const warned = useRef(false)
-
-  let resolved: "source" | "preview" | "split" = "source"
-  if (mode === "preview" || mode === "split") {
-    resolved = mode
-  } else if (mode !== "source" && !warned.current) {
-    warned.current = true
-    console.warn(`[stylo] mode="${mode}" is not implemented yet; using "source".`)
-  }
+  const resolved = mode === "preview" || mode === "split" || mode === "in-place" ? mode : "source"
 
   const rootClass = [styles.root, "stylo", className].filter(Boolean).join(" ")
 
@@ -59,6 +53,17 @@ export function Stylo({
           readOnly={readOnly}
           placeholder={placeholder}
         />
+      )}
+
+      {resolved === "in-place" && (
+        <Suspense fallback={<div className={styles.inplace} aria-busy="true" />}>
+          <LazyInPlaceView
+            value={value}
+            onChange={onChange}
+            readOnly={readOnly}
+            placeholder={placeholder}
+          />
+        </Suspense>
       )}
     </div>
   )
