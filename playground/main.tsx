@@ -1,6 +1,6 @@
 import { StrictMode, useState } from "react"
 import { createRoot } from "react-dom/client"
-import { Stylo, type StyloMode } from "../src/index"
+import { Stylo, type InPlaceDecorationToggles, type StyloMode } from "../src/index"
 import "katex/dist/katex.min.css"
 import "./styles.css"
 
@@ -49,10 +49,33 @@ const greet = (name: string) => \`hello, \${name}\`
 
 const MODES: StyloMode[] = ["in-place", "source", "preview", "split"]
 
+const DECORATION_KEYS: (keyof InPlaceDecorationToggles)[] = [
+  "headings",
+  "emphasis",
+  "links",
+  "wikilinks",
+  "math",
+  "lists",
+  "tasks",
+  "blockquote",
+  "horizontalRule",
+  "code",
+  "frontmatter",
+  "tables",
+]
+
 function App() {
   const [doc, setDoc] = useState(DEMO)
   const [mode, setMode] = useState<StyloMode>("in-place")
   const [lastLink, setLastLink] = useState<string | null>(null)
+  // ADR-005: inPlace config is read once at mount, so a changed toggle remounts
+  // the canvas via `key` below — a deliberate demo of that construction-time rule.
+  const [decorations, setDecorations] = useState<Required<InPlaceDecorationToggles>>(
+    () =>
+      Object.fromEntries(
+        DECORATION_KEYS.map((k) => [k, true]),
+      ) as Required<InPlaceDecorationToggles>,
+  )
 
   return (
     <main
@@ -85,11 +108,40 @@ function App() {
         ))}
       </div>
 
+      {mode === "in-place" && (
+        <details style={{ margin: "0 0 1rem", fontSize: "0.85rem" }}>
+          <summary style={{ cursor: "pointer", color: "#71717a" }}>
+            Customize in-place decorations (ADR-005)
+          </summary>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+              gap: "0.35rem 1rem",
+              marginTop: "0.6rem",
+            }}
+          >
+            {DECORATION_KEYS.map((key) => (
+              <label key={key} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                <input
+                  type="checkbox"
+                  checked={decorations[key]}
+                  onChange={(e) => setDecorations((prev) => ({ ...prev, [key]: e.target.checked }))}
+                />
+                {key}
+              </label>
+            ))}
+          </div>
+        </details>
+      )}
+
       <Stylo
+        key={mode === "in-place" ? JSON.stringify(decorations) : "static"}
         value={doc}
         onChange={setDoc}
         mode={mode}
         onWikiLinkClick={setLastLink}
+        inPlace={{ decorations }}
         className={mode === "split" ? "playground-editor is-split" : "playground-editor"}
       />
 
