@@ -5,6 +5,7 @@ import { Stylo } from "../src/Stylo"
 import { frontmatterField } from "../src/inplace/frontmatter"
 import { blockMathField } from "../src/inplace/math"
 import { inPlacePlugin } from "../src/inplace/plugin"
+import { tableField } from "../src/inplace/tables"
 import { BulletWidget, CheckboxWidget, HrWidget } from "../src/inplace/widgets"
 
 afterEach(cleanup)
@@ -286,4 +287,46 @@ test("a document-wide selection reveals every marker", async () => {
 
   expect(hidesAMarker(view)).toBe(false)
   expect(atomicCount(view)).toBe(0)
+})
+
+function tableDOM(view: EditorView): HTMLTableElement | null {
+  let dom: HTMLTableElement | null = null
+  view.state.field(tableField).between(0, view.state.doc.length, (_f, _t, deco) => {
+    const w = deco.spec.widget as WidgetType | undefined
+    if (w) dom = w.toDOM(view) as HTMLTableElement
+  })
+  return dom
+}
+
+test("a GFM table renders as a <table> off-caret", async () => {
+  const { view } = await mount(
+    "intro\n\n| Feature | Status |\n| ------- | ------ |\n| Source | done |\n| Preview | soon |\n\ntail",
+  )
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+
+  const table = tableDOM(view)
+  expect(table?.tagName).toBe("TABLE")
+  expect(table?.querySelectorAll("thead th")).toHaveLength(2)
+  expect(table?.querySelectorAll("tbody tr")).toHaveLength(2)
+  expect(table?.querySelector("thead th")?.textContent).toBe("Feature")
+  expect(table?.querySelector("tbody td")?.textContent).toBe("Source")
+})
+
+test("a table shows its source when the caret is on a table line", async () => {
+  const { view } = await mount("intro\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\ntail")
+
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+  expect(view.state.field(tableField).size).toBe(1)
+
+  view.dispatch({ selection: { anchor: view.state.doc.line(3).from } })
+  expect(view.state.field(tableField).size).toBe(0)
+})
+
+test("column alignment from the delimiter row reaches the rendered cells", async () => {
+  const { view } = await mount("intro\n\n| L | C |\n| :- | :-: |\n| a | b |\n\ntail")
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+
+  const cells = tableDOM(view)?.querySelectorAll<HTMLTableCellElement>("tbody td")
+  expect(cells?.[0]?.style.textAlign).toBe("left")
+  expect(cells?.[1]?.style.textAlign).toBe("center")
 })

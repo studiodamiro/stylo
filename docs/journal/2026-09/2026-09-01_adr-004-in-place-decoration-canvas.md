@@ -109,16 +109,22 @@ v1 of the canvas decorates:
 ### Deferred (post-v1, additive)
 
 Left as source-styled text in v1, each addable later without reworking the
-plugin: rendered tables, syntax-highlighted code fences (waits on the
-`codeLanguages` pass-through prop), inline image previews, interactive task
-checkboxes, embeds / transclusions.
+plugin: syntax-highlighted code fences (waits on the `codeLanguages`
+pass-through prop), inline image previews, embeds / transclusions.
 
 > **Amended 2026-09-01 (in-place milestone):** interactive task checkboxes were
 > pulled forward into the milestone, ahead of the default flip — a raw `- [ ]`
 > under the default mode reads as unfinished. A `TaskMarker` node becomes an
 > `<input type="checkbox">` widget that toggles `[ ]` ⇄ `[x]` in the source.
-> Rendered tables remain deferred (planned immediately after the flip); their
-> "edit = reveal source" interaction differs from the rest of the canvas.
+>
+> **Amended 2026-09-01 (increment 8):** rendered GFM tables landed, just after
+> the default flip. A `Table` node is replaced with a `block: true` `<table>`
+> widget built from the Lezer `TableCell` / `TableDelimiter` children (header,
+> body, per-column alignment); the caret entering any table line reveals the
+> source, as with every other node. It rides its own state field (`tableField`),
+> not the view plugin, because the replacement spans line breaks. Cell text is
+> rendered verbatim — inline formatting inside cells, and consumer-facing table
+> styling options, are follow-ups for the customization API pass.
 
 ### Default-mode flip is staged, not immediate
 
@@ -177,9 +183,10 @@ The increment-by-increment plan and its running status live in the
   host the real cursor.
 - **Decorating the whole document instead of the viewport.** Simpler to write,
   but O(document) work on every keystroke; unacceptable for long notes.
-- **Rendered tables and highlighted code fences in v1.** Tables need column-model
-  handling and inline editing affordances; code highlighting is coupled to the
-  unresolved `codeLanguages` question. Both are additive later.
+- **Rendered tables and highlighted code fences in v1.** Deferred to keep the
+  first pass focused; tables landed straight after the flip as increment 8 (see
+  the amendment above), code highlighting stays coupled to the unresolved
+  `codeLanguages` question.
 - **Flipping the default to `in-place` immediately.** Ships an unproven,
   interaction-heavy surface as the default for every consumer before its edge
   cases are covered. Staged behind the rollout instead.

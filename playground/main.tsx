@@ -23,11 +23,11 @@ until the caret lands on the line.
 - [x] in-place canvas
 - [ ] toggle me in the in-place canvas
 
-| Feature      | Status |
-| ------------ | ------ |
-| Source mode  | done   |
-| Preview mode | done   |
-| In-place     | soon   |
+| Feature      |   Status |
+| ------------ | -------: |
+| Source mode  |     done |
+| Preview mode |     done |
+| In-place     |     done |
 
 Inline math: $e^{i\\pi} + 1 = 0$. And a display block:
 

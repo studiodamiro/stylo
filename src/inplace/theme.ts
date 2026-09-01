@@ -97,4 +97,20 @@ export const inPlaceTheme = EditorView.theme({
     border: "1px solid var(--stylo-border)",
     borderRadius: "4px",
   },
+
+  ".cm-inplace-table": {
+    borderCollapse: "collapse",
+    margin: "0.3em 0 0.9em",
+    fontSize: "0.95em",
+  },
+  ".cm-inplace-table th": {
+    padding: "0.35em 0.6em",
+    border: "1px solid var(--stylo-border)",
+    background: "color-mix(in srgb, var(--stylo-border) 30%, transparent)",
+    fontWeight: "600",
+  },
+  ".cm-inplace-table td": {
+    padding: "0.35em 0.6em",
+    border: "1px solid var(--stylo-border)",
+  },
 })
