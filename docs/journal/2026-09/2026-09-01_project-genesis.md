@@ -27,13 +27,13 @@ started as a standalone, reusable React component library.
   (published to npm as the scoped package `@damiro/stylo` — the unscoped name is
   taken).
 - Seeded it from Sympose:
-  - Engineering guidelines written for Stylo — kept the
-    stack-agnostic execution guidelines (think before coding, simplicity &
-    modular cleanliness, surgical changes & verification, the < 200 LOC ceiling),
-    dropped the Python-only rules (TTFT SLA, path-traversal, mutexes, persona
-    regex), and added a **plain-text-first architecture** section as the project
-    north star. Documentation standards (dual Wiki + Journal/ADR system, Obsidian
-    YAML frontmatter) carried over with tags renamespaced to `stylo/…`.
+  - Engineering guidelines written for Stylo — stack-agnostic execution
+    guidelines (think before coding, simplicity & modular cleanliness, surgical
+    changes & verification, the < 200 LOC ceiling), dropped the Python-only
+    rules (TTFT SLA, path-traversal, mutexes), and added a **plain-text-first
+    architecture** section as the project north star. Documentation standards
+    (dual Wiki + Journal/ADR system, Obsidian YAML frontmatter) carried over with
+    tags renamespaced to `stylo/…`.
 - Wrote the initial `README.md`: description, rationale, planned stack table, and
   a `<Stylo value onChange mode onWikiLinkClick />` API sketch.
 - Added a Node/Vite `.gitignore`.
