@@ -14,9 +14,6 @@ const INLINE: Record<string, { mark: string; className: string }> = {
   InlineCode: { mark: "CodeMark", className: "cm-inplace-code" },
 }
 
-/** Blocks whose lines must stay monospace on the otherwise-proportional canvas. */
-const MONO_BLOCK = new Set(["FencedCode", "CodeBlock"])
-
 export interface NodeCtx {
   doc: Text
   revealed: Set<number>
@@ -115,11 +112,30 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
     return false
   }
 
-  if (MONO_BLOCK.has(node.name)) {
+  if (node.name === "FencedCode" || node.name === "CodeBlock") {
+    const fenced = node.name === "FencedCode"
     const first = doc.lineAt(node.from).number
-    const last = doc.lineAt(Math.min(node.to, doc.length)).number
+    const last = doc.lineAt(node.to > node.from ? node.to - 1 : node.to).number
+
+    let blockRevealed = false
+    for (let n = first; n <= last && !blockRevealed; n++) {
+      if (revealed.has(n)) blockRevealed = true
+    }
+    // Off-caret, a fence line's ``` text is replaced with nothing; the emptied
+    // row (collapsed to zero line-height) then serves as the container's pad.
+    const emptyFences = fenced && last > first && !blockRevealed
+
     for (let n = first; n <= last; n++) {
-      out.push(Decoration.line({ class: "cm-inplace-mono" }).range(doc.line(n).from))
+      const isFence = fenced && (n === first || n === last)
+      let cls = "cm-inplace-mono"
+      if (n === first) cls += " cm-inplace-code-top"
+      if (n === last) cls += " cm-inplace-code-bottom"
+      if (isFence) cls += emptyFences ? " cm-inplace-code-pad" : " cm-inplace-fence"
+      out.push(Decoration.line({ class: cls }).range(doc.line(n).from))
+      if (isFence && emptyFences) {
+        const l = doc.line(n)
+        out.push(Decoration.replace({}).range(l.from, l.to))
+      }
     }
     return false
   }

@@ -35,7 +35,27 @@ export const inPlaceTheme = EditorView.theme({
     background: "color-mix(in srgb, var(--stylo-border) 45%, transparent)",
   },
 
-  ".cm-inplace-mono": { fontFamily: MONO },
+  ".cm-inplace-mono": {
+    fontFamily: MONO,
+    fontSize: "0.9em",
+    background: "color-mix(in srgb, var(--stylo-border) 35%, transparent)",
+    margin: "0 0.25rem",
+    padding: "0 0.65rem",
+  },
+  ".cm-inplace-code-top": {
+    marginTop: "0.5em",
+    paddingTop: "0.7rem",
+    borderTopLeftRadius: "var(--stylo-radius)",
+    borderTopRightRadius: "var(--stylo-radius)",
+  },
+  ".cm-inplace-code-bottom": {
+    marginBottom: "0.9em",
+    paddingBottom: "0.7rem",
+    borderBottomLeftRadius: "var(--stylo-radius)",
+    borderBottomRightRadius: "var(--stylo-radius)",
+  },
+  ".cm-inplace-fence": { color: "var(--stylo-text-muted)" },
+  ".cm-inplace-code-pad": { fontSize: "0", lineHeight: "0" },
 
   ".cm-inplace-link": {
     color: "var(--stylo-accent)",
