@@ -1,8 +1,9 @@
 import { syntaxTree } from "@codemirror/language"
 import type { Range } from "@codemirror/state"
 import { Decoration, type DecorationSet, type EditorView } from "@codemirror/view"
-import { WIKILINK_PATTERN } from "../wikilink"
+import { scanInlineMath } from "./math"
 import { revealedLines } from "./reveal"
+import { scanWikilinks } from "./wikilinks"
 
 const HEADING = /^ATXHeading([1-6])$/
 
@@ -17,17 +18,10 @@ const INLINE: Record<string, { mark: string; className: string }> = {
 /** Blocks whose lines must stay monospace on the otherwise-proportional canvas. */
 const MONO_BLOCK = new Set(["FencedCode", "CodeBlock"])
 
-const CODE_NODES = new Set(["InlineCode", "FencedCode", "CodeBlock", "CodeText"])
-
-/** Is `pos` inside a code span or code block? Used to leave `[[…]]` literal there. */
-function inCodeContext(tree: ReturnType<typeof syntaxTree>, pos: number): boolean {
-  let node = tree.resolveInner(pos, 1)
-  for (;;) {
-    if (CODE_NODES.has(node.name)) return true
-    const parent = node.parent
-    if (!parent) return false
-    node = parent
-  }
+export interface InPlaceDecorations {
+  decorations: DecorationSet
+  /** Widget replacements the caret should step over rather than into. */
+  atomic: DecorationSet
 }
 
 /**
@@ -37,8 +31,9 @@ function inCodeContext(tree: ReturnType<typeof syntaxTree>, pos: number): boolea
  * sorted by `Decoration.set`, which tolerates the overlaps that nested emphasis
  * and marker-inside-styled-span produce.
  */
-export function buildDecorations(view: EditorView): DecorationSet {
+export function buildDecorations(view: EditorView): InPlaceDecorations {
   const out: Range<Decoration>[] = []
+  const atomic: Range<Decoration>[] = []
   const revealed = revealedLines(view.state)
   const tree = syntaxTree(view.state)
   const { doc } = view.state
@@ -117,42 +112,11 @@ export function buildDecorations(view: EditorView): DecorationSet {
     })
 
     scanWikilinks(view, range.from, range.to, revealed, tree, out)
+    scanInlineMath(view, range.from, range.to, revealed, tree, out, atomic)
   }
 
-  return Decoration.set(out, true)
-}
-
-/** Regex pass for `[[wikilinks]]` — the CodeMirror grammar has no node for them. */
-function scanWikilinks(
-  view: EditorView,
-  from: number,
-  to: number,
-  revealed: Set<number>,
-  tree: ReturnType<typeof syntaxTree>,
-  out: Range<Decoration>[],
-): void {
-  const text = view.state.doc.sliceString(from, to)
-  if (!text.includes("[[")) return
-
-  for (const match of text.matchAll(WIKILINK_PATTERN)) {
-    const [raw = "", rawTarget = "", rawLabel] = match
-    const target = rawTarget.trim()
-    const start = from + (match.index ?? 0)
-    if (!target || inCodeContext(tree, start + 1)) continue
-
-    const end = start + raw.length
-    const labelStart = rawLabel != null ? start + 2 + rawTarget.length + 1 : start + 2
-    const labelEnd = end - 2
-
-    out.push(
-      Decoration.mark({
-        class: "cm-inplace-link cm-inplace-wikilink",
-        attributes: { "data-stylo-wikilink": target },
-      }).range(labelStart, labelEnd),
-    )
-    if (!revealed.has(view.state.doc.lineAt(start).number)) {
-      out.push(Decoration.replace({}).range(start, labelStart))
-      out.push(Decoration.replace({}).range(labelEnd, end))
-    }
+  return {
+    decorations: Decoration.set(out, true),
+    atomic: Decoration.set(atomic, true),
   }
 }

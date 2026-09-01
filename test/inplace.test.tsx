@@ -1,7 +1,8 @@
 import { afterEach, expect, test, vi } from "vitest"
 import { cleanup, render } from "@testing-library/react"
-import { EditorView } from "@codemirror/view"
+import { EditorView, type WidgetType } from "@codemirror/view"
 import { Stylo } from "../src/Stylo"
+import { blockMathField } from "../src/inplace/math"
 import { inPlacePlugin } from "../src/inplace/plugin"
 
 afterEach(cleanup)
@@ -17,14 +18,28 @@ async function mount(value: string) {
   return { ...result, view }
 }
 
-/** Does the live decoration set hide a marker range (a replace decoration)? */
+/** Does the live decoration set hide a marker range (a bare replace decoration)? */
 function hidesAMarker(view: EditorView): boolean {
   const set = view.plugin(inPlacePlugin)?.decorations
   if (!set) return false
   let found = false
   set.between(0, view.state.doc.length, (from, to, deco) => {
-    if (from < to && !deco.spec.class) found = true
+    if (from < to && !deco.spec.class && !deco.spec.widget) found = true
   })
+  return found
+}
+
+/** The math widgets currently rendered — from the plugin and the block field. */
+function mathWidgets(view: EditorView): { src: string; block: boolean }[] {
+  const found: { src: string; block: boolean }[] = []
+  const collect = (set: import("@codemirror/view").DecorationSet | undefined) => {
+    set?.between(0, view.state.doc.length, (_from, _to, deco) => {
+      const w = deco.spec.widget as { src?: string; block?: boolean } | undefined
+      if (w && typeof w.src === "string") found.push({ src: w.src, block: Boolean(w.block) })
+    })
+  }
+  collect(view.plugin(inPlacePlugin)?.decorations)
+  collect(view.state.field(blockMathField, false))
   return found
 }
 
@@ -119,4 +134,40 @@ test("a wikilink collapses to its label and carries the target", async () => {
 test("a wikilink inside inline code is left as literal text", async () => {
   const { view } = await mount("literal `[[Note]]` here\n\nsecond line")
   expect(hasClass(view, "cm-inplace-wikilink")).toBe(false)
+})
+
+test("inline and block math become widgets off-line, source on-line", async () => {
+  const { view } = await mount("text $a+b$ more\n\n$$\nx^2\n$$\n\ntail")
+
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+  const widgets = mathWidgets(view)
+  expect(widgets.some((w) => !w.block && w.src === "a+b")).toBe(true)
+  expect(widgets.some((w) => w.block && w.src.includes("x^2"))).toBe(true)
+
+  view.dispatch({ selection: { anchor: 6 } }) // onto the inline-math line
+  expect(mathWidgets(view).some((w) => w.src === "a+b")).toBe(false)
+})
+
+test("$100 and $200 is not treated as math", async () => {
+  const { view } = await mount("it costs $100 and $200 total\n\ntail")
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+  expect(mathWidgets(view)).toHaveLength(0)
+})
+
+test("math inside inline code is left literal", async () => {
+  const { view } = await mount("literal `$x$` here\n\ntail")
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+  expect(mathWidgets(view)).toHaveLength(0)
+})
+
+test("a math widget renders KaTeX markup", async () => {
+  const { view } = await mount("a $x^2$ b\n\ntail")
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+
+  let dom: HTMLElement | undefined
+  view.plugin(inPlacePlugin)!.decorations.between(0, view.state.doc.length, (_f, _t, deco) => {
+    const w = deco.spec.widget as WidgetType | undefined
+    if (w) dom = w.toDOM(view) as HTMLElement
+  })
+  expect(dom?.querySelector(".katex")).not.toBeNull()
 })
