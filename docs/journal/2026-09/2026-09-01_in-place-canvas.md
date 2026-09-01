@@ -68,7 +68,7 @@ first (increment 0).
 | 2   | Emphasis — bold / italic / strikethrough / inline code                            | ✅     | —      | Inline rule table in `decorate.ts`; canvas switched to a proportional font (code stays monospace).                                                                  |
 | 3   | Links + wikilinks                                                                 | ✅     | —      | `Link` case + regex `[[…]]` scan with a code-context guard; shared pattern in `src/wikilink.ts`; delegated click → `onWikiLinkClick`.                               |
 | 4   | Block and inline math widgets (KaTeX)                                             | ✅     | —      | `math.ts` split out: inline / one-line `$$` in the plugin, multi-line `$$` in a `StateField` (plugins can't replace line breaks); `atomicRanges` from both.         |
-| 5   | Horizontal rule, blockquote, list markers, hide frontmatter                       | ✅     | —      | `nodes.ts` split from `decorate.ts`; `HrWidget` / `BulletWidget`; `frontmatterField` hides the YAML behind a "Properties" chip; task items left as source.          |
+| 5   | Horizontal rule, blockquote, list markers, hide frontmatter                       | ✅     | —      | `nodes.ts` split from `decorate.ts`; `HrWidget` / `BulletWidget`; `frontmatterField` recesses the YAML block in place (a "Properties" chip until 2026-09-02); task items left as source. |
 | 6   | Cursor-reveal edge cases + `atomicRanges` pass                                    | ✅     | —      | Atomic set now derived from every replacing decoration (markers + widgets), not just widgets. Line-span reveal kept; per-node reveal deferred to the API pass.      |
 | 6b  | Task checkboxes                                                                   | ✅     | —      | `CheckboxWidget` replaces `[ ]` / `[x]`; toggling dispatches a one-char change. `- ` hidden on task rows. Pulled in from the deferred list (ADR-004 amendment).     |
 | 7   | Flip default `mode` to `in-place`; ADR-002 amendment; wiki + props updates        | ✅     | —      | `Stylo` defaults to `in-place`; `types.ts` / playground updated; ADR-002 §1 and ADR-004 marked complete; `props.md` + `overview.md` synced.                         |
@@ -155,6 +155,18 @@ onChange />` with no `mode` now lazy-loads the in-place chunk (and the shared
   is rendered verbatim — no inline formatting inside cells yet. Theme rules
   mirror the preview's table CSS; the playground demo table gained a
   right-aligned column.
+- 2026-09-02 — click-to-position accuracy. The frontmatter "Properties" chip
+  (a `block: true` widget folding the YAML to one line) is replaced with line
+  decorations that recess the block in place at full height — muted, monospace,
+  a CSS "Properties" label, `---` fences hidden off-caret. Then every vertical
+  `margin` in `theme.ts` (math block, `<hr>`, table, fenced-code container) was
+  converted to `padding`: CodeMirror's height map measures border boxes, so a
+  `margin` — or a folded block widget — is vertical space it cannot see, and the
+  caret drifted further off the further down the document a click landed. The
+  `<hr>` rule is now a centred background hairline. With the drift gone the
+  fenced-code fence rows collapse to zero height again off-caret, giving a
+  compact `preview`-sized container. Full write-up:
+  [click-to-position accuracy](./2026-09-02_in-place-click-mapping.md).
 
 ## After in-place
 
@@ -168,10 +180,11 @@ onChange />` with no `mode` now lazy-loads the in-place chunk (and the shared
   cells (`**bold**`, `` `code` ``, links, math), and consumer-facing style hooks
   (borders, striping, colours that track the host's `--stylo-*` tokens or
   branding).
-- **Frontmatter display mode** — the v1 canvas hides the YAML block behind a
-  minimal "Properties" chip. Make this configurable: at least `source` (leave it
-  raw), `chip` (current default), and `properties` (a rendered key/value panel).
-  The `properties` mode depends on the deferred frontmatter _exposure_ work from
+- **Frontmatter display mode** — the canvas recesses the YAML block in place
+  (muted monospace, a "Properties" label, `---` fences hidden off-caret). Make
+  this configurable: at least `source` (leave it raw), `inline` (current default
+  — the recessed style), and `properties` (a rendered key/value panel). The
+  `properties` mode depends on the deferred frontmatter _exposure_ work from
   ADR-001 (parsing the YAML — `gray-matter` / a YAML dependency and its own ADR,
   plus the `onFrontmatter` prop), so it lands with that, not before.
 - The rest of the post-foundation work is unchanged and tracked in the

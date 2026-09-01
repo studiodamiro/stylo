@@ -41,7 +41,7 @@ Every key is optional and defaults to `true`.
 | `blockquote`     | left-border / muted framing, and `>` hiding off-caret                |
 | `horizontalRule` | the rendered `<hr>`                                                  |
 | `code`           | inline `` `code` `` styling and the fenced / indented code container |
-| `frontmatter`    | the "Properties" chip over the leading YAML block                    |
+| `frontmatter`    | the recessed in-place styling of the leading YAML block              |
 | `tables`         | the rendered `<table>`                                               |
 
 ## Applied at mount
@@ -56,7 +56,7 @@ a toggle change live.
 Deferred, each its own later decision:
 
 - `inPlace.reveal` — `"line" | "node"` cursor-reveal granularity.
-- `inPlace.frontmatter` — a `source` / `chip` / `properties` display mode; the
+- `inPlace.frontmatter` — a `source` / `inline` / `properties` display mode; the
   `properties` panel needs YAML parsing and its own dependency.
 - Table rendering options — inline formatting inside cells, style hooks.
 - A consumer-supplied decorator hook for custom in-place node types.
