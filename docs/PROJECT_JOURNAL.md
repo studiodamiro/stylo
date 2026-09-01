@@ -17,6 +17,7 @@ milestones and Architectural Decision Records, newest first.
 
 | ADR                                                                            | Title                                                                 | Status   | Date       |
 | ------------------------------------------------------------------------------ | --------------------------------------------------------------------- | -------- | ---------- |
+| [ADR-005](./journal/2026-09/2026-09-01_adr-005-in-place-decoration-toggles.md) | In-place decoration toggles                                           | Accepted | 2026-09-01 |
 | [ADR-004](./journal/2026-09/2026-09-01_adr-004-in-place-decoration-canvas.md)  | In-place decoration canvas                                            | Accepted | 2026-09-01 |
 | [ADR-003](./journal/2026-09/2026-09-01_adr-003-katex-math-rendering.md)        | Math rendering engine and KaTeX asset delivery                        | Accepted | 2026-09-01 |
 | [ADR-002](./journal/2026-09/2026-09-01_adr-002-editor-ux-and-customization.md) | Editor UX, Customization API, and Design System                       | Accepted | 2026-09-01 |
@@ -26,6 +27,7 @@ milestones and Architectural Decision Records, newest first.
 
 | Date       | Entry                                                                                                                                     |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-01 | [Customization API — in-place decoration toggles](./journal/2026-09/2026-09-01_customization-in-place-toggles.md)                         |
 | 2026-09-01 | [In-place canvas — build tracker](./journal/2026-09/2026-09-01_in-place-canvas.md)                                                        |
 | 2026-09-01 | [Split mode — source and preview side by side](./journal/2026-09/2026-09-01_split-mode.md)                                                |
 | 2026-09-01 | [Foundation milestone — build, source and preview modes](./journal/2026-09/2026-09-01_foundation-milestone.md)                            |
