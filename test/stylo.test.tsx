@@ -1,13 +1,24 @@
-import { afterEach, expect, test } from "vitest"
+import { afterEach, expect, test, vi } from "vitest"
 import { cleanup, render } from "@testing-library/react"
 import { Stylo } from "../src/Stylo"
 
 afterEach(cleanup)
 
-test("renders a CodeMirror source surface by default", () => {
+test("defaults to the in-place canvas", async () => {
   const { container } = render(<Stylo value="# hi" onChange={() => {}} />)
-  expect(container.querySelector(".cm-editor")).not.toBeNull()
+  expect(container.querySelector('[data-stylo-mode="in-place"]')).not.toBeNull()
+
+  // in-place is a lazy chunk — the editor attaches asynchronously
+  await vi.waitFor(() => {
+    if (!container.querySelector(".cm-editor")) throw new Error("not mounted")
+  })
   expect(container.querySelector(".stylo")).not.toBeNull()
+})
+
+test('mode="source" renders the plain surface synchronously', () => {
+  const { container } = render(<Stylo value="# hi" onChange={() => {}} mode="source" />)
+  expect(container.querySelector(".cm-editor")).not.toBeNull()
+  expect(container.querySelector('[data-stylo-mode="source"]')).not.toBeNull()
 })
 
 test("an out-of-range mode value falls back to source", () => {

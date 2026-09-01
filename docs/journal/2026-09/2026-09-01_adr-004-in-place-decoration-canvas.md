@@ -128,6 +128,11 @@ implemented and verified in the playground. Until then the default stays
 `source` and `in-place` is opt-in. This sequences ADR-002's decision; it does
 not change the committed end state.
 
+> **Completed 2026-09-01:** every v1 node type (plus task checkboxes) is
+> implemented and playground-verified; `Stylo`'s default `mode` is now
+> `in-place`. `mode="source"` remains the plain surface that loads no render
+> chunk.
+
 The increment-by-increment plan and its running status live in the
 [in-place canvas build tracker](./2026-09-01_in-place-canvas.md).
 

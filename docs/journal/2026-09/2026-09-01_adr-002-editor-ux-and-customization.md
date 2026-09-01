@@ -60,6 +60,10 @@ untouched, and must not gate v1.
   > stays `source` until every v1 node type is implemented and playground-
   > verified; the flip to `in-place` is the final step. The committed end state
   > — `in-place` as the default — is unchanged.
+  >
+  > **Completed 2026-09-01:** the in-place canvas milestone shipped and the
+  > default `mode` is now `in-place`. See the
+  > [build tracker](./2026-09-01_in-place-canvas.md).
 
 #### 2. Declarative developer toolbar API
 

@@ -69,21 +69,21 @@ The UX layer, customization API, and design-token system are specified in
 
 `<Stylo mode>` selects the interaction layout:
 
-- `in-place` — Notion-like canvas: headings and LaTeX math render live in the
-  CodeMirror surface via view decorations, with the raw source revealed under
-  the cursor. Architecture and v1 node set in
+- `in-place` (**default**) — Notion-like canvas: headings, emphasis, links and
+  wikilinks, `$…$` / `$$…$$` math, rules, blockquotes, list bullets, and task
+  checkboxes render live in the CodeMirror surface via view decorations, with
+  the raw source revealed under the caret. Tables and fenced-code highlighting
+  stay as source for now. Architecture and node set in
   [ADR-004](../../journal/2026-09/2026-09-01_adr-004-in-place-decoration-canvas.md).
-- `source` — raw CodeMirror Markdown text surface.
+- `source` — raw CodeMirror Markdown text surface; loads no render chunk.
 - `preview` — rendered HTML/KaTeX preview pane.
 - `split` — side-by-side editing and preview with synchronized scroll.
 
-**Implemented today:** `source`, `preview`, and `split` (the last with a
-proportional scroll link between panes). `in-place` is being built incrementally
-([ADR-004](../../journal/2026-09/2026-09-01_adr-004-in-place-decoration-canvas.md),
-[tracker](../../journal/2026-09/2026-09-01_in-place-canvas.md)); until it is
-complete it falls back to `source`, which is also the interim default. Once the
-canvas ships, `in-place` becomes the default per ADR-002 §1. See the
-[foundation milestone](../../journal/2026-09/2026-09-01_foundation-milestone.md)
+**All four modes are implemented.** `in-place` is the default per ADR-002 §1;
+it and `preview` / `split` load their render pipeline as a lazy chunk, so a
+`mode="source"` consumer stays at the CodeMirror-only baseline. See the
+[in-place canvas tracker](../../journal/2026-09/2026-09-01_in-place-canvas.md),
+the [foundation milestone](../../journal/2026-09/2026-09-01_foundation-milestone.md),
 and the [split-mode note](../../journal/2026-09/2026-09-01_split-mode.md).
 
 ### UI layers
