@@ -1,5 +1,6 @@
 import type { EditorView } from "@codemirror/view"
 import styles from "../styles/stylo.module.css"
+import type { CodeLanguages } from "../types"
 import { useCodeMirror } from "./useCodeMirror"
 
 export interface SourceViewProps {
@@ -7,6 +8,8 @@ export interface SourceViewProps {
   onChange: (next: string) => void
   readOnly?: boolean
   placeholder?: string
+  /** Fenced-code grammars, forwarded to the Markdown language. Read once. */
+  codeLanguages?: CodeLanguages
   /** Called with the `EditorView` once created, and with `null` on teardown. */
   onViewChange?: (view: EditorView | null) => void
 }
@@ -17,8 +20,9 @@ export function SourceView({
   onChange,
   readOnly,
   placeholder,
+  codeLanguages,
   onViewChange,
 }: SourceViewProps) {
-  const ref = useCodeMirror({ value, onChange, readOnly, placeholder, onViewChange })
+  const ref = useCodeMirror({ value, onChange, readOnly, placeholder, codeLanguages, onViewChange })
   return <div className={styles.source} ref={ref} />
 }

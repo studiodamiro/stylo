@@ -1,5 +1,6 @@
 import { StrictMode, useState } from "react"
 import { createRoot } from "react-dom/client"
+import { languages } from "@codemirror/language-data"
 import { Stylo, type InPlaceDecorationToggles, type StyloMode } from "../src/index"
 import "katex/dist/katex.min.css"
 import "./styles.css"
@@ -44,6 +45,11 @@ Jump to another note with [[Getting Started]], or a labelled one:
 
 \`\`\`ts
 const greet = (name: string) => \`hello, \${name}\`
+\`\`\`
+
+\`\`\`python
+def greet(name: str) -> str:
+    return f"hello, {name}"
 \`\`\`
 `
 
@@ -142,6 +148,7 @@ function App() {
         mode={mode}
         onWikiLinkClick={setLastLink}
         inPlace={{ decorations }}
+        codeLanguages={languages}
         className={mode === "split" ? "playground-editor is-split" : "playground-editor"}
       />
 
