@@ -133,7 +133,7 @@ read it.
 - **The repository stays vendor-neutral.** Editor-specific and local workspace
   configuration — e.g. `.agents/`, `.cursor/` — is `.gitignore`d and
   never committed. Standards that belong to the project live here and in `docs/`,
-  not in .
+  not in editor config.
 - **Commit messages**: imperative subject, prefixed by area
   (`docs:`, `feat:`, `fix:`, `chore:`). Explain the _why_ in the body.
 - **Branches**: work on a topic branch off `main`; open a PR.
