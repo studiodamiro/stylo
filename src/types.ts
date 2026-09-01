@@ -1,4 +1,17 @@
+import type { Language, LanguageDescription } from "@codemirror/language"
+
 export type StyloMode = "in-place" | "source" | "preview" | "split"
+
+/**
+ * Grammars for fenced-code sub-highlighting, forwarded verbatim to
+ * `@codemirror/lang-markdown`. Stylo ships none by default — a consumer opts in
+ * with exactly the set they want (`codeLanguages={languages}` from
+ * `@codemirror/language-data`, or a hand-built list). Affects the CodeMirror
+ * surfaces only (`source`, `split`, `in-place`); `preview` is a separate
+ * pipeline. See the ADR-001 amendment.
+ */
+export type CodeLanguages =
+  readonly LanguageDescription[] | ((info: string) => Language | LanguageDescription | null)
 
 /**
  * Per-construct on/off switches for the in-place canvas. Each key defaults to
@@ -39,6 +52,11 @@ export interface StyloProps {
   onWikiLinkClick?: (target: string) => void
   /** Configures the in-place canvas (ADR-005). Applied when it mounts. */
   inPlace?: InPlaceConfig
+  /**
+   * Grammars for fenced-code sub-highlighting on the CodeMirror surfaces
+   * (`source`, `split`, `in-place`). None by default. Read once, at mount.
+   */
+  codeLanguages?: CodeLanguages
   /** Render the source surface read-only. */
   readOnly?: boolean
   /** Placeholder text shown when the document is empty (source surface). */

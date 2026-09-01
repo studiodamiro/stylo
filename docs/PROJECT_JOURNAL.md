@@ -27,6 +27,7 @@ milestones and Architectural Decision Records, newest first.
 
 | Date       | Entry                                                                                                                                     |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-02 | [`codeLanguages` prop — fenced-code sub-highlighting, opt-in](./journal/2026-09/2026-09-02_code-languages-prop.md)                        |
 | 2026-09-02 | [In-place canvas — click-to-position accuracy](./journal/2026-09/2026-09-02_in-place-click-mapping.md)                                    |
 | 2026-09-01 | [Customization API — in-place decoration toggles](./journal/2026-09/2026-09-01_customization-in-place-toggles.md)                         |
 | 2026-09-01 | [In-place canvas — build tracker](./journal/2026-09/2026-09-01_in-place-canvas.md)                                                        |
