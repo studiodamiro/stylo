@@ -26,7 +26,8 @@ _Pending first release._
 
 ### Reference
 
-_Pending first release — the `<Stylo>` prop surface will land here._
+- [[reference/props|`<Stylo>` props]] — the current prop surface, styling tokens,
+  and math setup.
 
 ## Engineering journal
 
