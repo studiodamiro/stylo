@@ -2,8 +2,10 @@ import { afterEach, expect, test, vi } from "vitest"
 import { cleanup, render } from "@testing-library/react"
 import { EditorView, type WidgetType } from "@codemirror/view"
 import { Stylo } from "../src/Stylo"
+import { frontmatterField } from "../src/inplace/frontmatter"
 import { blockMathField } from "../src/inplace/math"
 import { inPlacePlugin } from "../src/inplace/plugin"
+import { BulletWidget, HrWidget } from "../src/inplace/widgets"
 
 afterEach(cleanup)
 
@@ -41,6 +43,15 @@ function mathWidgets(view: EditorView): { src: string; block: boolean }[] {
   collect(view.plugin(inPlacePlugin)?.decorations)
   collect(view.state.field(blockMathField, false))
   return found
+}
+
+/** Count the widget decorations of a given type in the plugin's set. */
+function countWidgets(view: EditorView, Ctor: abstract new () => unknown): number {
+  let n = 0
+  view.plugin(inPlacePlugin)?.decorations.between(0, view.state.doc.length, (_f, _t, deco) => {
+    if (deco.spec.widget instanceof Ctor) n += 1
+  })
+  return n
 }
 
 /** Is there a decoration carrying `className` anywhere in the document? */
@@ -158,6 +169,37 @@ test("math inside inline code is left literal", async () => {
   const { view } = await mount("literal `$x$` here\n\ntail")
   view.dispatch({ selection: { anchor: view.state.doc.length } })
   expect(mathWidgets(view)).toHaveLength(0)
+})
+
+test("frontmatter is hidden off-caret and revealed when the caret enters it", async () => {
+  const { view } = await mount("---\ntitle: x\ntags: [a]\n---\n\n# Body")
+
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+  expect(view.state.field(frontmatterField).size).toBe(1)
+
+  view.dispatch({ selection: { anchor: view.state.doc.line(2).from } })
+  expect(view.state.field(frontmatterField).size).toBe(0)
+})
+
+test("a horizontal rule becomes a widget off-line, source on-line", async () => {
+  const { view } = await mount("above\n\n---\n\nbelow")
+
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+  expect(countWidgets(view, HrWidget)).toBe(1)
+
+  view.dispatch({ selection: { anchor: view.state.doc.line(3).from } })
+  expect(countWidgets(view, HrWidget)).toBe(0)
+})
+
+test("blockquote lines get the quote class", async () => {
+  const { view } = await mount("> quoted one\n> quoted two\n\ntail")
+  expect(hasClass(view, "cm-inplace-quote")).toBe(true)
+})
+
+test("a dash bullet is swapped for a glyph, but a task item is left alone", async () => {
+  const { view } = await mount("- plain item\n- [ ] a task\n\ntail")
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+  expect(countWidgets(view, BulletWidget)).toBe(1)
 })
 
 test("a math widget renders KaTeX markup", async () => {

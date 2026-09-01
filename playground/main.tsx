@@ -20,6 +20,7 @@ until the caret lands on the line.
 
 - **Source** mode — a real CodeMirror 6 surface.
 - **Preview** mode — GFM tables, math, and wikilinks.
+- [ ] task items stay as source for now
 
 | Feature      | Status |
 | ------------ | ------ |
@@ -35,6 +36,8 @@ $$
 
 Jump to another note with [[Getting Started]], or a labelled one:
 [[api/reference|the API reference]].
+
+---
 
 > The YAML frontmatter above is kept out of the rendered preview.
 
