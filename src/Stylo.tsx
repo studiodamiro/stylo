@@ -1,5 +1,6 @@
 import { useRef } from "react"
 import { SourceView } from "./editor/SourceView"
+import { Preview } from "./render/Preview"
 import styles from "./styles/stylo.module.css"
 import "./styles/tokens.css"
 import type { StyloProps } from "./types"
@@ -8,13 +9,14 @@ import type { StyloProps } from "./types"
  * Plain-text-first Markdown editor. `value` is the canonical Markdown string;
  * every view is a pure function of it.
  *
- * This milestone implements `source`; `preview` arrives next, and `in-place` /
- * `split` fall back to `source` for now.
+ * This milestone implements `source` and `preview`; `in-place` / `split` fall
+ * back to `source` for now.
  */
 export function Stylo({
   value,
   onChange,
   mode = "source", // TODO(ADR-002): default becomes "in-place"
+  onWikiLinkClick,
   readOnly,
   placeholder,
   className,
@@ -41,7 +43,7 @@ export function Stylo({
           placeholder={placeholder}
         />
       ) : (
-        <div className={styles.preview}>Preview mode arrives in the next step.</div>
+        <Preview value={value} onWikiLinkClick={onWikiLinkClick} />
       )}
     </div>
   )

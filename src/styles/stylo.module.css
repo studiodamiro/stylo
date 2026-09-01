@@ -24,5 +24,93 @@
 
 .preview {
   padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
   line-height: 1.6;
+  overflow-wrap: break-word;
+}
+
+.preview > :first-child {
+  margin-top: 0;
+}
+
+.preview > :last-child {
+  margin-bottom: 0;
+}
+
+.preview :is(h1, h2, h3, h4, h5, h6) {
+  margin: 1.4em 0 0.5em;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.preview h1 {
+  font-size: 1.6em;
+}
+
+.preview h2 {
+  font-size: 1.35em;
+}
+
+.preview h3 {
+  font-size: 1.15em;
+}
+
+.preview :is(p, ul, ol, blockquote, pre, table) {
+  margin: 0 0 0.9em;
+}
+
+.preview a {
+  color: var(--stylo-accent);
+  text-underline-offset: 0.15em;
+}
+
+.preview code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  padding: 0.1em 0.35em;
+  border-radius: calc(var(--stylo-radius) - 3px);
+  background: color-mix(in srgb, var(--stylo-border) 45%, transparent);
+}
+
+.preview pre {
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--stylo-radius);
+  background: color-mix(in srgb, var(--stylo-border) 35%, transparent);
+  overflow-x: auto;
+}
+
+.preview pre code {
+  padding: 0;
+  font-size: 0.85em;
+  background: none;
+}
+
+.preview blockquote {
+  padding-left: 0.9em;
+  border-left: 3px solid var(--stylo-border);
+  color: var(--stylo-text-muted);
+}
+
+.preview table {
+  display: block;
+  border-collapse: collapse;
+  overflow-x: auto;
+}
+
+.preview :is(th, td) {
+  padding: 0.35em 0.6em;
+  border: 1px solid var(--stylo-border);
+  text-align: left;
+}
+
+.preview hr {
+  margin: 1.5em 0;
+  border: none;
+  border-top: 1px solid var(--stylo-border);
+}
+
+.preview :global(.katex-display) {
+  padding: 0.25em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
