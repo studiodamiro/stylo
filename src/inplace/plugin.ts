@@ -13,8 +13,9 @@ import { buildDecorations } from "./decorate"
  * viewport, or the selection changes. Selection is a trigger because the
  * cursor-reveal behaviour depends on where the caret sits.
  *
- * Also provides `EditorView.atomicRanges` covering only the widget replacements
- * (rendered math), so the caret steps over them instead of into hidden `$$`.
+ * Also provides `EditorView.atomicRanges` covering every replacing decoration —
+ * hidden markers and widgets alike — so the caret steps over hidden syntax
+ * instead of into invisible positions.
  *
  * Exported (not just the factory) so tests can read the live sets via
  * `view.plugin(inPlacePlugin)`.

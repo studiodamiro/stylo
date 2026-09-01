@@ -9,7 +9,7 @@ import { scanWikilinks } from "./wikilinks"
 
 export interface InPlaceDecorations {
   decorations: DecorationSet
-  /** Widget replacements the caret should step over rather than into. */
+  /** Every replacing decoration — the caret steps over these rather than into them. */
   atomic: DecorationSet
 }
 
@@ -24,11 +24,10 @@ export interface InPlaceDecorations {
  */
 export function buildDecorations(view: EditorView): InPlaceDecorations {
   const out: Range<Decoration>[] = []
-  const atomic: Range<Decoration>[] = []
   const revealed = revealedLines(view.state)
   const tree = syntaxTree(view.state)
   const { doc } = view.state
-  const ctx = { doc, revealed, out, atomic, fmEnd: frontmatterRange(doc)?.to ?? -1 }
+  const ctx = { doc, revealed, out, fmEnd: frontmatterRange(doc)?.to ?? -1 }
 
   for (const range of view.visibleRanges) {
     tree.iterate({
@@ -37,8 +36,12 @@ export function buildDecorations(view: EditorView): InPlaceDecorations {
       enter: (node) => decorateNode(node, ctx),
     })
     scanWikilinks(view, range.from, range.to, revealed, tree, out)
-    scanInlineMath(view, range.from, range.to, revealed, tree, out, atomic)
+    scanInlineMath(view, range.from, range.to, revealed, tree, out)
   }
+
+  // Every replacing decoration (marker-hiding and widgets) is atomic, so the
+  // caret steps over hidden syntax instead of into invisible positions.
+  const atomic = out.filter((r) => r.from < r.to && !r.value.spec.class)
 
   return {
     decorations: Decoration.set(out, true),

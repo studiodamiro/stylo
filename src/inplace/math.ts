@@ -40,9 +40,8 @@ class MathWidget extends WidgetType {
 
 /**
  * Viewport pass for `$…$` and single-line `$$…$$` — the CodeMirror grammar has
- * no math node. Off-caret matches become KaTeX widgets; their ranges are also
- * pushed to `atomic` so the caret steps over them. Multi-line `$$` blocks are
- * handled by `blockMathField` instead (a plugin may not replace line breaks).
+ * no math node. Off-caret matches become KaTeX widgets. Multi-line `$$` blocks
+ * are handled by `blockMathField` instead (a plugin may not replace line breaks).
  */
 export function scanInlineMath(
   view: EditorView,
@@ -51,7 +50,6 @@ export function scanInlineMath(
   revealed: Set<number>,
   tree: Tree,
   out: Range<Decoration>[],
-  atomic: Range<Decoration>[],
 ): void {
   const text = view.state.doc.sliceString(from, to)
   if (!text.includes("$")) return
@@ -65,7 +63,7 @@ export function scanInlineMath(
     if (!src || inCodeContext(tree, start + 2)) continue
     claimed.push([start, end])
     if (rangeRevealed(revealed, doc, start, end)) continue
-    add(out, atomic, start, end, src, true)
+    out.push(Decoration.replace({ widget: new MathWidget(src, true) }).range(start, end))
   }
 
   for (const m of text.matchAll(INLINE_MATH)) {
@@ -75,21 +73,8 @@ export function scanInlineMath(
     if (!src || inCodeContext(tree, start + 1)) continue
     if (claimed.some(([s, e]) => start >= s && end <= e)) continue
     if (rangeRevealed(revealed, doc, start, end)) continue
-    add(out, atomic, start, end, src, false)
+    out.push(Decoration.replace({ widget: new MathWidget(src, false) }).range(start, end))
   }
-}
-
-function add(
-  out: Range<Decoration>[],
-  atomic: Range<Decoration>[],
-  from: number,
-  to: number,
-  src: string,
-  block: boolean,
-): void {
-  const deco = Decoration.replace({ widget: new MathWidget(src, block) })
-  out.push(deco.range(from, to))
-  atomic.push(deco.range(from, to))
 }
 
 /**
