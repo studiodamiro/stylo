@@ -12,7 +12,7 @@ tags:
 
 - **Status:** Accepted
 - **Date:** 2026-09-01
-- **Deciders:** damiro
+- **Deciders:** damiro, Grace
 
 ## Context
 

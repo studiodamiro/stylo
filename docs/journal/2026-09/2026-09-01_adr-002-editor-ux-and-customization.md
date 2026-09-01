@@ -15,7 +15,7 @@ tags:
   `in-place` inline live-preview canvas to the default view and into
   first-release scope
 - **Date:** 2026-09-01
-- **Deciders:** damiro
+- **Deciders:** damiro, Grace
 
 ---
 

@@ -13,7 +13,7 @@ tags:
 - **Status:** Accepted — amended in part by
   [ADR-002](./2026-09-01_adr-002-editor-ux-and-customization.md) (2026-09-01)
 - **Date:** 2026-09-01
-- **Deciders:** damiro
+- **Deciders:** damiro, Grace
 
 ## Context
 
