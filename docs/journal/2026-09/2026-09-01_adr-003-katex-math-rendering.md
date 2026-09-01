@@ -122,3 +122,28 @@ async reflow for this workload.
   on-demand loading.
 - **Copying / path-rewriting the woff2 files into `dist/fonts/`.** Extra build
   machinery for no gain over the `@damiro/stylo/katex.css` re-export.
+
+## Bundle placement (foundation milestone)
+
+The render pipeline (`react-markdown` + `remark-*` + `rehype-katex` + `katex`)
+adds ~145 kB gzip. To keep `mode="source"` consumers from paying for it, the
+`Preview` component is loaded with `React.lazy` behind a `Suspense` boundary in
+`Stylo.tsx`. The build splits it into its own chunk (`Preview-*.js`), fetched
+only when a rendered mode is used; the entry chunk stays at the CodeMirror-only
+floor (~187 kB gzip).
+
+`katex`, `rehype-katex`, and `remark-math` remain regular `dependencies`.
+
+**Considered and deferred:** splitting the render pipeline (and, separately, the
+CodeMirror language grammars) into their own package subpath exports —
+`@damiro/stylo/preview`, `@damiro/stylo/code-languages` — each carrying its own
+dependencies, so a source-only consumer's install never pulls them.
+
+- Rejected as premature: it is a public-API decision (it changes what
+  `mode="preview"` means and how `split` composes), and lazy-loading already
+  solves the shipped-bundle problem. The remaining benefit is a smaller
+  `node_modules` for source-only consumers — dev-machine disk, not shipped
+  weight — at the cost of an explicit install step and a subpath import.
+- To be revisited when the v1 public API surface is designed. Making `katex` an
+  optional peer dependency does not work in isolation: `remark-math` hard-depends
+  on `katex` transitively, so any real split has to move the whole render stack.

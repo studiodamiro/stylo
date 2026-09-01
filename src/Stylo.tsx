@@ -1,9 +1,12 @@
-import { useRef } from "react"
+import { lazy, Suspense, useRef } from "react"
 import { SourceView } from "./editor/SourceView"
-import { Preview } from "./render/Preview"
 import styles from "./styles/stylo.module.css"
 import "./styles/tokens.css"
 import type { StyloProps } from "./types"
+
+// Preview pulls in react-markdown + remark/rehype + KaTeX. Load it only when a
+// rendered mode is actually used, so `mode="source"` consumers never pay for it.
+const Preview = lazy(async () => ({ default: (await import("./render/Preview")).Preview }))
 
 /**
  * Plain-text-first Markdown editor. `value` is the canonical Markdown string;
@@ -43,7 +46,9 @@ export function Stylo({
           placeholder={placeholder}
         />
       ) : (
-        <Preview value={value} onWikiLinkClick={onWikiLinkClick} />
+        <Suspense fallback={<div className={styles.preview} aria-busy="true" />}>
+          <Preview value={value} onWikiLinkClick={onWikiLinkClick} />
+        </Suspense>
       )}
     </div>
   )
