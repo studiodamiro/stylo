@@ -11,14 +11,14 @@ import type { StyloProps } from "./types"
  * Plain-text-first Markdown editor. `value` is the canonical Markdown string;
  * every view is a pure function of it.
  *
- * `source`, `preview`, and `split` are complete. `in-place` is opt-in while the
- * decoration canvas is built increment by increment (ADR-004); the default stays
- * `source` until it is finished.
+ * The default `mode` is `in-place`, the live decoration canvas (ADR-002 §1,
+ * ADR-004). Pass `mode="source"` for the plain surface with no lazy render
+ * chunk. `preview` and `split` are also available.
  */
 export function Stylo({
   value,
   onChange,
-  mode = "source",
+  mode = "in-place",
   onWikiLinkClick,
   readOnly,
   placeholder,

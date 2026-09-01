@@ -6,13 +6,11 @@ export interface StyloProps {
   /** Called with the complete Markdown string on every edit. */
   onChange: (next: string) => void
   /**
-   * Interaction layout. `in-place` and `split` are not implemented in the current
-   * milestone and fall back to `source` (with one console warning).
-   *
-   * TODO(ADR-002): the default becomes `"in-place"` once decorations land.
+   * Interaction layout. Defaults to `"in-place"` — the live decoration canvas.
+   * `"source"` is the plain surface and avoids loading the render chunk.
    */
   mode?: StyloMode
-  /** Invoked when a rendered `[[wikilink]]` is activated in the preview. */
+  /** Invoked when a `[[wikilink]]` is activated in the preview or in-place canvas. */
   onWikiLinkClick?: (target: string) => void
   /** Render the source surface read-only. */
   readOnly?: boolean

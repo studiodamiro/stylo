@@ -46,8 +46,9 @@ first (increment 0).
 
 ## Standing decisions
 
-- **Default `mode` stays `source`** until in-place is proven. The flip to
-  `in-place` as the default is the last increment, with an ADR-002 amendment.
+- **Default `mode` stayed `source`** until in-place was proven; increment 7
+  flipped it to `in-place` (ADR-002 §1). `mode="source"` stays the plain
+  surface that loads no render chunk.
 - **The in-place plugin is lazy-loaded** (like `Preview`), so it carries `katex`
   into its own chunk and `mode="source"` consumers never fetch it.
 - Decorations are built over the **visible viewport only**, rebuilt on
@@ -68,7 +69,7 @@ first (increment 0).
 | 5   | Horizontal rule, blockquote, list markers, hide frontmatter                       | ✅     | —      | `nodes.ts` split from `decorate.ts`; `HrWidget` / `BulletWidget`; `frontmatterField` hides the YAML behind a "Properties" chip; task items left as source.      |
 | 6   | Cursor-reveal edge cases + `atomicRanges` pass                                    | ✅     | —      | Atomic set now derived from every replacing decoration (markers + widgets), not just widgets. Line-span reveal kept; per-node reveal deferred to the API pass.  |
 | 6b  | Task checkboxes                                                                   | ✅     | —      | `CheckboxWidget` replaces `[ ]` / `[x]`; toggling dispatches a one-char change. `- ` hidden on task rows. Pulled in from the deferred list (ADR-004 amendment). |
-| 7   | Flip default `mode` to `in-place`; ADR-002 amendment; wiki + props updates        | ☐      |        |                                                                                                                                                                 |
+| 7   | Flip default `mode` to `in-place`; ADR-002 amendment; wiki + props updates        | ✅     | —      | `Stylo` defaults to `in-place`; `types.ts` / playground updated; ADR-002 §1 and ADR-004 marked complete; `props.md` + `overview.md` synced.                     |
 | 8   | Rendered tables — GFM `Table` node → a `block: true` widget, click to edit source | ☐      |        | After the flip; larger, and its "edit = reveal source" model differs from the rest.                                                                             |
 
 Mark a row `✅` and fill in the commit hash as it lands.
@@ -127,6 +128,13 @@ Mark a row `✅` and fill in the commit hash as it lands.
   in one keypress. The separate `atomic` array threaded through `nodes.ts` and
   `math.ts` is gone. The line-span reveal model is kept as ADR-004 chose it;
   per-node reveal is left to the customization API as a `reveal` option.
+- 2026-09-01 — increment 7: `Stylo`'s default `mode` is now `in-place` (ADR-002
+  §1). `types.ts` and the playground updated; ADR-002 §1 and ADR-004's staging
+  section marked complete; `props.md` and `overview.md` describe the full node
+  set and note `mode="source"` as the no-render-chunk path. `<Stylo value
+onChange />` with no `mode` now lazy-loads the in-place chunk (and the shared
+  ~85 kB gzip KaTeX chunk) on mount — the intended tradeoff for the default
+  experience; `mode="source"` stays the zero-dependency surface.
 - 2026-09-01 — increment 6b: task checkboxes, pulled in from the deferred list
   ahead of the default flip. A `TaskMarker` node becomes a `CheckboxWidget`
   (`<input type="checkbox">`); toggling dispatches a one-character change,

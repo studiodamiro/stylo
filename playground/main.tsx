@@ -47,11 +47,11 @@ const greet = (name: string) => \`hello, \${name}\`
 \`\`\`
 `
 
-const MODES: StyloMode[] = ["source", "preview", "split", "in-place"]
+const MODES: StyloMode[] = ["in-place", "source", "preview", "split"]
 
 function App() {
   const [doc, setDoc] = useState(DEMO)
-  const [mode, setMode] = useState<StyloMode>("source")
+  const [mode, setMode] = useState<StyloMode>("in-place")
   const [lastLink, setLastLink] = useState<string | null>(null)
 
   return (
