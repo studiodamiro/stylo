@@ -28,6 +28,18 @@ function hidesAMarker(view: EditorView): boolean {
   return found
 }
 
+/** Is there a decoration carrying `className` anywhere in the document? */
+function hasClass(view: EditorView, className: string): boolean {
+  const set = view.plugin(inPlacePlugin)?.decorations
+  if (!set) return false
+  let found = false
+  set.between(0, view.state.doc.length, (_from, _to, deco) => {
+    const c = deco.spec.class
+    if (typeof c === "string" && c.includes(className)) found = true
+  })
+  return found
+}
+
 test("in-place mounts a CodeMirror surface, no warnings", async () => {
   const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
   const { container } = await mount("# Title\n\nbody")
@@ -41,14 +53,7 @@ test("in-place mounts a CodeMirror surface, no warnings", async () => {
 
 test("a heading carries a display-size line decoration", async () => {
   const { view } = await mount("# Title\n\nbody")
-
-  let h1 = false
-  view.plugin(inPlacePlugin)!.decorations.between(0, view.state.doc.length, (_from, _to, deco) => {
-    if (typeof deco.spec.class === "string" && deco.spec.class.includes("cm-inplace-h1")) {
-      h1 = true
-    }
-  })
-  expect(h1).toBe(true)
+  expect(hasClass(view, "cm-inplace-h1")).toBe(true)
 })
 
 test("the # marker is hidden off the heading line and revealed on it", async () => {
@@ -59,4 +64,23 @@ test("the # marker is hidden off the heading line and revealed on it", async () 
 
   view.dispatch({ selection: { anchor: 1 } })
   expect(hidesAMarker(view)).toBe(false)
+})
+
+test("bold text is styled and its ** markers hide off-line, reveal on-line", async () => {
+  const { view } = await mount("normal **bold** normal\n\nsecond line")
+
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+  expect(hasClass(view, "cm-inplace-strong")).toBe(true)
+  expect(hidesAMarker(view)).toBe(true)
+
+  view.dispatch({ selection: { anchor: 10 } }) // inside "bold"
+  expect(hidesAMarker(view)).toBe(false)
+})
+
+test("italic, strikethrough, and inline code each get a decoration", async () => {
+  const { view } = await mount("an *emphasis*, a ~~strike~~, and `code` here\n\nx")
+
+  expect(hasClass(view, "cm-inplace-em")).toBe(true)
+  expect(hasClass(view, "cm-inplace-strike")).toBe(true)
+  expect(hasClass(view, "cm-inplace-code")).toBe(true)
 })
