@@ -5,7 +5,7 @@ import { Stylo } from "../src/Stylo"
 import { frontmatterField } from "../src/inplace/frontmatter"
 import { blockMathField } from "../src/inplace/math"
 import { inPlacePlugin } from "../src/inplace/plugin"
-import { BulletWidget, HrWidget } from "../src/inplace/widgets"
+import { BulletWidget, CheckboxWidget, HrWidget } from "../src/inplace/widgets"
 
 afterEach(cleanup)
 
@@ -46,7 +46,7 @@ function mathWidgets(view: EditorView): { src: string; block: boolean }[] {
 }
 
 /** Count the widget decorations of a given type in the plugin's set. */
-function countWidgets(view: EditorView, Ctor: abstract new () => unknown): number {
+function countWidgets(view: EditorView, Ctor: abstract new (...args: never[]) => unknown): number {
   let n = 0
   view.plugin(inPlacePlugin)?.decorations.between(0, view.state.doc.length, (_f, _t, deco) => {
     if (deco.spec.widget instanceof Ctor) n += 1
@@ -217,10 +217,28 @@ test("fenced code: mono container, fences emptied off-block and shown on-caret",
   expect(hasClass(view, "cm-inplace-fence")).toBe(true)
 })
 
-test("a dash bullet is swapped for a glyph, but a task item is left alone", async () => {
+test("a dash bullet is swapped for a glyph; a task item gets a checkbox instead", async () => {
   const { view } = await mount("- plain item\n- [ ] a task\n\ntail")
   view.dispatch({ selection: { anchor: view.state.doc.length } })
+
   expect(countWidgets(view, BulletWidget)).toBe(1)
+  expect(countWidgets(view, CheckboxWidget)).toBe(1)
+})
+
+test("a checkbox reflects [ ] and toggling it rewrites the source", async () => {
+  const { view } = await mount("- [ ] todo\n\ntail")
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+
+  const input = await vi.waitFor(() => {
+    const el = view.contentDOM.querySelector<HTMLInputElement>("input.cm-inplace-checkbox")
+    if (!el) throw new Error("checkbox not rendered")
+    return el
+  })
+  expect(input.checked).toBe(false)
+
+  input.checked = true
+  input.dispatchEvent(new Event("change"))
+  expect(view.state.doc.line(1).text).toBe("- [x] todo")
 })
 
 test("a math widget renders KaTeX markup", async () => {

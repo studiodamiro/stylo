@@ -113,6 +113,13 @@ plugin: rendered tables, syntax-highlighted code fences (waits on the
 `codeLanguages` pass-through prop), inline image previews, interactive task
 checkboxes, embeds / transclusions.
 
+> **Amended 2026-09-01 (in-place milestone):** interactive task checkboxes were
+> pulled forward into the milestone, ahead of the default flip — a raw `- [ ]`
+> under the default mode reads as unfinished. A `TaskMarker` node becomes an
+> `<input type="checkbox">` widget that toggles `[ ]` ⇄ `[x]` in the source.
+> Rendered tables remain deferred (planned immediately after the flip); their
+> "edit = reveal source" interaction differs from the rest of the canvas.
+
 ### Default-mode flip is staged, not immediate
 
 ADR-002 §1 makes `in-place` the default `mode`. That flip is the **last step**
