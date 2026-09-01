@@ -1,6 +1,7 @@
 import { syntaxTree } from "@codemirror/language"
 import type { Range } from "@codemirror/state"
 import { Decoration, type DecorationSet, type EditorView } from "@codemirror/view"
+import { inPlaceConfigFacet } from "./config"
 import { frontmatterRange } from "./frontmatter"
 import { scanInlineMath } from "./math"
 import { decorateNode } from "./nodes"
@@ -27,7 +28,8 @@ export function buildDecorations(view: EditorView): InPlaceDecorations {
   const revealed = revealedLines(view.state)
   const tree = syntaxTree(view.state)
   const { doc } = view.state
-  const ctx = { doc, revealed, out, fmEnd: frontmatterRange(doc)?.to ?? -1 }
+  const toggles = view.state.facet(inPlaceConfigFacet)
+  const ctx = { doc, revealed, out, toggles, fmEnd: frontmatterRange(doc)?.to ?? -1 }
 
   for (const range of view.visibleRanges) {
     tree.iterate({
@@ -35,8 +37,8 @@ export function buildDecorations(view: EditorView): InPlaceDecorations {
       to: range.to,
       enter: (node) => decorateNode(node, ctx),
     })
-    scanWikilinks(view, range.from, range.to, revealed, tree, out)
-    scanInlineMath(view, range.from, range.to, revealed, tree, out)
+    if (toggles.wikilinks) scanWikilinks(view, range.from, range.to, revealed, tree, out)
+    if (toggles.math) scanInlineMath(view, range.from, range.to, revealed, tree, out)
   }
 
   // Every replacing decoration (marker-hiding and widgets) is atomic, so the

@@ -11,6 +11,10 @@ export class HrWidget extends WidgetType {
     el.className = "cm-inplace-hr"
     return el
   }
+
+  override ignoreEvent() {
+    return false
+  }
 }
 
 /** `•` glyph replacing a `-` / `*` / `+` list marker. */

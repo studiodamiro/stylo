@@ -23,6 +23,7 @@ export function Stylo({
   readOnly,
   placeholder,
   className,
+  inPlace,
 }: StyloProps) {
   const resolved = mode === "preview" || mode === "split" || mode === "in-place" ? mode : "source"
 
@@ -63,6 +64,7 @@ export function Stylo({
             readOnly={readOnly}
             placeholder={placeholder}
             onWikiLinkClick={onWikiLinkClick}
+            inPlace={inPlace}
           />
         </Suspense>
       )}

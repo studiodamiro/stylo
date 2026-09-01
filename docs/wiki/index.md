@@ -28,6 +28,8 @@ _Pending first release._
 
 - [[reference/props|`<Stylo>` props]] — the current prop surface, styling tokens,
   and math setup.
+- [[reference/in-place-config|In-place canvas configuration]] — the `inPlace`
+  prop and its decoration toggles.
 
 ## Engineering journal
 
@@ -37,6 +39,7 @@ under `docs/journal/YYYY-MM/`. The master ADR index is
 
 | ADR     | Title                                                                 | Status   |
 | ------- | --------------------------------------------------------------------- | -------- |
+| ADR-005 | In-place decoration toggles                                           | Accepted |
 | ADR-004 | In-place decoration canvas                                            | Accepted |
 | ADR-003 | Math rendering engine and KaTeX asset delivery                        | Accepted |
 | ADR-002 | Editor UX, Customization API, and Design System                       | Accepted |

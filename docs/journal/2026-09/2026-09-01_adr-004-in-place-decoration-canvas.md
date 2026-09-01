@@ -79,6 +79,33 @@ Approach **A** is the only one that does not fork the source of truth.
    over a rendered math block instead of into hidden characters. A click on a
    widget places the caret at its edge, which reveals the source via rule 3.
 
+   > **Amended 2026-09-02 (ADR-005 implementation):** "a click on a widget
+   > places the caret at its edge" did not hold reliably — a click on KaTeX
+   > internals or the empty parts of an `<hr>` / the chip could leave the caret
+   > unplaced, so nothing revealed. A narrow `mousedown` handler in
+   > `inPlaceExtension` now catches clicks whose target is inside a rendered
+   > widget (`.cm-inplace-math`, `-hr`, `-frontmatter`, `-table`) and drops the
+   > caret at the widget's document position; text and line padding stay with
+   > CodeMirror. `HrWidget` and `FrontmatterWidget` also had their
+   > `ignoreEvent` flipped to `false` so the handler sees their events. The
+   > hidden zero-width `>` and the collapsed fence rows have no click target of
+   > their own — as with a hidden `#`, you click the construct's visible text.
+   >
+   > **Amended 2026-09-02 (click-to-position fixes):** the "Properties" chip over
+   > the frontmatter block is gone. It was a `block: true` widget that folded the
+   > YAML to one line, and the fold desynced click-to-position for every row
+   > below it — CodeMirror's height map measures a widget by its border box, and
+   > a folded block widget misreports the vertical space it occupies. The block
+   > now stays at full height with line decorations only (muted, monospace, a CSS
+   > "Properties" label), the `---` fences hidden off-caret. `FrontmatterWidget`
+   > and the `.cm-inplace-frontmatter` entry in the selector above are removed.
+   > Relatedly, every vertical `margin` in the in-place theme (the math block,
+   > the `<hr>`, the table, the fenced-code container rows) became `padding`:
+   > `margin` sits outside the border box the height map measures, so it drifted
+   > the caret cumulatively further off the further down the document the click
+   > was. See the
+   > [click-to-position journal note](./2026-09-02_in-place-click-mapping.md).
+
 5. **Math is typeset directly with `katex`.** Widgets call
    `katex.renderToString(src, { throwOnError: false, displayMode })` — not the
    `react-markdown` pipeline. `katex` is already a Stylo dependency
@@ -103,8 +130,15 @@ v1 of the canvas decorates:
 | Block math `$$…$$`              | Replaced with a KaTeX display widget; arrow or click to edit          |
 | Inline math `$…$`               | Replaced with an inline KaTeX widget                                  |
 | Horizontal rule                 | Rendered line                                                         |
-| Blockquote                      | Left border and muted colour; markers kept                            |
+| Blockquote                      | Left border and muted colour; `>` hidden off the cursor line          |
 | List markers                    | Bullet-glyph styling                                                  |
+
+> **Amended 2026-09-02 (ADR-005 implementation):** blockquote `>` markers are
+> now hidden off-caret and revealed on-caret, like heading and emphasis
+> markers, instead of always kept. Found while verifying the `blockquote`
+> decoration toggle in the playground — leaving `>` permanently visible made
+> the toggle look like it did nothing to the marker itself, only the framing.
+> Per-line, via a `QuoteMark` case in `nodes.ts`.
 
 ### Deferred (post-v1, additive)
 
