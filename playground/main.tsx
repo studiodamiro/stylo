@@ -20,7 +20,8 @@ until the caret lands on the line.
 
 - **Source** mode — a real CodeMirror 6 surface.
 - **Preview** mode — GFM tables, math, and wikilinks.
-- [ ] task items stay as source for now
+- [x] in-place canvas
+- [ ] toggle me in the in-place canvas
 
 | Feature      | Status |
 | ------------ | ------ |

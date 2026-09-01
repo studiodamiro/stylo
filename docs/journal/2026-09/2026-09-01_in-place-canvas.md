@@ -33,13 +33,15 @@ first (increment 0).
 - Horizontal rule — rendered line
 - Blockquote — left border and muted colour; markers kept
 - List markers — bullet glyph styling
+- Task checkboxes — interactive `<input>` toggling `[ ]` ⇄ `[x]` in the source
+  _(pulled in from the deferred list before the default flip — a raw `- [ ]`
+  under the default mode reads as unfinished; ADR-004 scope amendment)_
 
 ### Explicitly out of v1 (stay source-styled)
 
-- Rendered tables
+- Rendered tables _(planned as increment 8, after the default flip)_
 - Highlighted code fences (waits on the `codeLanguages` pass-through prop)
 - Image inline previews
-- Task checkboxes
 - Embeds / transclusions
 
 ## Standing decisions
@@ -56,16 +58,18 @@ first (increment 0).
 
 ## Increments
 
-| #   | Increment                                                                       | Status | Commit | Notes                                                                                                                                                          |
-| --- | ------------------------------------------------------------------------------- | ------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0   | ADR-004 — decoration architecture + v1 scope                                    | ✅     | —      | Merged into this tracker; see [ADR-004](./2026-09-01_adr-004-in-place-decoration-canvas.md).                                                                   |
-| 1   | Plugin skeleton, viewport decoration builder, cursor-reveal mechanism, headings | ✅     | —      | `src/inplace/*`; lazy `InPlaceView`; ATX headings at display size, `#` hidden off the caret line.                                                              |
-| 2   | Emphasis — bold / italic / strikethrough / inline code                          | ✅     | —      | Inline rule table in `decorate.ts`; canvas switched to a proportional font (code stays monospace).                                                             |
-| 3   | Links + wikilinks                                                               | ✅     | —      | `Link` case + regex `[[…]]` scan with a code-context guard; shared pattern in `src/wikilink.ts`; delegated click → `onWikiLinkClick`.                          |
-| 4   | Block and inline math widgets (KaTeX)                                           | ✅     | —      | `math.ts` split out: inline / one-line `$$` in the plugin, multi-line `$$` in a `StateField` (plugins can't replace line breaks); `atomicRanges` from both.    |
-| 5   | Horizontal rule, blockquote, list markers, hide frontmatter                     | ✅     | —      | `nodes.ts` split from `decorate.ts`; `HrWidget` / `BulletWidget`; `frontmatterField` hides the YAML behind a "Properties" chip; task items left as source.     |
-| 6   | Cursor-reveal edge cases + `atomicRanges` pass                                  | ✅     | —      | Atomic set now derived from every replacing decoration (markers + widgets), not just widgets. Line-span reveal kept; per-node reveal deferred to the API pass. |
-| 7   | Flip default `mode` to `in-place`; ADR-002 amendment; wiki + props updates      | ☐      |        |                                                                                                                                                                |
+| #   | Increment                                                                         | Status | Commit | Notes                                                                                                                                                           |
+| --- | --------------------------------------------------------------------------------- | ------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0   | ADR-004 — decoration architecture + v1 scope                                      | ✅     | —      | Merged into this tracker; see [ADR-004](./2026-09-01_adr-004-in-place-decoration-canvas.md).                                                                    |
+| 1   | Plugin skeleton, viewport decoration builder, cursor-reveal mechanism, headings   | ✅     | —      | `src/inplace/*`; lazy `InPlaceView`; ATX headings at display size, `#` hidden off the caret line.                                                               |
+| 2   | Emphasis — bold / italic / strikethrough / inline code                            | ✅     | —      | Inline rule table in `decorate.ts`; canvas switched to a proportional font (code stays monospace).                                                              |
+| 3   | Links + wikilinks                                                                 | ✅     | —      | `Link` case + regex `[[…]]` scan with a code-context guard; shared pattern in `src/wikilink.ts`; delegated click → `onWikiLinkClick`.                           |
+| 4   | Block and inline math widgets (KaTeX)                                             | ✅     | —      | `math.ts` split out: inline / one-line `$$` in the plugin, multi-line `$$` in a `StateField` (plugins can't replace line breaks); `atomicRanges` from both.     |
+| 5   | Horizontal rule, blockquote, list markers, hide frontmatter                       | ✅     | —      | `nodes.ts` split from `decorate.ts`; `HrWidget` / `BulletWidget`; `frontmatterField` hides the YAML behind a "Properties" chip; task items left as source.      |
+| 6   | Cursor-reveal edge cases + `atomicRanges` pass                                    | ✅     | —      | Atomic set now derived from every replacing decoration (markers + widgets), not just widgets. Line-span reveal kept; per-node reveal deferred to the API pass.  |
+| 6b  | Task checkboxes                                                                   | ✅     | —      | `CheckboxWidget` replaces `[ ]` / `[x]`; toggling dispatches a one-char change. `- ` hidden on task rows. Pulled in from the deferred list (ADR-004 amendment). |
+| 7   | Flip default `mode` to `in-place`; ADR-002 amendment; wiki + props updates        | ☐      |        |                                                                                                                                                                 |
+| 8   | Rendered tables — GFM `Table` node → a `block: true` widget, click to edit source | ☐      |        | After the flip; larger, and its "edit = reveal source" model differs from the rest.                                                                             |
 
 Mark a row `✅` and fill in the commit hash as it lands.
 
@@ -123,6 +127,13 @@ Mark a row `✅` and fill in the commit hash as it lands.
   in one keypress. The separate `atomic` array threaded through `nodes.ts` and
   `math.ts` is gone. The line-span reveal model is kept as ADR-004 chose it;
   per-node reveal is left to the customization API as a `reveal` option.
+- 2026-09-01 — increment 6b: task checkboxes, pulled in from the deferred list
+  ahead of the default flip. A `TaskMarker` node becomes a `CheckboxWidget`
+  (`<input type="checkbox">`); toggling dispatches a one-character change,
+  `" "` ⇄ `"x"`, at the position resolved from the widget DOM. The `- ` list
+  marker is hidden on task rows so the line reads as just the checkbox and its
+  text. The caret entering the line restores the `- [ ]` source. Recorded as an
+  ADR-004 scope amendment.
 
 ## After in-place
 

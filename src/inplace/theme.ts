@@ -83,6 +83,11 @@ export const inPlaceTheme = EditorView.theme({
     color: "var(--stylo-text-muted)",
   },
   ".cm-inplace-bullet": { color: "var(--stylo-text-muted)" },
+  ".cm-inplace-checkbox": {
+    margin: "0 0.4em 0 0",
+    verticalAlign: "middle",
+    cursor: "pointer",
+  },
   ".cm-inplace-frontmatter": {
     display: "inline-block",
     padding: "0.1em 0.5em",

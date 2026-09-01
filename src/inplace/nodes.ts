@@ -1,7 +1,7 @@
 import type { Range, Text } from "@codemirror/state"
 import { Decoration } from "@codemirror/view"
 import type { SyntaxNodeRef } from "@lezer/common"
-import { BulletWidget, HrWidget } from "./widgets"
+import { BulletWidget, CheckboxWidget, HrWidget } from "./widgets"
 
 const HEADING = /^ATXHeading([1-6])$/
 const BULLET = /^[-*+]$/
@@ -99,12 +99,25 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
 
   if (node.name === "ListMark") {
     const text = doc.sliceString(node.from, node.to)
-    // A task item wraps its content in a `Task` node (holding the `TaskMarker`);
-    // leave `- [ ]` fully as source — checkboxes are deferred.
+    const line = doc.lineAt(node.from)
     const item = node.node.parent
     const isTask = Boolean(item?.getChild("Task") ?? item?.getChild("TaskMarker"))
-    if (BULLET.test(text) && !isTask && !revealed.has(doc.lineAt(node.from).number)) {
+    if (revealed.has(line.number)) return false
+    if (isTask) {
+      // Hide "- " so the row reads as just the checkbox and its text.
+      out.push(Decoration.replace({}).range(node.from, Math.min(node.to + 1, line.to)))
+    } else if (BULLET.test(text)) {
       out.push(Decoration.replace({ widget: new BulletWidget() }).range(node.from, node.to))
+    }
+    return false
+  }
+
+  if (node.name === "TaskMarker") {
+    if (!revealed.has(doc.lineAt(node.from).number)) {
+      const checked = doc.sliceString(node.from + 1, node.to - 1).toLowerCase() === "x"
+      out.push(
+        Decoration.replace({ widget: new CheckboxWidget(checked) }).range(node.from, node.to),
+      )
     }
     return false
   }
