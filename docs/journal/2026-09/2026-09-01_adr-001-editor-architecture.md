@@ -1,5 +1,5 @@
 ---
-title: "ADR-001 — Editor architecture: compose from primitives, plain text is canonical"
+title: 'ADR-001 — Editor architecture: compose from primitives, plain text is canonical'
 created: 2026-09-01
 type: adr
 parent: index
@@ -10,7 +10,8 @@ tags:
 
 # ADR-001 — Editor architecture: compose from primitives, plain text is canonical
 
-- **Status:** Accepted
+- **Status:** Accepted — amended in part by
+  [ADR-002](./2026-09-01_adr-002-editor-ux-and-customization.md) (2026-09-01)
 - **Date:** 2026-09-01
 - **Deciders:** damiro
 
@@ -62,6 +63,12 @@ Adopt approach **3**. Specifically:
   decorations) is deferred; it is additive and does not violate the plain-text
   invariant.
 
+  > **Amended by [ADR-002](./2026-09-01_adr-002-editor-ux-and-customization.md)
+  > (2026-09-01):** the inline live-preview canvas (`in-place` mode) is promoted
+  > to the default view and pulled into first-release scope. The plain-text
+  > invariant and the composed-primitives stack below are unchanged; only the
+  > shipping order of the view modes moves.
+
 ## Consequences
 
 **Positive**
@@ -81,7 +88,8 @@ Adopt approach **3**. Specifically:
 - Toolbar commands operate on text ranges, not semantic nodes, so some actions
   (e.g. "toggle bold" across mixed selections) need careful range logic.
 - KaTeX ships webfonts; the host must include `katex` CSS and fonts. Documented
-  as a peer/setup step rather than hidden.
+  as a peer/setup step rather than hidden — the concrete mechanism is settled in
+  [ADR-003](./2026-09-01_adr-003-katex-math-rendering.md).
 
 ## Alternatives rejected
 

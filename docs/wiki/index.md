@@ -33,4 +33,6 @@ under `docs/journal/YYYY-MM/`. The master ADR index is
 
 | ADR | Title | Status |
 | --- | ----- | ------ |
+| ADR-003 | Math rendering engine and KaTeX asset delivery | Accepted |
+| ADR-002 | Editor UX, Customization API, and Design System | Accepted |
 | ADR-001 | Editor architecture: compose from primitives, plain text is canonical | Accepted |

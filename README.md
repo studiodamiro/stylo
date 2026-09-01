@@ -41,12 +41,20 @@ truth.** The editor is a thin, composable surface over it.
 | Render / preview | `react-markdown` + `remark-gfm` + `remark-math` + `rehype-katex` + `katex` |
 | `[[wikilinks]]`  | small custom `remark` plugin                                              |
 | Frontmatter      | `remark-frontmatter` (render) + `gray-matter` (parse)                     |
+| Styling          | CSS Modules + `--stylo-*` CSS custom properties — no Tailwind, no CSS-in-JS |
+| Icons            | inline SVG, swappable via the `icons` prop — no icon-package dependency   |
+
+Styling and icon decisions are recorded in
+[ADR-002](./docs/journal/2026-09/2026-09-01_adr-002-editor-ux-and-customization.md);
+the math engine and KaTeX asset delivery in
+[ADR-003](./docs/journal/2026-09/2026-09-01_adr-003-katex-math-rendering.md).
 
 ## Planned API sketch
 
 ```tsx
 import { Stylo } from "stylo"
 import "stylo/styles.css"
+import "stylo/katex.css"        // KaTeX stylesheet + fonts (or import "katex/dist/katex.min.css")
 
 function Editor() {
   const [doc, setDoc] = useState("# Hello\n\nInline math: $e^{i\\pi} + 1 = 0$")
@@ -55,7 +63,7 @@ function Editor() {
     <Stylo
       value={doc}
       onChange={setDoc}
-      mode="split"                // "source" | "preview" | "split"
+      mode="in-place"             // default — also "source" | "preview" | "split"
       onWikiLinkClick={(target) => navigate(target)}
     />
   )
@@ -75,4 +83,4 @@ npm run build      # library bundle
 
 ## License
 
-MIT © studiodamiro
+MIT © damiro

@@ -62,23 +62,44 @@ flowchart LR
 The source surface and the preview never talk to each other. Both derive from the
 same string; the host owns that string.
 
-## View modes
+## View modes & UI Surfaces
 
-`<Stylo mode>` selects which derivations are mounted:
+The UX layer, customization API, and design-token system are specified in
+[ADR-002](../../journal/2026-09/2026-09-01_adr-002-editor-ux-and-customization.md).
 
-- `source` — CodeMirror only.
-- `preview` — pipeline output only.
-- `split` — both, side by side, sharing scroll position.
+`<Stylo mode>` selects the interaction layout:
 
-A later milestone may add an Obsidian-style **inline live preview** (rendered
-Markdown *inside* the CodeMirror surface via view decorations). That is additive
-and does not change the invariant above; it is explicitly out of scope for the
-first release.
+- `in-place` (default) — Notion-like in-place canvas with live LaTeX math, headings, and code preview via CodeMirror 6 view decorations.
+- `source` — raw CodeMirror Markdown text surface.
+- `preview` — rendered HTML/KaTeX preview pane.
+- `split` — side-by-side editing and preview with synchronized scroll.
+
+### UI layers
+
+**First release:**
+
+1. **Adaptive canvas** — responsive writing surface themed through a small set of
+   CSS custom properties: `--stylo-bg`, `--stylo-text`, `--stylo-text-muted`,
+   `--stylo-border`, `--stylo-accent`, `--stylo-ring`, `--stylo-radius`. Defaults
+   follow shadcn/ui's neutral conventions as a visual reference; no Tailwind or
+   shadcn code is bundled.
+2. **Declarative toolbar** — `left` / `right` slots, constrained heading sets
+   (`headings: ["h1", "h2", "h3"]`), and `overflow: "wrap" | "collapse"`.
+
+**Deferred (post-v1, additive — see ADR-002):** context-aware selection tooltip,
+and the `<StyloToolbarSettings />` drag-and-drop customizer with magnetic docks.
+
+Internal UI is styled with CSS Modules compiled to a single `dist/styles.css`;
+consumers import it once and need no build-time CSS tooling.
 
 ## What Stylo does not own
 
-- **Persistence.** The host holds the string and decides when to save.
+- **Backend persistence.** The host holds the string and decides when to save
+  (deferred `autoSave` hook, or `onSave`).
 - **Navigation.** `onWikiLinkClick` hands the target back to the host; Stylo has
   no router and no vault index.
-- **Theme.** Stylo ships structural CSS and CSS-variable hooks; colour is the
-  host's.
+- **Brand colors.** Stylo ships scoped CSS and a design-token surface; the theme
+  palette is inherited from the host.
+- **KaTeX stylesheet.** Stylo's CSS is KaTeX-font-free; the consumer imports
+  `stylo/katex.css` (or KaTeX's own CSS) once. See
+  [ADR-003](../../journal/2026-09/2026-09-01_adr-003-katex-math-rendering.md).

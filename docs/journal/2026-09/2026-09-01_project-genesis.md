@@ -23,8 +23,7 @@ started as a standalone, reusable React component library.
 
 ## What happened
 
-- Created a new repository, **Stylo**, at
-  `git@github.com:studiodamiro/stylo.git`.
+- Created a new repository, **Stylo**, at `git@github.com:damiro/stylo.git`.
 - Seeded it from Sympose:
   - `` rewritten for Stylo — kept the
     stack-agnostic execution guidelines (think before coding, simplicity &
@@ -45,12 +44,23 @@ started as a standalone, reusable React component library.
 ## State at end of session
 
 Scaffold only — no build tooling, no `package.json`, no source. `main` tracks
-`origin/main`.
+`origin/main`. A follow-up session added
+[ADR-002](./2026-09-01_adr-002-editor-ux-and-customization.md) (editor UX,
+customization API, design system), which amends ADR-001 to make the `in-place`
+live-preview canvas the default view; the "Next" list below reflects that.
 
 ## Next
 
 - Scaffold the build: Vite library mode + TypeScript, `package.json` scripts
-  (`dev`, `typecheck`, `test`, `build`), a playground entry.
-- Add the composed dependencies and stand up the `source` view mode first.
+  (`dev`, `typecheck`, `test`, `build`), a playground entry. Add `LICENSE`,
+  `tsconfig.json`, and a bundle-size budget check.
+- Stand up the foundation editing surface first — CodeMirror 6 +
+  `@codemirror/lang-markdown` bound to a canonical Markdown string — before
+  layering the `in-place` view decorations from ADR-002 on top of it.
 - Custom `remark` wikilink plugin.
-- `split` mode with shared scroll.
+- KaTeX asset delivery: ship `stylo/katex.css` as an opt-in re-export of
+  `katex/dist/katex.min.css`; keep Stylo's own stylesheet KaTeX-font-free.
+  Recorded in [ADR-003](./2026-09-01_adr-003-katex-math-rendering.md), which also
+  confirms KaTeX over MathJax for the live-preview loop and flags Temml/MathML as
+  a future revisit.
+- `split` and `preview` modes; shared scroll for `split`.
