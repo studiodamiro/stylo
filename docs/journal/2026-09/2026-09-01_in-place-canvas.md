@@ -63,7 +63,7 @@ first (increment 0).
 | 2   | Emphasis — bold / italic / strikethrough / inline code                          | ✅     | —      | Inline rule table in `decorate.ts`; canvas switched to a proportional font (code stays monospace).                                                          |
 | 3   | Links + wikilinks                                                               | ✅     | —      | `Link` case + regex `[[…]]` scan with a code-context guard; shared pattern in `src/wikilink.ts`; delegated click → `onWikiLinkClick`.                       |
 | 4   | Block and inline math widgets (KaTeX)                                           | ✅     | —      | `math.ts` split out: inline / one-line `$$` in the plugin, multi-line `$$` in a `StateField` (plugins can't replace line breaks); `atomicRanges` from both. |
-| 5   | Horizontal rule, blockquote, list markers, hide frontmatter                     | ☐      |        |                                                                                                                                                             |
+| 5   | Horizontal rule, blockquote, list markers, hide frontmatter                     | ✅     | —      | `nodes.ts` split from `decorate.ts`; `HrWidget` / `BulletWidget`; `frontmatterField` hides the YAML behind a "Properties" chip; task items left as source.  |
 | 6   | Cursor-reveal edge cases + `atomicRanges` pass                                  | ☐      |        |                                                                                                                                                             |
 | 7   | Flip default `mode` to `in-place`; ADR-002 amendment; wiki + props updates      | ☐      |        |                                                                                                                                                             |
 
@@ -93,6 +93,16 @@ Mark a row `✅` and fill in the commit hash as it lands.
   handler in `inPlaceExtension` calls `onWikiLinkClick`, threaded from `Stylo`
   through `InPlaceView` via a ref. Also fixed: the heading branch no longer
   stops the tree walk, so emphasis and links inside a heading are decorated.
+- 2026-09-01 — increment 5: the tree-node handling moved from `decorate.ts` into
+  `nodes.ts`, leaving `decorate.ts` a thin orchestrator. Added horizontal rules
+  (an `<hr>` widget, atomic), blockquote line framing (border + muted colour,
+  `>` kept), and `-` / `*` / `+` list markers swapped for a `•` glyph — task
+  items (`- [ ]`, which the grammar wraps in a `Task` node) are left as source
+  since checkboxes are deferred. `frontmatter.ts` finds the leading `---` … `---`
+  block by hand (no grammar node) and a state field hides it behind a
+  "Properties" chip, revealed when the caret enters it; `decorate.ts` skips
+  every node inside that range. Chip-vs-rendered-properties is recorded as a v1
+  API-pass decision.
 - 2026-09-01 — increment 4: the in-place module was split for the 200-line
   ceiling — `scan.ts` (shared `inCodeContext` / `rangeRevealed`), `wikilinks.ts`,
   `math.ts`. `math.ts` renders `$…$` and single-line `$$…$$` from the viewport
@@ -105,7 +115,19 @@ Mark a row `✅` and fill in the commit hash as it lands.
 
 ## After in-place
 
-The remaining post-foundation work is unchanged and tracked in the
-[foundation milestone](./2026-09-01_foundation-milestone.md) "Next" list:
-declarative toolbar, `codeLanguages` prop, v1 public-API pass, publish
-automation.
+- **In-place customization API** — one deliberate pass deciding what canvas
+  decorations a consumer can toggle or extend: the v1-deferred node types (task
+  checkboxes, callout blockquotes `> [!note]`, image previews, rendered tables),
+  nested-list indent guides, and any hook for consumer-supplied decorators. This
+  is public-API surface, so it belongs in the v1 API design milestone, not in
+  the increments above.
+- **Frontmatter display mode** — the v1 canvas hides the YAML block behind a
+  minimal "Properties" chip. Make this configurable: at least `source` (leave it
+  raw), `chip` (current default), and `properties` (a rendered key/value panel).
+  The `properties` mode depends on the deferred frontmatter _exposure_ work from
+  ADR-001 (parsing the YAML — `gray-matter` / a YAML dependency and its own ADR,
+  plus the `onFrontmatter` prop), so it lands with that, not before.
+- The rest of the post-foundation work is unchanged and tracked in the
+  [foundation milestone](./2026-09-01_foundation-milestone.md) "Next" list:
+  declarative toolbar, `codeLanguages` prop, v1 public-API pass, publish
+  automation.

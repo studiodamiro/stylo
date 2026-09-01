@@ -51,4 +51,25 @@ export const inPlaceTheme = EditorView.theme({
     textAlign: "center",
   },
   ".cm-inplace-math-block .katex-display": { margin: "0" },
+
+  ".cm-inplace-hr": {
+    display: "block",
+    border: "none",
+    borderTop: "1px solid var(--stylo-border)",
+    margin: "0.5em 0",
+  },
+  ".cm-inplace-quote": {
+    borderLeft: "3px solid var(--stylo-border)",
+    color: "var(--stylo-text-muted)",
+  },
+  ".cm-inplace-bullet": { color: "var(--stylo-text-muted)" },
+  ".cm-inplace-frontmatter": {
+    display: "inline-block",
+    padding: "0.1em 0.5em",
+    margin: "0.15em 0",
+    fontSize: "0.8em",
+    color: "var(--stylo-text-muted)",
+    border: "1px solid var(--stylo-border)",
+    borderRadius: "4px",
+  },
 })
