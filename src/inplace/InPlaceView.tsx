@@ -1,14 +1,14 @@
+import { useRef, useState } from "react"
 import { useCodeMirror } from "../editor/useCodeMirror"
 import styles from "../styles/stylo.module.css"
 import { inPlaceExtension } from "./extension"
-
-const IN_PLACE = [inPlaceExtension()]
 
 export interface InPlaceViewProps {
   value: string
   onChange: (next: string) => void
   readOnly?: boolean
   placeholder?: string
+  onWikiLinkClick?: (target: string) => void
 }
 
 /**
@@ -16,9 +16,24 @@ export interface InPlaceViewProps {
  * via view decorations, revealing the raw source under the cursor. Loaded lazily
  * so `mode="source"` consumers never pull it in.
  *
- * Increment 1 renders headings; later increments extend the decoration plugin.
+ * The extension array is built once; `onWikiLinkClick` is reached through a ref
+ * so a changed handler does not force the editor to be rebuilt.
  */
-export function InPlaceView({ value, onChange, readOnly, placeholder }: InPlaceViewProps) {
-  const ref = useCodeMirror({ value, onChange, readOnly, placeholder, extensions: IN_PLACE })
+export function InPlaceView({
+  value,
+  onChange,
+  readOnly,
+  placeholder,
+  onWikiLinkClick,
+}: InPlaceViewProps) {
+  const clickRef = useRef(onWikiLinkClick)
+  clickRef.current = onWikiLinkClick
+
+  // Built once; a changed handler is picked up through the ref, not a rebuild.
+  const [extensions] = useState(() => [
+    inPlaceExtension({ onWikiLinkClick: (target) => clickRef.current?.(target) }),
+  ])
+
+  const ref = useCodeMirror({ value, onChange, readOnly, placeholder, extensions })
   return <div className={styles.inplace} ref={ref} />
 }

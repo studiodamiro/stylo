@@ -11,11 +11,12 @@ tags: [demo, markdown]
 
 # Stylo playground
 
-A plain-text editor where the Markdown string is the source of truth. Text can be
-**bold**, *italic*, ~~struck through~~, or \`inline code\` — the markers hide in
-the in-place canvas until the caret lands on the line.
+A plain-text editor where the Markdown string is the source of truth, built on
+[CodeMirror 6](https://codemirror.net). Text can be **bold**, *italic*,
+~~struck through~~, or \`inline code\` — the markers hide in the in-place canvas
+until the caret lands on the line.
 
-## What works today
+## What works **today**
 
 - **Source** mode — a real CodeMirror 6 surface.
 - **Preview** mode — GFM tables, math, and wikilinks.
