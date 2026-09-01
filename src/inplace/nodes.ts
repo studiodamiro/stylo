@@ -154,20 +154,20 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
     for (let n = first; n <= last && !blockRevealed; n++) {
       if (revealed.has(n)) blockRevealed = true
     }
-    // Off-caret, a fence line's ``` text is replaced with nothing; the emptied
-    // row (collapsed to zero line-height) then serves as the container's pad.
-    const emptyFences = fenced && last > first && !blockRevealed
 
     for (let n = first; n <= last; n++) {
       const isFence = fenced && (n === first || n === last)
       let cls = "cm-inplace-mono"
       if (n === first) cls += " cm-inplace-code-top"
       if (n === last) cls += " cm-inplace-code-bottom"
-      if (isFence) cls += emptyFences ? " cm-inplace-code-pad" : " cm-inplace-fence"
-      out.push(Decoration.line({ class: cls }).range(doc.line(n).from))
-      if (isFence && emptyFences) {
-        const l = doc.line(n)
-        out.push(Decoration.replace({}).range(l.from, l.to))
+      if (isFence) cls += " cm-inplace-fence"
+      const line = doc.line(n)
+      out.push(Decoration.line({ class: cls }).range(line.from))
+      // Hide the ``` fence text while the caret is outside the block, but keep
+      // the row at full height — collapsing it (line-height: 0) desyncs
+      // click-to-position for everything below.
+      if (isFence && !blockRevealed && line.to > line.from) {
+        out.push(Decoration.replace({}).range(line.from, line.to))
       }
     }
     return false

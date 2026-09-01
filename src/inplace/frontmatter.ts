@@ -1,5 +1,5 @@
 import { type EditorState, StateField, type Text } from "@codemirror/state"
-import { Decoration, type DecorationSet, EditorView, WidgetType } from "@codemirror/view"
+import { Decoration, type DecorationSet, EditorView } from "@codemirror/view"
 import { inPlaceConfigFacet } from "./config"
 
 /**
@@ -15,67 +15,40 @@ export function frontmatterRange(doc: Text): { from: number; to: number } | null
   return null
 }
 
-class FrontmatterWidget extends WidgetType {
-  override eq() {
-    return true
-  }
-
-  toDOM() {
-    const el = document.createElement("div")
-    el.className = "cm-inplace-frontmatter"
-    el.textContent = "Properties"
-    return el
-  }
-
-  override ignoreEvent() {
-    return false // let a click on the chip reach the reveal handler
-  }
-}
-
-function chip(range: { from: number; to: number }): DecorationSet {
-  return Decoration.set(
-    Decoration.replace({ widget: new FrontmatterWidget(), block: true }).range(
-      range.from,
-      range.to,
-    ),
-  )
-}
-
-/**
- * A fresh `EditorState` always starts with the caret at position 0 — inside the
- * frontmatter block, if there is one — which is a construction artifact, not a
- * real caret placement. So the field starts folded regardless, and only
- * `build` (driven by an actual selection change) reveals the source.
- */
-function buildInitial(state: EditorState): DecorationSet {
-  if (!state.facet(inPlaceConfigFacet).frontmatter) return Decoration.none
-  const range = frontmatterRange(state.doc)
-  return range ? chip(range) : Decoration.none
-}
-
 function build(state: EditorState): DecorationSet {
   if (!state.facet(inPlaceConfigFacet).frontmatter) return Decoration.none
   const range = frontmatterRange(state.doc)
   if (!range) return Decoration.none
 
-  const closing = state.doc.lineAt(range.to).number
-  for (const r of state.selection.ranges) {
-    if (state.doc.lineAt(r.from).number <= closing) return Decoration.none
-  }
+  const first = state.doc.lineAt(range.from).number
+  const last = state.doc.lineAt(range.to).number
+  const revealed = state.selection.ranges.some((r) => {
+    const l = state.doc.lineAt(r.from).number
+    return l >= first && l <= last
+  })
 
-  return chip(range)
+  const out = []
+  for (let n = first; n <= last; n++) {
+    const line = state.doc.line(n)
+    const cls = n === first ? "cm-inplace-fm cm-inplace-fm-first" : "cm-inplace-fm"
+    out.push(Decoration.line({ class: cls }).range(line.from))
+    // Hide the `---` fences off-caret; keep the row (no height collapse).
+    if ((n === first || n === last) && !revealed && line.to > line.from) {
+      out.push(Decoration.replace({}).range(line.from, line.to))
+    }
+  }
+  return Decoration.set(out, true)
 }
 
 /**
- * Hides the frontmatter block behind a small chip, revealing the source when the
- * caret enters it. A state field, not a plugin, because the replacement spans
- * line breaks.
+ * Recesses the leading YAML block — muted, monospace, with a "Properties" label
+ * on the first line — without collapsing it. Line decorations only: the rows
+ * keep their height, so click-to-position stays accurate (an earlier `block`
+ * widget that folded the block to a one-line chip desynced it). A state field,
+ * not the plugin, only because the region has no grammar node to hang off.
  */
 export const frontmatterField = StateField.define<DecorationSet>({
-  create: buildInitial,
+  create: build,
   update: (value, tr) => (tr.docChanged || tr.selection ? build(tr.state) : value),
-  provide: (field) => [
-    EditorView.decorations.from(field),
-    EditorView.atomicRanges.of((view) => view.state.field(field)),
-  ],
+  provide: (field) => EditorView.decorations.from(field),
 })

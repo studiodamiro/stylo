@@ -55,7 +55,6 @@ export const inPlaceTheme = EditorView.theme({
     borderBottomRightRadius: "var(--stylo-radius)",
   },
   ".cm-inplace-fence": { color: "var(--stylo-text-muted)" },
-  ".cm-inplace-code-pad": { fontSize: "0", lineHeight: "0" },
 
   ".cm-inplace-link": {
     color: "var(--stylo-accent)",
@@ -88,14 +87,21 @@ export const inPlaceTheme = EditorView.theme({
     verticalAlign: "middle",
     cursor: "pointer",
   },
-  ".cm-inplace-frontmatter": {
-    display: "inline-block",
-    padding: "0.1em 0.5em",
-    margin: "0.15em 0",
-    fontSize: "0.8em",
+  ".cm-inplace-fm": {
+    fontFamily: MONO,
+    fontSize: "0.85em",
     color: "var(--stylo-text-muted)",
-    border: "1px solid var(--stylo-border)",
-    borderRadius: "4px",
+  },
+  ".cm-inplace-fm-first::before": {
+    content: '"Properties"',
+    marginRight: "0.6em",
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    fontSize: "0.8rem",
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: "0.04em",
+    color: "var(--stylo-text-muted)",
   },
 
   ".cm-inplace-table": {

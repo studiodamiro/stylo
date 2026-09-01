@@ -175,18 +175,28 @@ test("math inside inline code is left literal", async () => {
   expect(mathWidgets(view)).toHaveLength(0)
 })
 
-test("frontmatter is hidden off-caret and revealed when the caret enters it", async () => {
+test("frontmatter lines are recessed in place, fences hidden off-caret, no widget", async () => {
   const { view } = await mount("---\ntitle: x\ntags: [a]\n---\n\n# Body")
-
-  // A fresh EditorState's default caret sits at 0 (inside the frontmatter) —
-  // a construction artifact, not a real placement, so the chip starts shown.
-  expect(view.state.field(frontmatterField).size).toBe(1)
-
   view.dispatch({ selection: { anchor: view.state.doc.length } })
-  expect(view.state.field(frontmatterField).size).toBe(1)
 
-  view.dispatch({ selection: { anchor: view.state.doc.line(2).from } })
-  expect(view.state.field(frontmatterField).size).toBe(0)
+  const set = view.state.field(frontmatterField)
+  let classes = ""
+  let hiddenFences = 0
+  set.between(0, view.state.doc.length, (from, to, deco) => {
+    expect(deco.spec.widget).toBeUndefined() // never a block widget — it would fold the rows
+    if (typeof deco.spec.class === "string") classes += ` ${deco.spec.class}`
+    else if (from < to) hiddenFences += 1
+  })
+  expect(classes).toContain("cm-inplace-fm")
+  expect(classes).toContain("cm-inplace-fm-first")
+  expect(hiddenFences).toBe(2) // the opening and closing ---
+
+  view.dispatch({ selection: { anchor: view.state.doc.line(2).from } }) // caret into the block
+  let stillHidden = 0
+  view.state.field(frontmatterField).between(0, view.state.doc.length, (from, to, deco) => {
+    if (typeof deco.spec.class !== "string" && from < to) stillHidden += 1
+  })
+  expect(stillHidden).toBe(0) // --- fences shown while editing
 })
 
 test("a horizontal rule becomes a widget off-line, source on-line", async () => {
@@ -223,12 +233,11 @@ test("fenced code: mono container, fences emptied off-block and shown on-caret",
 
   expect(hasClass(view, "cm-inplace-mono")).toBe(true)
   expect(hasClass(view, "cm-inplace-code-top")).toBe(true)
-  expect(hasClass(view, "cm-inplace-code-pad")).toBe(true)
-  expect(emptiedFenceLines()).toBe(2)
+  expect(hasClass(view, "cm-inplace-fence")).toBe(true)
+  expect(emptiedFenceLines()).toBe(2) // ``` text hidden, rows kept at full height
 
   view.dispatch({ selection: { anchor: view.state.doc.line(4).from } })
   expect(emptiedFenceLines()).toBe(0)
-  expect(hasClass(view, "cm-inplace-fence")).toBe(true)
 })
 
 test("a dash bullet is swapped for a glyph; a task item gets a checkbox instead", async () => {
@@ -293,16 +302,6 @@ test("mousedown on a rendered <hr> widget reveals its source", async () => {
   const hrEl = await elementIn(view, ".cm-inplace-hr")
   hrEl.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }))
   expect(countWidgets(view, HrWidget)).toBe(0)
-})
-
-test("mousedown on the frontmatter chip reveals the YAML block", async () => {
-  const { view } = await mount("---\ntitle: x\n---\n\n# Body")
-  view.dispatch({ selection: { anchor: view.state.doc.length } })
-  expect(view.state.field(frontmatterField).size).toBe(1)
-
-  const chip = await elementIn(view, ".cm-inplace-frontmatter")
-  chip.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }))
-  expect(view.state.field(frontmatterField).size).toBe(0)
 })
 
 function atomicCount(view: EditorView): number {

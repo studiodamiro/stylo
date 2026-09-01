@@ -17,11 +17,11 @@ export interface InPlaceOptions {
 
 /**
  * Rendered widgets with no interior text position. A click on one (its body,
- * KaTeX internals, the empty parts of an `<hr>` or the chip) can leave the caret
- * unplaced, so nothing reveals — this hands it to the widget's edge instead.
- * Everything else, text and line padding alike, stays with CodeMirror.
+ * KaTeX internals, the empty parts of an `<hr>`) can leave the caret unplaced,
+ * so nothing reveals — this hands it to the widget's edge instead. Everything
+ * else, text and line padding alike, stays with CodeMirror.
  */
-const REVEAL_WIDGET = ".cm-inplace-math, .cm-inplace-hr, .cm-inplace-frontmatter, .cm-inplace-table"
+const REVEAL_WIDGET = ".cm-inplace-math, .cm-inplace-hr, .cm-inplace-table"
 
 /**
  * The complete in-place canvas layer: decoration plugin, display theme, a
