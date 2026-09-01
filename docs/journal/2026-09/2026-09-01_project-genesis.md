@@ -23,7 +23,9 @@ started as a standalone, reusable React component library.
 
 ## What happened
 
-- Created a new repository, **Stylo**, at `git@github.com:damiro/stylo.git`.
+- Created a new repository, **Stylo**, at `git@github.com:studiodamiro/stylo.git`
+  (published to npm as the scoped package `@damiro/stylo` — the unscoped name is
+  taken).
 - Seeded it from Sympose:
   - `` rewritten for Stylo — kept the
     stack-agnostic execution guidelines (think before coding, simplicity &
@@ -58,7 +60,7 @@ live-preview canvas the default view; the "Next" list below reflects that.
   `@codemirror/lang-markdown` bound to a canonical Markdown string — before
   layering the `in-place` view decorations from ADR-002 on top of it.
 - Custom `remark` wikilink plugin.
-- KaTeX asset delivery: ship `stylo/katex.css` as an opt-in re-export of
+- KaTeX asset delivery: ship `@damiro/stylo/katex.css` as an opt-in re-export of
   `katex/dist/katex.min.css`; keep Stylo's own stylesheet KaTeX-font-free.
   Recorded in [ADR-003](./2026-09-01_adr-003-katex-math-rendering.md), which also
   confirms KaTeX over MathJax for the live-preview loop and flags Temml/MathML as

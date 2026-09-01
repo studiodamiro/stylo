@@ -72,7 +72,7 @@ untouched, and must not gate v1.
 - Internal UI (toolbar, menus, drawer) is styled with **CSS Modules**, compiled
   by the library build into a single static `dist/styles.css`. No Tailwind, no
   utility-class toolchain, no PostCSS plugin stack beyond what the bundler needs.
-- Consumers import `stylo/styles.css` once. It is framework-agnostic — plain CSS,
+- Consumers import `@damiro/stylo/styles.css` once. It is framework-agnostic — plain CSS,
   Next.js, Astro, Vite, or any Tailwind version — because it ships as compiled
   CSS with locally-scoped class names that cannot collide with host styles.
 - A **minimal** token set is exposed as CSS custom properties, covering only what

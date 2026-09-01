@@ -63,7 +63,7 @@ async reflow for this workload.
 
 4. **KaTeX styling is a documented one-line setup step for the consumer**, who
    picks one of:
-   - `import "stylo/katex.css"` — a file Stylo ships that re-exports
+   - `import "@damiro/stylo/katex.css"` — a file Stylo ships that re-exports
      `katex/dist/katex.min.css`. Because `katex` is Stylo's dependency it is
      always resolvable, and this guarantees the CSS version matches the engine
      Stylo runs. **Recommended default.**
@@ -121,4 +121,4 @@ async reflow for this workload.
   every glyph family to download whether used or not, defeating the browser's
   on-demand loading.
 - **Copying / path-rewriting the woff2 files into `dist/fonts/`.** Extra build
-  machinery for no gain over the `stylo/katex.css` re-export.
+  machinery for no gain over the `@damiro/stylo/katex.css` re-export.

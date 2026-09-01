@@ -101,5 +101,5 @@ consumers import it once and need no build-time CSS tooling.
 - **Brand colors.** Stylo ships scoped CSS and a design-token surface; the theme
   palette is inherited from the host.
 - **KaTeX stylesheet.** Stylo's CSS is KaTeX-font-free; the consumer imports
-  `stylo/katex.css` (or KaTeX's own CSS) once. See
+  `@damiro/stylo/katex.css` (or KaTeX's own CSS) once. See
   [ADR-003](../../journal/2026-09/2026-09-01_adr-003-katex-math-rendering.md).

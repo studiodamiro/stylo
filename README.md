@@ -52,9 +52,9 @@ the math engine and KaTeX asset delivery in
 ## Planned API sketch
 
 ```tsx
-import { Stylo } from "stylo"
-import "stylo/styles.css"
-import "stylo/katex.css"        // KaTeX stylesheet + fonts (or import "katex/dist/katex.min.css")
+import { Stylo } from "@damiro/stylo"
+import "@damiro/stylo/styles.css"
+import "@damiro/stylo/katex.css"   // KaTeX stylesheet + fonts (or import "katex/dist/katex.min.css")
 
 function Editor() {
   const [doc, setDoc] = useState("# Hello\n\nInline math: $e^{i\\pi} + 1 = 0$")
