@@ -1,7 +1,6 @@
 import type { Link, Root, Text } from "mdast"
 import { visit } from "unist-util-visit"
-
-const PATTERN = /\[\[([^\]|\n]+?)(?:\|([^\]\n]+?))?\]\]/g
+import { WIKILINK_PATTERN } from "../wikilink"
 
 /**
  * Rewrites `[[target]]` and `[[target|label]]` inside text into link nodes that
@@ -16,7 +15,7 @@ export function remarkWikilink() {
       const out: Array<Text | Link> = []
       let cursor = 0
 
-      for (const match of node.value.matchAll(PATTERN)) {
+      for (const match of node.value.matchAll(WIKILINK_PATTERN)) {
         const [raw = "", rawTarget = "", rawLabel] = match
         const start = match.index ?? 0
         if (start > cursor) {

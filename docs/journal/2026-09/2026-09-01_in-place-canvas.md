@@ -56,16 +56,16 @@ first (increment 0).
 
 ## Increments
 
-| #   | Increment                                                                       | Status | Commit | Notes                                                                                              |
-| --- | ------------------------------------------------------------------------------- | ------ | ------ | -------------------------------------------------------------------------------------------------- |
-| 0   | ADR-004 — decoration architecture + v1 scope                                    | ✅     | —      | Merged into this tracker; see [ADR-004](./2026-09-01_adr-004-in-place-decoration-canvas.md).       |
-| 1   | Plugin skeleton, viewport decoration builder, cursor-reveal mechanism, headings | ✅     | —      | `src/inplace/*`; lazy `InPlaceView`; ATX headings at display size, `#` hidden off the caret line.  |
-| 2   | Emphasis — bold / italic / strikethrough / inline code                          | ✅     | —      | Inline rule table in `decorate.ts`; canvas switched to a proportional font (code stays monospace). |
-| 3   | Links + wikilinks                                                               | ☐      |        |                                                                                                    |
-| 4   | Block and inline math widgets (KaTeX)                                           | ☐      |        |                                                                                                    |
-| 5   | Horizontal rule, blockquote, list markers                                       | ☐      |        |                                                                                                    |
-| 6   | Cursor-reveal edge cases + `atomicRanges` pass                                  | ☐      |        |                                                                                                    |
-| 7   | Flip default `mode` to `in-place`; ADR-002 amendment; wiki + props updates      | ☐      |        |                                                                                                    |
+| #   | Increment                                                                       | Status | Commit | Notes                                                                                                                                 |
+| --- | ------------------------------------------------------------------------------- | ------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 0   | ADR-004 — decoration architecture + v1 scope                                    | ✅     | —      | Merged into this tracker; see [ADR-004](./2026-09-01_adr-004-in-place-decoration-canvas.md).                                          |
+| 1   | Plugin skeleton, viewport decoration builder, cursor-reveal mechanism, headings | ✅     | —      | `src/inplace/*`; lazy `InPlaceView`; ATX headings at display size, `#` hidden off the caret line.                                     |
+| 2   | Emphasis — bold / italic / strikethrough / inline code                          | ✅     | —      | Inline rule table in `decorate.ts`; canvas switched to a proportional font (code stays monospace).                                    |
+| 3   | Links + wikilinks                                                               | ✅     | —      | `Link` case + regex `[[…]]` scan with a code-context guard; shared pattern in `src/wikilink.ts`; delegated click → `onWikiLinkClick`. |
+| 4   | Block and inline math widgets (KaTeX)                                           | ☐      |        |                                                                                                                                       |
+| 5   | Horizontal rule, blockquote, list markers                                       | ☐      |        |                                                                                                                                       |
+| 6   | Cursor-reveal edge cases + `atomicRanges` pass                                  | ☐      |        |                                                                                                                                       |
+| 7   | Flip default `mode` to `in-place`; ADR-002 amendment; wiki + props updates      | ☐      |        |                                                                                                                                       |
 
 Mark a row `✅` and fill in the commit hash as it lands.
 
@@ -85,6 +85,14 @@ Mark a row `✅` and fill in the commit hash as it lands.
   code, hiding each marker off the caret line. The canvas now renders in a
   proportional font (`inPlaceTheme` raised with `Prec.high` to beat the base
   monospace theme); inline code and fenced/indented code keep a monospace class.
+- 2026-09-01 — increment 3: the `[[…]]` pattern moved to `src/wikilink.ts` and is
+  now shared with `remark-wikilink`. `decorate.ts` styles standard `[text](url)`
+  links (hiding `[` and the `](url)` tail) and runs a regex pass for wikilinks,
+  collapsing them to the label and skipping matches inside code spans/blocks.
+  A collapsed wikilink carries `data-stylo-wikilink`; a delegated `click`
+  handler in `inPlaceExtension` calls `onWikiLinkClick`, threaded from `Stylo`
+  through `InPlaceView` via a ref. Also fixed: the heading branch no longer
+  stops the tree walk, so emphasis and links inside a heading are decorated.
 
 ## After in-place
 

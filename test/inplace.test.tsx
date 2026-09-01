@@ -84,3 +84,39 @@ test("italic, strikethrough, and inline code each get a decoration", async () =>
   expect(hasClass(view, "cm-inplace-strike")).toBe(true)
   expect(hasClass(view, "cm-inplace-code")).toBe(true)
 })
+
+test("emphasis inside a heading is still decorated", async () => {
+  const { view } = await mount("## has **bold** inside\n\nsecond line")
+
+  expect(hasClass(view, "cm-inplace-h2")).toBe(true)
+  expect(hasClass(view, "cm-inplace-strong")).toBe(true)
+})
+
+test("a standard link is styled and its syntax hides off-line, reveals on-line", async () => {
+  const { view } = await mount("see [the docs](https://x.dev) now\n\nsecond line")
+
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+  expect(hasClass(view, "cm-inplace-link")).toBe(true)
+  expect(hidesAMarker(view)).toBe(true)
+
+  view.dispatch({ selection: { anchor: 7 } }) // inside the link text
+  expect(hidesAMarker(view)).toBe(false)
+})
+
+test("a wikilink collapses to its label and carries the target", async () => {
+  const { view } = await mount("go to [[Notes/Home|home]] please\n\nsecond line")
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+
+  let target: string | undefined
+  view.plugin(inPlacePlugin)!.decorations.between(0, view.state.doc.length, (_f, _t, deco) => {
+    const attrs = deco.spec.attributes as Record<string, string> | undefined
+    if (attrs && attrs["data-stylo-wikilink"]) target = attrs["data-stylo-wikilink"]
+  })
+  expect(target).toBe("Notes/Home")
+  expect(hidesAMarker(view)).toBe(true)
+})
+
+test("a wikilink inside inline code is left as literal text", async () => {
+  const { view } = await mount("literal `[[Note]]` here\n\nsecond line")
+  expect(hasClass(view, "cm-inplace-wikilink")).toBe(false)
+})

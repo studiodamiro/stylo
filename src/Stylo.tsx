@@ -62,6 +62,7 @@ export function Stylo({
             onChange={onChange}
             readOnly={readOnly}
             placeholder={placeholder}
+            onWikiLinkClick={onWikiLinkClick}
           />
         </Suspense>
       )}

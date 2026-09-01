@@ -1,6 +1,7 @@
 import { syntaxTree } from "@codemirror/language"
 import type { Range } from "@codemirror/state"
 import { Decoration, type DecorationSet, type EditorView } from "@codemirror/view"
+import { WIKILINK_PATTERN } from "../wikilink"
 import { revealedLines } from "./reveal"
 
 const HEADING = /^ATXHeading([1-6])$/
@@ -15,6 +16,19 @@ const INLINE: Record<string, { mark: string; className: string }> = {
 
 /** Blocks whose lines must stay monospace on the otherwise-proportional canvas. */
 const MONO_BLOCK = new Set(["FencedCode", "CodeBlock"])
+
+const CODE_NODES = new Set(["InlineCode", "FencedCode", "CodeBlock", "CodeText"])
+
+/** Is `pos` inside a code span or code block? Used to leave `[[…]]` literal there. */
+function inCodeContext(tree: ReturnType<typeof syntaxTree>, pos: number): boolean {
+  let node = tree.resolveInner(pos, 1)
+  for (;;) {
+    if (CODE_NODES.has(node.name)) return true
+    const parent = node.parent
+    if (!parent) return false
+    node = parent
+  }
+}
 
 /**
  * Build the in-place decoration set for the visible viewport only — the syntax
@@ -48,7 +62,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
               out.push(Decoration.replace({}).range(hm.from, Math.min(hm.to + 1, line.to)))
             }
           }
-          return false
+          return // descend: emphasis / links inside the heading still get decorated
         }
 
         const rule = INLINE[node.name]
@@ -69,6 +83,26 @@ export function buildDecorations(view: EditorView): DecorationSet {
           return
         }
 
+        if (node.name === "Link") {
+          const before = doc.sliceString(Math.max(0, node.from - 1), node.from)
+          const after = doc.sliceString(node.to, node.to + 1)
+          if (before === "[" && after === "]") return false // inner of a [[wikilink]]
+
+          const marks = node.node.getChildren("LinkMark")
+          if (marks.length >= 2) {
+            const open = marks[0]!
+            const shut = marks[1]!
+            if (shut.from > open.to) {
+              out.push(Decoration.mark({ class: "cm-inplace-link" }).range(open.to, shut.from))
+            }
+            if (!revealed.has(doc.lineAt(node.from).number)) {
+              out.push(Decoration.replace({}).range(node.from, open.to))
+              out.push(Decoration.replace({}).range(shut.from, node.to))
+            }
+          }
+          return false
+        }
+
         if (MONO_BLOCK.has(node.name)) {
           const first = doc.lineAt(node.from).number
           const last = doc.lineAt(Math.min(node.to, doc.length)).number
@@ -81,7 +115,44 @@ export function buildDecorations(view: EditorView): DecorationSet {
         return
       },
     })
+
+    scanWikilinks(view, range.from, range.to, revealed, tree, out)
   }
 
   return Decoration.set(out, true)
+}
+
+/** Regex pass for `[[wikilinks]]` — the CodeMirror grammar has no node for them. */
+function scanWikilinks(
+  view: EditorView,
+  from: number,
+  to: number,
+  revealed: Set<number>,
+  tree: ReturnType<typeof syntaxTree>,
+  out: Range<Decoration>[],
+): void {
+  const text = view.state.doc.sliceString(from, to)
+  if (!text.includes("[[")) return
+
+  for (const match of text.matchAll(WIKILINK_PATTERN)) {
+    const [raw = "", rawTarget = "", rawLabel] = match
+    const target = rawTarget.trim()
+    const start = from + (match.index ?? 0)
+    if (!target || inCodeContext(tree, start + 1)) continue
+
+    const end = start + raw.length
+    const labelStart = rawLabel != null ? start + 2 + rawTarget.length + 1 : start + 2
+    const labelEnd = end - 2
+
+    out.push(
+      Decoration.mark({
+        class: "cm-inplace-link cm-inplace-wikilink",
+        attributes: { "data-stylo-wikilink": target },
+      }).range(labelStart, labelEnd),
+    )
+    if (!revealed.has(view.state.doc.lineAt(start).number)) {
+      out.push(Decoration.replace({}).range(start, labelStart))
+      out.push(Decoration.replace({}).range(labelEnd, end))
+    }
+  }
 }

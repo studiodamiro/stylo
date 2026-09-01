@@ -36,4 +36,12 @@ export const inPlaceTheme = EditorView.theme({
   },
 
   ".cm-inplace-mono": { fontFamily: MONO },
+
+  ".cm-inplace-link": {
+    color: "var(--stylo-accent)",
+    textDecoration: "underline",
+    textUnderlineOffset: "0.15em",
+    cursor: "pointer",
+  },
+  ".cm-inplace-wikilink": { textDecoration: "none" },
 })
