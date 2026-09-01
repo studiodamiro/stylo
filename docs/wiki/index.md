@@ -28,6 +28,8 @@ _Pending first release._
 
 - [[reference/props|`<Stylo>` props]] — the current prop surface, styling tokens,
   and math setup.
+- [[reference/in-place-config|In-place canvas configuration]] — the `inPlace`
+  prop and its decoration toggles.
 
 ## Engineering journal
 

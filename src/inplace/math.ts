@@ -2,6 +2,7 @@ import { syntaxTree } from "@codemirror/language"
 import { type EditorState, type Range, StateField } from "@codemirror/state"
 import { Decoration, type DecorationSet, EditorView, WidgetType } from "@codemirror/view"
 import katex from "katex"
+import { inPlaceConfigFacet } from "./config"
 import { revealedLines } from "./reveal"
 import { inCodeContext, rangeRevealed, type Tree } from "./scan"
 
@@ -94,6 +95,7 @@ export const blockMathField = StateField.define<DecorationSet>({
 })
 
 function buildBlockMath(state: EditorState): DecorationSet {
+  if (!state.facet(inPlaceConfigFacet).math) return Decoration.none
   const text = state.doc.toString()
   if (!text.includes("$$")) return Decoration.none
 

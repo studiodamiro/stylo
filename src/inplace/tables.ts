@@ -2,6 +2,7 @@ import { syntaxTree } from "@codemirror/language"
 import { type EditorState, type Range, StateField, type Text } from "@codemirror/state"
 import { Decoration, type DecorationSet, EditorView, WidgetType } from "@codemirror/view"
 import type { SyntaxNode } from "@lezer/common"
+import { inPlaceConfigFacet } from "./config"
 import { frontmatterRange } from "./frontmatter"
 import { revealedLines } from "./reveal"
 
@@ -95,6 +96,7 @@ function parseTable(table: SyntaxNode, doc: Text): ParsedTable | null {
 }
 
 function build(state: EditorState): DecorationSet {
+  if (!state.facet(inPlaceConfigFacet).tables) return Decoration.none
   const tree = syntaxTree(state)
   const fm = frontmatterRange(state.doc)
   const revealed = revealedLines(state)

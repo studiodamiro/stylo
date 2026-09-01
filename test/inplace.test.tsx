@@ -7,11 +7,14 @@ import { blockMathField } from "../src/inplace/math"
 import { inPlacePlugin } from "../src/inplace/plugin"
 import { tableField } from "../src/inplace/tables"
 import { BulletWidget, CheckboxWidget, HrWidget } from "../src/inplace/widgets"
+import type { InPlaceConfig } from "../src/types"
 
 afterEach(cleanup)
 
-async function mount(value: string) {
-  const result = render(<Stylo value={value} onChange={() => {}} mode="in-place" />)
+async function mount(value: string, inPlace?: InPlaceConfig) {
+  const result = render(
+    <Stylo value={value} onChange={() => {}} mode="in-place" inPlace={inPlace} />,
+  )
   // The in-place surface is a lazy chunk — wait for the editor to attach.
   await vi.waitFor(() => {
     if (!result.container.querySelector(".cm-editor")) throw new Error("not mounted")
@@ -175,6 +178,10 @@ test("math inside inline code is left literal", async () => {
 test("frontmatter is hidden off-caret and revealed when the caret enters it", async () => {
   const { view } = await mount("---\ntitle: x\ntags: [a]\n---\n\n# Body")
 
+  // A fresh EditorState's default caret sits at 0 (inside the frontmatter) —
+  // a construction artifact, not a real placement, so the chip starts shown.
+  expect(view.state.field(frontmatterField).size).toBe(1)
+
   view.dispatch({ selection: { anchor: view.state.doc.length } })
   expect(view.state.field(frontmatterField).size).toBe(1)
 
@@ -192,9 +199,15 @@ test("a horizontal rule becomes a widget off-line, source on-line", async () => 
   expect(countWidgets(view, HrWidget)).toBe(0)
 })
 
-test("blockquote lines get the quote class", async () => {
-  const { view } = await mount("> quoted one\n> quoted two\n\ntail")
+test("blockquote lines get the quote class and > hides off-caret, reveals on-caret", async () => {
+  const { view } = await mount("> quoted\n\ntail")
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+
   expect(hasClass(view, "cm-inplace-quote")).toBe(true)
+  expect(hidesAMarker(view)).toBe(true)
+
+  view.dispatch({ selection: { anchor: 0 } }) // onto the quoted line
+  expect(hidesAMarker(view)).toBe(false)
 })
 
 test("fenced code: mono container, fences emptied off-block and shown on-caret", async () => {
@@ -252,6 +265,44 @@ test("a math widget renders KaTeX markup", async () => {
     if (w) dom = w.toDOM(view) as HTMLElement
   })
   expect(dom?.querySelector(".katex")).not.toBeNull()
+})
+
+async function elementIn(view: EditorView, selector: string): Promise<HTMLElement> {
+  return vi.waitFor(() => {
+    const el = view.contentDOM.querySelector<HTMLElement>(selector)
+    if (!el) throw new Error(`no ${selector}`)
+    return el
+  })
+}
+
+test("mousedown on a rendered inline-math widget reveals its source", async () => {
+  const { view } = await mount("text $a+b$ more\n\ntail")
+  view.dispatch({ selection: { anchor: view.state.doc.length } }) // off the math line
+  expect(mathWidgets(view).some((w) => w.src === "a+b")).toBe(true)
+
+  const mathEl = await elementIn(view, ".cm-inplace-math")
+  mathEl.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }))
+  expect(mathWidgets(view).some((w) => w.src === "a+b")).toBe(false)
+})
+
+test("mousedown on a rendered <hr> widget reveals its source", async () => {
+  const { view } = await mount("above\n\n---\n\nbelow")
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+  expect(countWidgets(view, HrWidget)).toBe(1)
+
+  const hrEl = await elementIn(view, ".cm-inplace-hr")
+  hrEl.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }))
+  expect(countWidgets(view, HrWidget)).toBe(0)
+})
+
+test("mousedown on the frontmatter chip reveals the YAML block", async () => {
+  const { view } = await mount("---\ntitle: x\n---\n\n# Body")
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+  expect(view.state.field(frontmatterField).size).toBe(1)
+
+  const chip = await elementIn(view, ".cm-inplace-frontmatter")
+  chip.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }))
+  expect(view.state.field(frontmatterField).size).toBe(0)
 })
 
 function atomicCount(view: EditorView): number {
@@ -329,4 +380,54 @@ test("column alignment from the delimiter row reaches the rendered cells", async
   const cells = tableDOM(view)?.querySelectorAll<HTMLTableCellElement>("tbody td")
   expect(cells?.[0]?.style.textAlign).toBe("left")
   expect(cells?.[1]?.style.textAlign).toBe("center")
+})
+
+test("inPlace.decorations.headings=false leaves a heading as plain source", async () => {
+  const { view } = await mount("# Title\n\nbody", { decorations: { headings: false } })
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+
+  expect(hasClass(view, "cm-inplace-h1")).toBe(false)
+  expect(hidesAMarker(view)).toBe(false)
+})
+
+test("inPlace.decorations.math=false leaves $…$ as literal text", async () => {
+  const { view } = await mount("a $x^2$ b\n\ntail", { decorations: { math: false } })
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+
+  expect(mathWidgets(view)).toHaveLength(0)
+})
+
+test("inPlace.decorations.tables=false leaves a GFM table as source", async () => {
+  const { view } = await mount("| A | B |\n| - | - |\n| 1 | 2 |\n\ntail", {
+    decorations: { tables: false },
+  })
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+
+  expect(view.state.field(tableField).size).toBe(0)
+})
+
+test("inPlace.decorations.frontmatter=false leaves the YAML block visible", async () => {
+  const { view } = await mount("---\ntitle: x\n---\n\n# Body", {
+    decorations: { frontmatter: false },
+  })
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+
+  expect(view.state.field(frontmatterField).size).toBe(0)
+})
+
+test("inPlace.decorations.code covers inline code, not just fenced blocks", async () => {
+  const inline = await mount("some `code` here\n\ntail", { decorations: { code: false } })
+  expect(hasClass(inline.view, "cm-inplace-code")).toBe(false)
+
+  // emphasis stays off inline code's separate toggle
+  const emphasisOff = await mount("some `code` here\n\ntail", { decorations: { emphasis: false } })
+  expect(hasClass(emphasisOff.view, "cm-inplace-code")).toBe(true)
+})
+
+test("inPlace.decorations.tasks=false leaves a task item fully as source", async () => {
+  const { view } = await mount("- [ ] todo\n\ntail", { decorations: { tasks: false } })
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+
+  expect(countWidgets(view, CheckboxWidget)).toBe(0)
+  expect(hidesAMarker(view)).toBe(false) // the "- " prefix stays too
 })

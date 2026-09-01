@@ -158,11 +158,11 @@ onChange />` with no `mode` now lazy-loads the in-place chunk (and the shared
 
 ## After in-place
 
-- **In-place customization API** — one deliberate pass deciding what canvas
-  decorations a consumer can toggle or extend: the still-deferred node types
-  (callout blockquotes `> [!note]`, image previews), nested-list indent guides,
-  and any hook for consumer-supplied decorators. This is public-API surface, so
-  it belongs in the v1 API design milestone, not in the increments above.
+- **In-place customization API** — per-type on/off toggles landed as
+  [ADR-005](./2026-09-01_adr-005-in-place-decoration-toggles.md) (the `inPlace`
+  prop). Still open: cursor-reveal granularity, a frontmatter display mode,
+  callout blockquotes (`> [!note]`), image previews, nested-list indent guides,
+  and any hook for consumer-supplied decorators — each its own future decision.
 - **Table rendering options** — v1 renders one fixed table style and shows cell
   text verbatim. Follow-ups for the customization pass: inline formatting inside
   cells (`**bold**`, `` `code` ``, links, math), and consumer-facing style hooks

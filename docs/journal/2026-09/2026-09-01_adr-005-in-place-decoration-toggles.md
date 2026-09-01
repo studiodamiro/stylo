@@ -69,20 +69,20 @@ this slice, each deferred to its own later decision:
 `inPlace.decorations` is a flat record of twelve optional booleans, **each
 defaulting to `true`**:
 
-| Key              | Turns off                                           |
-| ---------------- | --------------------------------------------------- |
-| `headings`       | ATX heading sizing and `#` hiding                   |
-| `emphasis`       | bold / italic / strikethrough / inline-code styling |
-| `links`          | `[text](url)` collapse to the link text             |
-| `wikilinks`      | `[[target\|label]]` collapse to the label           |
-| `math`           | `$…$` and `$$…$$` KaTeX widgets                     |
-| `lists`          | `-` / `*` / `+` bullet-glyph substitution           |
-| `tasks`          | interactive `[ ]` / `[x]` checkboxes                |
-| `blockquote`     | left-border / muted framing                         |
-| `horizontalRule` | the rendered `<hr>`                                 |
-| `code`           | the fenced / indented code container                |
-| `frontmatter`    | the "Properties" chip over the leading YAML         |
-| `tables`         | the rendered `<table>`                              |
+| Key              | Turns off                                                            |
+| ---------------- | -------------------------------------------------------------------- |
+| `headings`       | ATX heading sizing and `#` hiding                                    |
+| `emphasis`       | bold / italic / strikethrough / inline-code styling                  |
+| `links`          | `[text](url)` collapse to the link text                              |
+| `wikilinks`      | `[[target\|label]]` collapse to the label                            |
+| `math`           | `$…$` and `$$…$$` KaTeX widgets                                      |
+| `lists`          | `-` / `*` / `+` bullet-glyph substitution                            |
+| `tasks`          | interactive `[ ]` / `[x]` checkboxes                                 |
+| `blockquote`     | left-border / muted framing, and `>` hiding off-caret                |
+| `horizontalRule` | the rendered `<hr>`                                                  |
+| `code`           | inline `` `code` `` styling and the fenced / indented code container |
+| `frontmatter`    | the "Properties" chip over the leading YAML                          |
+| `tables`         | the rendered `<table>`                                               |
 
 Turning a key off leaves that construct exactly as it renders in `mode="source"`
 — raw text, no reveal behaviour, nothing atomic.
@@ -115,6 +115,14 @@ until the editor is recreated (e.g. via a changed React `key`). This matches how
 the canvas already treats its other options and avoids a live-reconfiguration
 path for a prop that is set once in practice. Revisit if a real use case for
 runtime toggling appears.
+
+> **Amended 2026-09-02:** remounting on toggle change (as the playground demo
+> does) surfaced a pre-existing bug in `frontmatterField` — a fresh
+> `EditorState`'s default caret sits at position 0, inside the frontmatter
+> block, so the chip never rendered on the very first frame of any mount
+> (including before this ADR). Fixed: the field now starts folded
+> unconditionally at creation and only reveals in response to an actual
+> selection change, not the construction-time default.
 
 ## Consequences
 
