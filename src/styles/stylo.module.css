@@ -1,0 +1,28 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  color: var(--stylo-text);
+  background: var(--stylo-bg);
+  border: 1px solid var(--stylo-border);
+  border-radius: var(--stylo-radius);
+  overflow: hidden;
+}
+
+.source {
+  overflow: auto;
+}
+
+.source :global(.cm-editor) {
+  height: 100%;
+}
+
+.source :global(.cm-editor.cm-focused) {
+  outline: 2px solid var(--stylo-ring);
+  outline-offset: -2px;
+}
+
+.preview {
+  padding: 0.75rem 1rem;
+  line-height: 1.6;
+}

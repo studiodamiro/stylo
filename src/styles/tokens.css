@@ -1,0 +1,14 @@
+/*
+ * Default design tokens. Every value is overridable by the host on `.stylo`
+ * (or any ancestor). Defaults follow shadcn/ui's neutral conventions as a
+ * visual reference only (ADR-002) — no shadcn or Tailwind code is bundled.
+ */
+.stylo {
+  --stylo-bg: #ffffff;
+  --stylo-text: #09090b;
+  --stylo-text-muted: #71717a;
+  --stylo-border: #e4e4e7;
+  --stylo-accent: #18181b;
+  --stylo-ring: #a1a1aa;
+  --stylo-radius: 0.5rem;
+}
