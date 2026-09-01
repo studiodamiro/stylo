@@ -70,10 +70,12 @@ The UX layer, customization API, and design-token system are specified in
 `<Stylo mode>` selects the interaction layout:
 
 - `in-place` (**default**) — Notion-like canvas: headings, emphasis, links and
-  wikilinks, `$…$` / `$$…$$` math, rules, blockquotes, list bullets, and task
-  checkboxes render live in the CodeMirror surface via view decorations, with
-  the raw source revealed under the caret. Tables and fenced-code highlighting
-  stay as source for now. Architecture and node set in
+  wikilinks, `$…$` / `$$…$$` math, rules, blockquotes, list bullets, task
+  checkboxes, and GFM tables render live in the CodeMirror surface via view
+  decorations, with the raw source revealed under the caret. Fenced-code syntax
+  highlighting stays as source for now (waits on the `codeLanguages` prop);
+  rendered table cells show their text verbatim, without inline formatting.
+  Architecture and node set in
   [ADR-004](../../journal/2026-09/2026-09-01_adr-004-in-place-decoration-canvas.md).
 - `source` — raw CodeMirror Markdown text surface; loads no render chunk.
 - `preview` — rendered HTML/KaTeX preview pane.

@@ -36,10 +36,12 @@ first (increment 0).
 - Task checkboxes — interactive `<input>` toggling `[ ]` ⇄ `[x]` in the source
   _(pulled in from the deferred list before the default flip — a raw `- [ ]`
   under the default mode reads as unfinished; ADR-004 scope amendment)_
+- Rendered tables — GFM pipe tables become a `<table>` widget with per-column
+  alignment; the caret entering a table line reveals the source. Cell text is
+  verbatim _(increment 8, just after the default flip; ADR-004 scope amendment)_
 
 ### Explicitly out of v1 (stay source-styled)
 
-- Rendered tables _(planned as increment 8, after the default flip)_
 - Highlighted code fences (waits on the `codeLanguages` pass-through prop)
 - Image inline previews
 - Embeds / transclusions
@@ -59,18 +61,18 @@ first (increment 0).
 
 ## Increments
 
-| #   | Increment                                                                         | Status | Commit | Notes                                                                                                                                                           |
-| --- | --------------------------------------------------------------------------------- | ------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0   | ADR-004 — decoration architecture + v1 scope                                      | ✅     | —      | Merged into this tracker; see [ADR-004](./2026-09-01_adr-004-in-place-decoration-canvas.md).                                                                    |
-| 1   | Plugin skeleton, viewport decoration builder, cursor-reveal mechanism, headings   | ✅     | —      | `src/inplace/*`; lazy `InPlaceView`; ATX headings at display size, `#` hidden off the caret line.                                                               |
-| 2   | Emphasis — bold / italic / strikethrough / inline code                            | ✅     | —      | Inline rule table in `decorate.ts`; canvas switched to a proportional font (code stays monospace).                                                              |
-| 3   | Links + wikilinks                                                                 | ✅     | —      | `Link` case + regex `[[…]]` scan with a code-context guard; shared pattern in `src/wikilink.ts`; delegated click → `onWikiLinkClick`.                           |
-| 4   | Block and inline math widgets (KaTeX)                                             | ✅     | —      | `math.ts` split out: inline / one-line `$$` in the plugin, multi-line `$$` in a `StateField` (plugins can't replace line breaks); `atomicRanges` from both.     |
-| 5   | Horizontal rule, blockquote, list markers, hide frontmatter                       | ✅     | —      | `nodes.ts` split from `decorate.ts`; `HrWidget` / `BulletWidget`; `frontmatterField` hides the YAML behind a "Properties" chip; task items left as source.      |
-| 6   | Cursor-reveal edge cases + `atomicRanges` pass                                    | ✅     | —      | Atomic set now derived from every replacing decoration (markers + widgets), not just widgets. Line-span reveal kept; per-node reveal deferred to the API pass.  |
-| 6b  | Task checkboxes                                                                   | ✅     | —      | `CheckboxWidget` replaces `[ ]` / `[x]`; toggling dispatches a one-char change. `- ` hidden on task rows. Pulled in from the deferred list (ADR-004 amendment). |
-| 7   | Flip default `mode` to `in-place`; ADR-002 amendment; wiki + props updates        | ✅     | —      | `Stylo` defaults to `in-place`; `types.ts` / playground updated; ADR-002 §1 and ADR-004 marked complete; `props.md` + `overview.md` synced.                     |
-| 8   | Rendered tables — GFM `Table` node → a `block: true` widget, click to edit source | ☐      |        | After the flip; larger, and its "edit = reveal source" model differs from the rest.                                                                             |
+| #   | Increment                                                                         | Status | Commit | Notes                                                                                                                                                               |
+| --- | --------------------------------------------------------------------------------- | ------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0   | ADR-004 — decoration architecture + v1 scope                                      | ✅     | —      | Merged into this tracker; see [ADR-004](./2026-09-01_adr-004-in-place-decoration-canvas.md).                                                                        |
+| 1   | Plugin skeleton, viewport decoration builder, cursor-reveal mechanism, headings   | ✅     | —      | `src/inplace/*`; lazy `InPlaceView`; ATX headings at display size, `#` hidden off the caret line.                                                                   |
+| 2   | Emphasis — bold / italic / strikethrough / inline code                            | ✅     | —      | Inline rule table in `decorate.ts`; canvas switched to a proportional font (code stays monospace).                                                                  |
+| 3   | Links + wikilinks                                                                 | ✅     | —      | `Link` case + regex `[[…]]` scan with a code-context guard; shared pattern in `src/wikilink.ts`; delegated click → `onWikiLinkClick`.                               |
+| 4   | Block and inline math widgets (KaTeX)                                             | ✅     | —      | `math.ts` split out: inline / one-line `$$` in the plugin, multi-line `$$` in a `StateField` (plugins can't replace line breaks); `atomicRanges` from both.         |
+| 5   | Horizontal rule, blockquote, list markers, hide frontmatter                       | ✅     | —      | `nodes.ts` split from `decorate.ts`; `HrWidget` / `BulletWidget`; `frontmatterField` hides the YAML behind a "Properties" chip; task items left as source.          |
+| 6   | Cursor-reveal edge cases + `atomicRanges` pass                                    | ✅     | —      | Atomic set now derived from every replacing decoration (markers + widgets), not just widgets. Line-span reveal kept; per-node reveal deferred to the API pass.      |
+| 6b  | Task checkboxes                                                                   | ✅     | —      | `CheckboxWidget` replaces `[ ]` / `[x]`; toggling dispatches a one-char change. `- ` hidden on task rows. Pulled in from the deferred list (ADR-004 amendment).     |
+| 7   | Flip default `mode` to `in-place`; ADR-002 amendment; wiki + props updates        | ✅     | —      | `Stylo` defaults to `in-place`; `types.ts` / playground updated; ADR-002 §1 and ADR-004 marked complete; `props.md` + `overview.md` synced.                         |
+| 8   | Rendered tables — GFM `Table` node → a `block: true` widget, click to edit source | ✅     | —      | `src/inplace/tables.ts` — `tableField` state field (spans line breaks); header / body / alignment parsed from Lezer `TableCell` / `TableDelimiter`; verbatim cells. |
 
 Mark a row `✅` and fill in the commit hash as it lands.
 
@@ -142,15 +144,30 @@ onChange />` with no `mode` now lazy-loads the in-place chunk (and the shared
   marker is hidden on task rows so the line reads as just the checkbox and its
   text. The caret entering the line restores the `- [ ]` source. Recorded as an
   ADR-004 scope amendment.
+- 2026-09-01 — increment 8: rendered GFM tables. `src/inplace/tables.ts` adds a
+  `tableField` state field (not the view plugin — the replacement spans line
+  breaks) that walks the tree for `Table` nodes and replaces each with a
+  `block: true` `<table class="cm-inplace-table">` widget. Header cells, body
+  rows, and per-column alignment are read straight from the Lezer `TableCell`
+  and `TableDelimiter` children; the widget's `eq()` compares the parsed shape
+  so it is reused across unrelated edits. The caret on any table line reveals
+  the source, and the field is atomic so arrows step over the block. Cell text
+  is rendered verbatim — no inline formatting inside cells yet. Theme rules
+  mirror the preview's table CSS; the playground demo table gained a
+  right-aligned column.
 
 ## After in-place
 
 - **In-place customization API** — one deliberate pass deciding what canvas
-  decorations a consumer can toggle or extend: the v1-deferred node types (task
-  checkboxes, callout blockquotes `> [!note]`, image previews, rendered tables),
-  nested-list indent guides, and any hook for consumer-supplied decorators. This
-  is public-API surface, so it belongs in the v1 API design milestone, not in
-  the increments above.
+  decorations a consumer can toggle or extend: the still-deferred node types
+  (callout blockquotes `> [!note]`, image previews), nested-list indent guides,
+  and any hook for consumer-supplied decorators. This is public-API surface, so
+  it belongs in the v1 API design milestone, not in the increments above.
+- **Table rendering options** — v1 renders one fixed table style and shows cell
+  text verbatim. Follow-ups for the customization pass: inline formatting inside
+  cells (`**bold**`, `` `code` ``, links, math), and consumer-facing style hooks
+  (borders, striping, colours that track the host's `--stylo-*` tokens or
+  branding).
 - **Frontmatter display mode** — the v1 canvas hides the YAML block behind a
   minimal "Properties" chip. Make this configurable: at least `source` (leave it
   raw), `chip` (current default), and `properties` (a rendered key/value panel).

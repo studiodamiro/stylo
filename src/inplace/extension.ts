@@ -3,6 +3,7 @@ import { EditorView } from "@codemirror/view"
 import { frontmatterField } from "./frontmatter"
 import { blockMathField } from "./math"
 import { inPlaceDecorations } from "./plugin"
+import { tableField } from "./tables"
 import { inPlaceTheme } from "./theme"
 
 export interface InPlaceOptions {
@@ -23,6 +24,7 @@ export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
     inPlaceDecorations(),
     blockMathField,
     frontmatterField,
+    tableField,
     Prec.high(inPlaceTheme),
     EditorView.domEventHandlers({
       click(event) {
