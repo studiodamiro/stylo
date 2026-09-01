@@ -40,7 +40,7 @@ const greet = (name: string) => \`hello, \${name}\`
 \`\`\`
 `
 
-const MODES: StyloMode[] = ["source", "preview"]
+const MODES: StyloMode[] = ["source", "preview", "split"]
 
 function App() {
   const [doc, setDoc] = useState(DEMO)
@@ -50,7 +50,7 @@ function App() {
   return (
     <main
       style={{
-        maxWidth: 760,
+        maxWidth: mode === "split" ? 1100 : 760,
         margin: "3rem auto",
         padding: "0 1rem",
         fontFamily: "system-ui, -apple-system, sans-serif",
@@ -83,7 +83,7 @@ function App() {
         onChange={setDoc}
         mode={mode}
         onWikiLinkClick={setLastLink}
-        className="playground-editor"
+        className={mode === "split" ? "playground-editor is-split" : "playground-editor"}
       />
 
       <p style={{ color: "#71717a", fontSize: "0.85rem", marginTop: "1rem" }}>

@@ -11,6 +11,8 @@ export interface UseCodeMirrorOptions {
   onChange: (next: string) => void
   readOnly?: boolean
   placeholder?: string
+  /** Called with the `EditorView` once it is created, and with `null` on teardown. */
+  onViewChange?: (view: EditorView | null) => void
 }
 
 /**
@@ -22,11 +24,14 @@ export function useCodeMirror({
   onChange,
   readOnly = false,
   placeholder,
+  onViewChange,
 }: UseCodeMirrorOptions) {
   const parent = useRef<HTMLDivElement | null>(null)
   const viewRef = useRef<EditorView | null>(null)
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
+  const onViewChangeRef = useRef(onViewChange)
+  onViewChangeRef.current = onViewChange
   const dynamic = useRef(new Compartment())
 
   // Create the view once. `value` / `readOnly` / `placeholder` are reconciled by
@@ -51,8 +56,10 @@ export function useCodeMirror({
       }),
     })
     viewRef.current = view
+    onViewChangeRef.current?.(view)
 
     return () => {
+      onViewChangeRef.current?.(null)
       view.destroy()
       viewRef.current = null
     }

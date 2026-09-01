@@ -25,6 +25,7 @@ milestones and Architectural Decision Records, newest first.
 
 | Date       | Entry                                                                                                                                     |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-01 | [Split mode — source and preview side by side](./journal/2026-09/2026-09-01_split-mode.md)                                                |
 | 2026-09-01 | [Foundation milestone — build, source and preview modes](./journal/2026-09/2026-09-01_foundation-milestone.md)                            |
 | 2026-09-01 | [Drop `@codemirror/language-data` for a pass-through `codeLanguages` prop](./journal/2026-09/2026-09-01_drop-codemirror-language-data.md) |
 | 2026-09-01 | [Project Genesis — Stylo extracted from Sympose](./journal/2026-09/2026-09-01_project-genesis.md)                                         |
