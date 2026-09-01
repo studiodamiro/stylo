@@ -1,18 +1,16 @@
-import { lazy, Suspense, useRef } from "react"
+import { Suspense, useRef } from "react"
 import { SourceView } from "./editor/SourceView"
+import { LazyPreview } from "./render/lazyPreview"
+import { SplitView } from "./SplitView"
 import styles from "./styles/stylo.module.css"
 import "./styles/tokens.css"
 import type { StyloProps } from "./types"
-
-// Preview pulls in react-markdown + remark/rehype + KaTeX. Load it only when a
-// rendered mode is actually used, so `mode="source"` consumers never pay for it.
-const Preview = lazy(async () => ({ default: (await import("./render/Preview")).Preview }))
 
 /**
  * Plain-text-first Markdown editor. `value` is the canonical Markdown string;
  * every view is a pure function of it.
  *
- * This milestone implements `source` and `preview`; `in-place` / `split` fall
+ * This milestone implements `source`, `preview`, and `split`; `in-place` falls
  * back to `source` for now.
  */
 export function Stylo({
@@ -26,9 +24,9 @@ export function Stylo({
 }: StyloProps) {
   const warned = useRef(false)
 
-  let resolved: "source" | "preview" = "source"
-  if (mode === "preview") {
-    resolved = "preview"
+  let resolved: "source" | "preview" | "split" = "source"
+  if (mode === "preview" || mode === "split") {
+    resolved = mode
   } else if (mode !== "source" && !warned.current) {
     warned.current = true
     console.warn(`[stylo] mode="${mode}" is not implemented yet; using "source".`)
@@ -38,17 +36,29 @@ export function Stylo({
 
   return (
     <div className={rootClass} data-stylo-mode={resolved}>
-      {resolved === "source" ? (
+      {resolved === "source" && (
         <SourceView
           value={value}
           onChange={onChange}
           readOnly={readOnly}
           placeholder={placeholder}
         />
-      ) : (
+      )}
+
+      {resolved === "preview" && (
         <Suspense fallback={<div className={styles.preview} aria-busy="true" />}>
-          <Preview value={value} onWikiLinkClick={onWikiLinkClick} />
+          <LazyPreview value={value} onWikiLinkClick={onWikiLinkClick} />
         </Suspense>
+      )}
+
+      {resolved === "split" && (
+        <SplitView
+          value={value}
+          onChange={onChange}
+          onWikiLinkClick={onWikiLinkClick}
+          readOnly={readOnly}
+          placeholder={placeholder}
+        />
       )}
     </div>
   )

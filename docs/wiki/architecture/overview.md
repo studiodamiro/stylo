@@ -74,9 +74,11 @@ The UX layer, customization API, and design-token system are specified in
 - `preview` — rendered HTML/KaTeX preview pane.
 - `split` — side-by-side editing and preview with synchronized scroll.
 
-**Implemented today:** `source` and `preview`. `in-place` and `split` are planned
-and currently fall back to `source`; the interim default is `source`. See the
-[foundation milestone](../../journal/2026-09/2026-09-01_foundation-milestone.md).
+**Implemented today:** `source`, `preview`, and `split` (the last with a
+proportional scroll link between panes). `in-place` is planned and currently
+falls back to `source`; the interim default is `source`. See the
+[foundation milestone](../../journal/2026-09/2026-09-01_foundation-milestone.md)
+and the [split-mode note](../../journal/2026-09/2026-09-01_split-mode.md).
 
 ### UI layers
 
