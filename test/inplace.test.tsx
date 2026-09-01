@@ -196,6 +196,27 @@ test("blockquote lines get the quote class", async () => {
   expect(hasClass(view, "cm-inplace-quote")).toBe(true)
 })
 
+test("fenced code: mono container, fences emptied off-block and shown on-caret", async () => {
+  const { view } = await mount("text\n\n```ts\nconst a = 1\n```\n\ntail")
+
+  const emptiedFenceLines = () => {
+    let n = 0
+    view.plugin(inPlacePlugin)!.decorations.between(0, view.state.doc.length, (from, to, deco) => {
+      if (from < to && !deco.spec.class && !deco.spec.widget) n += 1
+    })
+    return n
+  }
+
+  expect(hasClass(view, "cm-inplace-mono")).toBe(true)
+  expect(hasClass(view, "cm-inplace-code-top")).toBe(true)
+  expect(hasClass(view, "cm-inplace-code-pad")).toBe(true)
+  expect(emptiedFenceLines()).toBe(2)
+
+  view.dispatch({ selection: { anchor: view.state.doc.line(4).from } })
+  expect(emptiedFenceLines()).toBe(0)
+  expect(hasClass(view, "cm-inplace-fence")).toBe(true)
+})
+
 test("a dash bullet is swapped for a glyph, but a task item is left alone", async () => {
   const { view } = await mount("- plain item\n- [ ] a task\n\ntail")
   view.dispatch({ selection: { anchor: view.state.doc.length } })
