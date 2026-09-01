@@ -24,9 +24,10 @@ pnpm-debug.log*
 .vscode/*
 !.vscode/extensions.json
 .idea/
-
-# local / editor workspace config
-.agents/
+*.swp
+*.swo
 .cursor/
+.agents/
+
 # test / coverage
 coverage/
