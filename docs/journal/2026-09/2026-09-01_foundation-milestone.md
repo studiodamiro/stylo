@@ -88,7 +88,8 @@ a `feat/foundation-scaffold` branch.
   the non-trivial CodeMirror milestone from ADR-002; this is what makes `mode`
   default to `in-place`.
 - Declarative toolbar + commands + inline SVG icons + keyboard shortcuts.
-- `codeLanguages` pass-through prop.
+- ~~`codeLanguages` pass-through prop.~~ Done 2026-09-02 —
+  [journal note](./2026-09-02_code-languages-prop.md).
 - v1 public-API design pass — the subpath-export question, `onFrontmatter`
   exposure, dark-theme tokens.
 - Publish automation.
