@@ -53,6 +53,14 @@ untouched, and must not gate v1.
   the amendment to ADR-001 recorded in the status line above.
 - `source`, `preview`, and `split` remain available via `mode`.
 
+  > **Rollout staged by
+  > [ADR-004](./2026-09-01_adr-004-in-place-decoration-canvas.md)
+  > (2026-09-01):** the decoration architecture and the v1 node set are
+  > specified there, and the canvas is built incrementally. The default `mode`
+  > stays `source` until every v1 node type is implemented and playground-
+  > verified; the flip to `in-place` is the final step. The committed end state
+  > — `in-place` as the default — is unchanged.
+
 #### 2. Declarative developer toolbar API
 
 - The toolbar is configured with a single declarative prop; developers can lock

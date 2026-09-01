@@ -69,14 +69,20 @@ The UX layer, customization API, and design-token system are specified in
 
 `<Stylo mode>` selects the interaction layout:
 
-- `in-place` (default) — Notion-like in-place canvas with live LaTeX math, headings, and code preview via CodeMirror 6 view decorations.
+- `in-place` — Notion-like canvas: headings and LaTeX math render live in the
+  CodeMirror surface via view decorations, with the raw source revealed under
+  the cursor. Architecture and v1 node set in
+  [ADR-004](../../journal/2026-09/2026-09-01_adr-004-in-place-decoration-canvas.md).
 - `source` — raw CodeMirror Markdown text surface.
 - `preview` — rendered HTML/KaTeX preview pane.
 - `split` — side-by-side editing and preview with synchronized scroll.
 
 **Implemented today:** `source`, `preview`, and `split` (the last with a
-proportional scroll link between panes). `in-place` is planned and currently
-falls back to `source`; the interim default is `source`. See the
+proportional scroll link between panes). `in-place` is being built incrementally
+([ADR-004](../../journal/2026-09/2026-09-01_adr-004-in-place-decoration-canvas.md),
+[tracker](../../journal/2026-09/2026-09-01_in-place-canvas.md)); until it is
+complete it falls back to `source`, which is also the interim default. Once the
+canvas ships, `in-place` becomes the default per ADR-002 §1. See the
 [foundation milestone](../../journal/2026-09/2026-09-01_foundation-milestone.md)
 and the [split-mode note](../../journal/2026-09/2026-09-01_split-mode.md).
 
