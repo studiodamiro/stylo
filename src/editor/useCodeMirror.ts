@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react"
-import { Annotation, Compartment, EditorState } from "@codemirror/state"
+import { Annotation, Compartment, EditorState, type Extension } from "@codemirror/state"
 import { EditorView } from "@codemirror/view"
 import { baseExtensions, dynamicConfig } from "./extensions"
 
@@ -13,6 +13,11 @@ export interface UseCodeMirrorOptions {
   placeholder?: string
   /** Called with the `EditorView` once it is created, and with `null` on teardown. */
   onViewChange?: (view: EditorView | null) => void
+  /**
+   * Extra extensions merged in at construction (e.g. the in-place decoration
+   * layer). Captured once — pass a stable, module-level array.
+   */
+  extensions?: Extension[]
 }
 
 /**
@@ -25,6 +30,7 @@ export function useCodeMirror({
   readOnly = false,
   placeholder,
   onViewChange,
+  extensions,
 }: UseCodeMirrorOptions) {
   const parent = useRef<HTMLDivElement | null>(null)
   const viewRef = useRef<EditorView | null>(null)
@@ -47,6 +53,7 @@ export function useCodeMirror({
         extensions: [
           baseExtensions(),
           dynamic.current.of(dynamicConfig({ readOnly, placeholder })),
+          ...(extensions ?? []),
           EditorView.updateListener.of((update) => {
             if (!update.docChanged) return
             if (update.transactions.some((t) => Boolean(t.annotation(External)))) return

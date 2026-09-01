@@ -22,6 +22,19 @@
   outline-offset: -2px;
 }
 
+.inplace {
+  overflow: auto;
+}
+
+.inplace :global(.cm-editor) {
+  height: 100%;
+}
+
+.inplace :global(.cm-editor.cm-focused) {
+  outline: 2px solid var(--stylo-ring);
+  outline-offset: -2px;
+}
+
 .split {
   display: grid;
   grid-template-columns: 1fr 1fr;

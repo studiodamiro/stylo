@@ -19,13 +19,3 @@ test("split mode renders both the source surface and the preview, with no warnin
 
   warn.mockRestore()
 })
-
-test("in-place still falls back to source with one warning", () => {
-  const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
-  const { container } = render(<Stylo value="x" onChange={() => {}} mode="in-place" />)
-
-  expect(container.querySelector('[data-stylo-mode="source"]')).not.toBeNull()
-  expect(warn).toHaveBeenCalledOnce()
-
-  warn.mockRestore()
-})

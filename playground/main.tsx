@@ -40,7 +40,7 @@ const greet = (name: string) => \`hello, \${name}\`
 \`\`\`
 `
 
-const MODES: StyloMode[] = ["source", "preview", "split"]
+const MODES: StyloMode[] = ["source", "preview", "split", "in-place"]
 
 function App() {
   const [doc, setDoc] = useState(DEMO)

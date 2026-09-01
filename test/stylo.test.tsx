@@ -1,4 +1,4 @@
-import { afterEach, expect, test, vi } from "vitest"
+import { afterEach, expect, test } from "vitest"
 import { cleanup, render } from "@testing-library/react"
 import { Stylo } from "../src/Stylo"
 
@@ -10,15 +10,11 @@ test("renders a CodeMirror source surface by default", () => {
   expect(container.querySelector(".stylo")).not.toBeNull()
 })
 
-test("an unimplemented mode falls back to source with one warning", () => {
-  const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
-  const { container } = render(<Stylo value="x" onChange={() => {}} mode="in-place" />)
+test("an out-of-range mode value falls back to source", () => {
+  const { container } = render(<Stylo value="x" onChange={() => {}} mode={"bogus" as never} />)
 
   expect(container.querySelector(".cm-editor")).not.toBeNull()
   expect(container.querySelector('[data-stylo-mode="source"]')).not.toBeNull()
-  expect(warn).toHaveBeenCalledOnce()
-
-  warn.mockRestore()
 })
 
 test("forwards a custom className onto the root", () => {
