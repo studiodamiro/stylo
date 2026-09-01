@@ -93,6 +93,15 @@ Mark a row `✅` and fill in the commit hash as it lands.
   handler in `inPlaceExtension` calls `onWikiLinkClick`, threaded from `Stylo`
   through `InPlaceView` via a ref. Also fixed: the heading branch no longer
   stops the tree walk, so emphasis and links inside a heading are decorated.
+- 2026-09-01 — increment 4: the in-place module was split for the 200-line
+  ceiling — `scan.ts` (shared `inCodeContext` / `rangeRevealed`), `wikilinks.ts`,
+  `math.ts`. `math.ts` renders `$…$` and single-line `$$…$$` from the viewport
+  plugin and multi-line `$$…$$` blocks from a `StateField` (a `ViewPlugin` may
+  not emit a replacement that spans line breaks); the field scans the whole
+  document, acceptable because `$$` blocks are few. Widgets call
+  `katex.render` directly. `atomicRanges` are provided from both the plugin and
+  the field so the caret steps over rendered math. `katex` is now shared
+  (deduplicated) between the preview and in-place chunks.
 - 2026-09-01 — increment 5: the tree-node handling moved from `decorate.ts` into
   `nodes.ts`, leaving `decorate.ts` a thin orchestrator. Added horizontal rules
   (an `<hr>` widget, atomic), blockquote line framing (border + muted colour,
@@ -103,15 +112,6 @@ Mark a row `✅` and fill in the commit hash as it lands.
   "Properties" chip, revealed when the caret enters it; `decorate.ts` skips
   every node inside that range. Chip-vs-rendered-properties is recorded as a v1
   API-pass decision.
-- 2026-09-01 — increment 4: the in-place module was split for the 200-line
-  ceiling — `scan.ts` (shared `inCodeContext` / `rangeRevealed`), `wikilinks.ts`,
-  `math.ts`. `math.ts` renders `$…$` and single-line `$$…$$` from the viewport
-  plugin and multi-line `$$…$$` blocks from a `StateField` (a `ViewPlugin` may
-  not emit a replacement that spans line breaks); the field scans the whole
-  document, acceptable because `$$` blocks are few. Widgets call
-  `katex.render` directly. `atomicRanges` are provided from both the plugin and
-  the field so the caret steps over rendered math. `katex` is now shared
-  (deduplicated) between the preview and in-place chunks.
 
 ## After in-place
 
