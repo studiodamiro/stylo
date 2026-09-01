@@ -18,14 +18,13 @@ export interface NodeCtx {
   doc: Text
   revealed: Set<number>
   out: Range<Decoration>[]
-  atomic: Range<Decoration>[]
   /** End of the frontmatter block, or -1. Nodes within are left to `frontmatterField`. */
   fmEnd: number
 }
 
 /** Decorate one syntax node. Returns `false` to stop descent, `undefined` to continue. */
 export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undefined {
-  const { doc, revealed, out, atomic, fmEnd } = ctx
+  const { doc, revealed, out, fmEnd } = ctx
   if (node.to <= fmEnd) return false
 
   const heading = HEADING.exec(node.name)
@@ -84,9 +83,7 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
   if (node.name === "HorizontalRule") {
     const line = doc.lineAt(node.from)
     if (!revealed.has(line.number)) {
-      const deco = Decoration.replace({ widget: new HrWidget() })
-      out.push(deco.range(line.from, line.to))
-      atomic.push(deco.range(line.from, line.to))
+      out.push(Decoration.replace({ widget: new HrWidget() }).range(line.from, line.to))
     }
     return false
   }

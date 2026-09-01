@@ -234,3 +234,38 @@ test("a math widget renders KaTeX markup", async () => {
   })
   expect(dom?.querySelector(".katex")).not.toBeNull()
 })
+
+function atomicCount(view: EditorView): number {
+  let n = 0
+  view.plugin(inPlacePlugin)!.atomic.between(0, view.state.doc.length, (from, to) => {
+    if (from < to) n += 1
+  })
+  return n
+}
+
+test("hidden markers are registered as atomic ranges", async () => {
+  const { view } = await mount("line one\n\nsome **bold** here")
+  view.dispatch({ selection: { anchor: 0 } }) // caret off the bold line
+
+  expect(hidesAMarker(view)).toBe(true)
+  expect(atomicCount(view)).toBe(2) // the two hidden ** markers
+
+  view.dispatch({ selection: { anchor: view.state.doc.length } }) // onto the bold line
+  expect(atomicCount(view)).toBe(0)
+})
+
+test("an unclosed ** does not crash and is not collapsed", async () => {
+  const { view } = await mount("line one\n\n**not closed here")
+  view.dispatch({ selection: { anchor: 0 } })
+
+  expect(hidesAMarker(view)).toBe(false)
+  expect(atomicCount(view)).toBe(0)
+})
+
+test("a document-wide selection reveals every marker", async () => {
+  const { view } = await mount("# Heading\n\n**bold** and `code` and [[Link]]")
+  view.dispatch({ selection: { anchor: 0, head: view.state.doc.length } })
+
+  expect(hidesAMarker(view)).toBe(false)
+  expect(atomicCount(view)).toBe(0)
+})

@@ -56,16 +56,16 @@ first (increment 0).
 
 ## Increments
 
-| #   | Increment                                                                       | Status | Commit | Notes                                                                                                                                                       |
-| --- | ------------------------------------------------------------------------------- | ------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0   | ADR-004 — decoration architecture + v1 scope                                    | ✅     | —      | Merged into this tracker; see [ADR-004](./2026-09-01_adr-004-in-place-decoration-canvas.md).                                                                |
-| 1   | Plugin skeleton, viewport decoration builder, cursor-reveal mechanism, headings | ✅     | —      | `src/inplace/*`; lazy `InPlaceView`; ATX headings at display size, `#` hidden off the caret line.                                                           |
-| 2   | Emphasis — bold / italic / strikethrough / inline code                          | ✅     | —      | Inline rule table in `decorate.ts`; canvas switched to a proportional font (code stays monospace).                                                          |
-| 3   | Links + wikilinks                                                               | ✅     | —      | `Link` case + regex `[[…]]` scan with a code-context guard; shared pattern in `src/wikilink.ts`; delegated click → `onWikiLinkClick`.                       |
-| 4   | Block and inline math widgets (KaTeX)                                           | ✅     | —      | `math.ts` split out: inline / one-line `$$` in the plugin, multi-line `$$` in a `StateField` (plugins can't replace line breaks); `atomicRanges` from both. |
-| 5   | Horizontal rule, blockquote, list markers, hide frontmatter                     | ✅     | —      | `nodes.ts` split from `decorate.ts`; `HrWidget` / `BulletWidget`; `frontmatterField` hides the YAML behind a "Properties" chip; task items left as source.  |
-| 6   | Cursor-reveal edge cases + `atomicRanges` pass                                  | ☐      |        |                                                                                                                                                             |
-| 7   | Flip default `mode` to `in-place`; ADR-002 amendment; wiki + props updates      | ☐      |        |                                                                                                                                                             |
+| #   | Increment                                                                       | Status | Commit | Notes                                                                                                                                                          |
+| --- | ------------------------------------------------------------------------------- | ------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0   | ADR-004 — decoration architecture + v1 scope                                    | ✅     | —      | Merged into this tracker; see [ADR-004](./2026-09-01_adr-004-in-place-decoration-canvas.md).                                                                   |
+| 1   | Plugin skeleton, viewport decoration builder, cursor-reveal mechanism, headings | ✅     | —      | `src/inplace/*`; lazy `InPlaceView`; ATX headings at display size, `#` hidden off the caret line.                                                              |
+| 2   | Emphasis — bold / italic / strikethrough / inline code                          | ✅     | —      | Inline rule table in `decorate.ts`; canvas switched to a proportional font (code stays monospace).                                                             |
+| 3   | Links + wikilinks                                                               | ✅     | —      | `Link` case + regex `[[…]]` scan with a code-context guard; shared pattern in `src/wikilink.ts`; delegated click → `onWikiLinkClick`.                          |
+| 4   | Block and inline math widgets (KaTeX)                                           | ✅     | —      | `math.ts` split out: inline / one-line `$$` in the plugin, multi-line `$$` in a `StateField` (plugins can't replace line breaks); `atomicRanges` from both.    |
+| 5   | Horizontal rule, blockquote, list markers, hide frontmatter                     | ✅     | —      | `nodes.ts` split from `decorate.ts`; `HrWidget` / `BulletWidget`; `frontmatterField` hides the YAML behind a "Properties" chip; task items left as source.     |
+| 6   | Cursor-reveal edge cases + `atomicRanges` pass                                  | ✅     | —      | Atomic set now derived from every replacing decoration (markers + widgets), not just widgets. Line-span reveal kept; per-node reveal deferred to the API pass. |
+| 7   | Flip default `mode` to `in-place`; ADR-002 amendment; wiki + props updates      | ☐      |        |                                                                                                                                                                |
 
 Mark a row `✅` and fill in the commit hash as it lands.
 
@@ -112,6 +112,17 @@ Mark a row `✅` and fill in the commit hash as it lands.
   "Properties" chip, revealed when the caret enters it; `decorate.ts` skips
   every node inside that range. Chip-vs-rendered-properties is recorded as a v1
   API-pass decision.
+- 2026-09-01 — fenced code fix: fenced / indented code blocks render inside a
+  monospace, tinted, rounded container. Off-caret, a fenced block's ` ``` `
+  lines have their text replaced and the rows collapse to zero height, acting as
+  the container's padding; the caret entering the block restores the fences
+  (dimmed).
+- 2026-09-01 — increment 6: the atomic-range set is now derived by filtering
+  every replacing decoration out of the built set — marker-hiding replaces
+  included, not just widgets — so the caret jumps hidden `#`, `**`, `[[`, `](…)`
+  in one keypress. The separate `atomic` array threaded through `nodes.ts` and
+  `math.ts` is gone. The line-span reveal model is kept as ADR-004 chose it;
+  per-node reveal is left to the customization API as a `reveal` option.
 
 ## After in-place
 
