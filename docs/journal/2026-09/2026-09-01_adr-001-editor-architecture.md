@@ -35,7 +35,7 @@ plain-Markdown tools. Three broad approaches were on the table:
    unified / `remark` / `rehype` pipeline plus KaTeX for rendering. This is the
    architecture Obsidian itself uses (CodeMirror 6).
 
-The project's zero-bloat mandate (see `` §2.2) weighs every transitive
+The project's zero-bloat mandate (see `CONTRIBUTING.md`) weighs every transitive
 dependency as a cost borne by every consumer of the library.
 
 ## Decision

@@ -27,7 +27,7 @@ started as a standalone, reusable React component library.
   (published to npm as the scoped package `@damiro/stylo` — the unscoped name is
   taken).
 - Seeded it from Sympose:
-  - `` rewritten for Stylo — kept the
+  - Engineering guidelines written for Stylo — kept the
     stack-agnostic execution guidelines (think before coding, simplicity &
     modular cleanliness, surgical changes & verification, the < 200 LOC ceiling),
     dropped the Python-only rules (TTFT SLA, path-traversal, mutexes, persona

@@ -131,7 +131,7 @@ read it.
 ## Repository conventions
 
 - **The repository stays vendor-neutral.** Editor-specific and local workspace
-  configuration — e.g. ``, `.agents/`, `.cursor/` — is `.gitignore`d and
+  configuration — e.g. `.agents/`, `.cursor/` — is `.gitignore`d and
   never committed. Standards that belong to the project live here and in `docs/`,
   not in .
 - **Commit messages**: imperative subject, prefixed by area
