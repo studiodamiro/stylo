@@ -11,7 +11,9 @@ tags: [demo, markdown]
 
 # Stylo playground
 
-A plain-text editor where the Markdown string is the source of truth.
+A plain-text editor where the Markdown string is the source of truth. Text can be
+**bold**, *italic*, ~~struck through~~, or \`inline code\` — the markers hide in
+the in-place canvas until the caret lands on the line.
 
 ## What works today
 
