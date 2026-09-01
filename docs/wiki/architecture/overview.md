@@ -31,7 +31,7 @@ framework:
 
 | Concern          | Library                                                                    | Role                                                                                                   |
 | ---------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Editing surface  | CodeMirror 6 (`@codemirror/lang-markdown`, `@codemirror/language-data`)    | Text input, selection, syntax-aware source styling, toolbar commands as transactions                   |
+| Editing surface  | CodeMirror 6 (`@codemirror/lang-markdown`)                                 | Text input, selection, syntax-aware source styling, toolbar commands as transactions                   |
 | Render / preview | `react-markdown` + `remark-gfm` + `remark-math` + `rehype-katex` + `katex` | Markdown string → React element tree for the preview pane                                              |
 | `[[wikilinks]]`  | small custom `remark` plugin (~30 LOC)                                     | Rewrites `[[target]]` / `[[target\|label]]` into link nodes with a `data-wikilink` target              |
 | Frontmatter      | `remark-frontmatter` (render side) + `gray-matter` (parse side)            | Keeps the leading `---` YAML block out of the rendered body; exposes it as structured data to the host |

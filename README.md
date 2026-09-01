@@ -37,7 +37,7 @@ truth.** The editor is a thin, composable surface over it.
 
 | Concern          | Library                                                                     |
 | ---------------- | --------------------------------------------------------------------------- |
-| Editing surface  | CodeMirror 6 (`@codemirror/lang-markdown`, `@codemirror/language-data`)     |
+| Editing surface  | CodeMirror 6 (`@codemirror/lang-markdown`)                                  |
 | Render / preview | `react-markdown` + `remark-gfm` + `remark-math` + `rehype-katex` + `katex`  |
 | `[[wikilinks]]`  | small custom `remark` plugin                                                |
 | Frontmatter      | `remark-frontmatter` (render) + `gray-matter` (parse)                       |
@@ -79,7 +79,6 @@ npm run typecheck
 npm run test
 npm run build      # library bundle
 ```
-
 
 ## License
 

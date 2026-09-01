@@ -49,6 +49,15 @@ Adopt approach **3**. Specifically:
 - **Editing surface:** CodeMirror 6 — `@codemirror/lang-markdown` with
   `@codemirror/language-data` for fenced-code sub-highlighting. Toolbar actions
   are dispatched as CodeMirror transactions.
+
+  > **Amended 2026-09-01 (foundation milestone):** `@codemirror/language-data` is
+  > dropped. Passing the full grammar set emits ~110 lazy language chunks into the
+  > published package for a notes editor where code blocks are incidental — the
+  > zero-bloat mandate inverted. Fenced blocks keep Markdown-level styling;
+  > per-language highlighting becomes an opt-in `codeLanguages` pass-through prop.
+  > See
+  > [the journal note](./2026-09-01_drop-codemirror-language-data.md).
+
 - **Render pipeline:** `react-markdown` + `remark-gfm` + `remark-math` +
   `rehype-katex` + `katex`.
 - **Wikilinks:** a small custom `remark` plugin (~30 LOC) rewriting

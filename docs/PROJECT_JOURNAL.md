@@ -23,6 +23,7 @@ milestones and Architectural Decision Records, newest first.
 
 ## Milestones
 
-| Date       | Entry                                                                                             |
-| ---------- | ------------------------------------------------------------------------------------------------- |
-| 2026-09-01 | [Project Genesis — Stylo extracted from Sympose](./journal/2026-09/2026-09-01_project-genesis.md) |
+| Date       | Entry                                                                                                                                     |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-01 | [Drop `@codemirror/language-data` for a pass-through `codeLanguages` prop](./journal/2026-09/2026-09-01_drop-codemirror-language-data.md) |
+| 2026-09-01 | [Project Genesis — Stylo extracted from Sympose](./journal/2026-09/2026-09-01_project-genesis.md)                                         |

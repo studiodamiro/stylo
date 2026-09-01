@@ -1,16 +1,23 @@
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands"
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown"
-import { languages } from "@codemirror/language-data"
 import { EditorState, type Extension } from "@codemirror/state"
 import { EditorView, keymap, placeholder as placeholderExt } from "@codemirror/view"
 import { styloTheme } from "./theme"
 
-/** Static extensions — created once with the view. */
+/**
+ * Static extensions — created once with the view.
+ *
+ * No `codeLanguages`: fenced blocks get Markdown-level styling only. Passing the
+ * full `@codemirror/language-data` grammar set emitted ~110 lazy language chunks
+ * into the published package — the zero-bloat mandate inverted for a notes
+ * editor. Per-language highlighting will return as an opt-in `codeLanguages`
+ * pass-through prop. See the 2026-09-01 journal note and the ADR-001 amendment.
+ */
 export function baseExtensions(): Extension {
   return [
     history(),
     keymap.of([...defaultKeymap, ...historyKeymap]),
-    markdown({ base: markdownLanguage, codeLanguages: languages }),
+    markdown({ base: markdownLanguage }),
     EditorView.lineWrapping,
     styloTheme,
   ]
