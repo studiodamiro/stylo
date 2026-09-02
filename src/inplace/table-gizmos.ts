@@ -64,14 +64,32 @@ export function createTableGizmos(doc: Document, host: GizmoHost): TableGizmos {
     return b
   }
 
-  const addCol = button("cm-inplace-tg-add cm-inplace-tg-addcol", "Add column", () =>
+  /**
+   * A full-edge hit strip (the whole right edge adds a column, the whole bottom
+   * edge adds a row — click anywhere along it, Obsidian style). The `+` glyph
+   * tracks the pointer down / across the strip so it stays in view on a tall
+   * table.
+   */
+  const edge = (axis: "col" | "row", label: string, onClick: () => void) => {
+    const strip = button(`cm-inplace-tg-edge cm-inplace-tg-add${axis}`, label, onClick)
+    const plus = doc.createElement("span")
+    plus.className = "cm-inplace-tg-plus"
+    plus.textContent = "+"
+    strip.appendChild(plus)
+    strip.addEventListener("mousemove", (e) => {
+      const r = strip.getBoundingClientRect()
+      if (axis === "col") plus.style.top = `${e.clientY - r.top}px`
+      else plus.style.left = `${e.clientX - r.left}px`
+    })
+    return strip
+  }
+
+  const addCol = edge("col", "Add column", () =>
     host.run({ kind: "insertColumn", at: host.dims().cols, focus: [1, host.dims().cols] }),
   )
-  addCol.textContent = "+"
-  const addRow = button("cm-inplace-tg-add cm-inplace-tg-addrow", "Add row", () =>
+  const addRow = edge("row", "Add row", () =>
     host.run({ kind: "insertRow", at: host.dims().rows, focus: [host.dims().rows, 0] }),
   )
-  addRow.textContent = "+"
   el.append(addCol, addRow, menu)
 
   let unbind: (() => void) | null = null
@@ -151,10 +169,14 @@ export function createTableGizmos(doc: Document, host: GizmoHost): TableGizmos {
     const rect = table.getBoundingClientRect()
     const left = rect.left - base.left
     const right = rect.right - base.left
+    // right edge, spanning the grid height
     addCol.style.left = `${right}px`
-    addCol.style.top = `${(top + bottom) / 2}px`
-    addRow.style.left = `${(left + right) / 2}px`
+    addCol.style.top = `${top}px`
+    addCol.style.height = `${bottom - top}px`
+    // bottom edge, spanning the grid width
+    addRow.style.left = `${left}px`
     addRow.style.top = `${bottom}px`
+    addRow.style.width = `${right - left}px`
   }
 
   return { el, layout, openFor, destroy: closeMenu }
