@@ -16,11 +16,20 @@ const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
  */
 export const inPlaceTheme = EditorView.theme({
   // The canvas reads as prose, not source. Code spans opt back into monospace.
+  //
+  // The horizontal gutter lives here, not on `.cm-line`. A `.cm-line` padding
+  // insets its text but not a line background/border (CSS paints those across
+  // the padding too) nor a block widget (a `block: true` replacement renders
+  // outside `.cm-line`). So a boxed block — fenced code, the blockquote bar, a
+  // rendered table, a `$$` math block — would otherwise bleed to the editor
+  // frame. Padding on `.cm-content` holds every one of them off the edge.
   "& .cm-content": {
     fontFamily:
       '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
     lineHeight: "1.75",
+    padding: "0.75rem",
   },
+  "& .cm-line": { paddingLeft: "0", paddingRight: "0" },
 
   ".cm-inplace-heading": { fontWeight: "600" },
   ".cm-inplace-h1": { fontSize: "2.25em", lineHeight: "1.1111111", paddingTop: "0.35em" },
@@ -41,12 +50,16 @@ export const inPlaceTheme = EditorView.theme({
     background: "color-mix(in srgb, var(--stylo-border) 45%, transparent)",
   },
 
+  // Fenced / indented code block rows. The background runs the full line width
+  // and the text is inset by `0.9rem`, mirroring the preview surface's `pre`
+  // (`stylo.module.css`) so a block lines up with the prose column on both
+  // edges. No horizontal margin — that inset the background and read as a
+  // floating, too-narrow block against every other flush block.
   ".cm-inplace-mono": {
     fontFamily: MONO,
     fontSize: "0.9em",
     background: "color-mix(in srgb, var(--stylo-border) 35%, transparent)",
-    margin: "0 0.25rem",
-    padding: "0 0.65rem",
+    padding: "0 0.9rem",
   },
   // Vertical spacing is padding, never margin, on anything CodeMirror measures
   // for its height map (`.cm-line` decorations, block/inline widgets): margin
