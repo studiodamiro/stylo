@@ -5,13 +5,15 @@ import type { SyntaxNode } from "@lezer/common"
 import { type Align, parseGrid } from "../toolbar/table-grid"
 import { inPlaceConfigFacet, tableEditingFacet } from "./config"
 import { frontmatterRange } from "./frontmatter"
+import { renderInline } from "./inline-md"
 import { revealedLines } from "./reveal"
 import { EditableTableWidget, fromTableWidget, type ParsedTable } from "./table-widget"
 
 /**
- * A GFM pipe table rendered as a real `<table>`. Cell text is shown verbatim —
- * inline formatting inside cells (`**bold**`, `` `code` ``, links, math) is a
- * follow-up; the caret entering any table line reveals the full source.
+ * A GFM pipe table rendered as a real `<table>`. Cell text is run through
+ * `renderInline` so `**bold**`, `` `code` ``, `[links]`, `[[wikilinks]]`, and
+ * `$math$` display formatted; the caret entering any table line still reveals
+ * the full source.
  */
 class TableWidget extends WidgetType {
   constructor(readonly table: ParsedTable) {
@@ -27,10 +29,13 @@ class TableWidget extends WidgetType {
     const el = document.createElement("table")
     el.className = "cm-inplace-table"
 
+    // `\|` is a literal pipe inside a GFM cell — unescape before inline parsing.
+    const cell = (raw: string) => renderInline(raw.replace(/\\\|/g, "|"))
+
     const hr = el.createTHead().insertRow()
     head.forEach((text, i) => {
       const th = document.createElement("th")
-      th.textContent = text
+      th.appendChild(cell(text))
       th.dataset.styloRow = "0"
       th.dataset.styloCol = String(i)
       align(th, aligns[i])
@@ -42,7 +47,7 @@ class TableWidget extends WidgetType {
       const tr = tbody.insertRow()
       for (let i = 0; i < head.length; i++) {
         const td = tr.insertCell()
-        td.textContent = row[i] ?? ""
+        td.appendChild(cell(row[i] ?? ""))
         td.dataset.styloRow = String(r + 1)
         td.dataset.styloCol = String(i)
         align(td, aligns[i])

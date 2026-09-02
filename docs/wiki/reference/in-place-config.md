@@ -54,9 +54,11 @@ How the caret entering a table behaves. Optional, defaults to `"source"`.
 | `"source"` | The rendered `<table>` reveals its aligned pipe source under the caret — Tab / Shift-Tab / Enter walk the cells, widths and the delimiter rebuild live. Obsidian's _Source mode_.                                                                                                                              |
 | `"cells"`  | The rendered `<table>` stays on screen with `contenteditable` cells. Typing rewrites the matching Markdown, re-aligned on every keystroke; Tab / Enter move between cells, past the last cell adds a row; `↓` from the last row and `↑` from the header row return to the document. Obsidian's _Live Preview_. |
 
-Cell text is still plain — inline formatting inside a cell (`**bold**`,
-`` `code` ``, links, math) renders verbatim in both modes; that is a separate
-follow-up. Specified in
+In `"source"` mode a rendered cell shows inline formatting — `**bold**`,
+`*em*`, `~~strike~~`, `` `code` ``, `[links]`, `[[wikilinks]]`, `$math$` — and
+reveals the raw source when the caret lands on the table. In `"cells"` mode the
+cells are editable, so their content stays plain text (formatting still shows in
+`source` mode and `preview`). Specified in
 [ADR-006](../../journal/2026-09/2026-09-02_adr-006-interactive-table-editing.md).
 
 ## Applied at mount
@@ -73,8 +75,9 @@ Deferred, each its own later decision:
 - `inPlace.reveal` — `"line" | "node"` cursor-reveal granularity.
 - `inPlace.frontmatter` — a `source` / `inline` / `properties` display mode; the
   `properties` panel needs YAML parsing and its own dependency.
-- Inline formatting inside table cells (both `table` modes), and structural
-  controls on the `"cells"` widget — add/remove column, remove row, alignment.
+- Inline formatting inside `"cells"`-mode editable cells (needs per-cell
+  reveal-on-focus), and structural controls on that widget — add/remove column,
+  remove row, alignment.
 - A consumer-supplied decorator hook for custom in-place node types.
 
 See the [in-place canvas tracker](../../journal/2026-09/2026-09-01_in-place-canvas.md)

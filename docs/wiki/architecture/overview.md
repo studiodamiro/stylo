@@ -74,7 +74,8 @@ The UX layer, customization API, and design-token system are specified in
   checkboxes, and GFM tables render live in the CodeMirror surface via view
   decorations, with the raw source revealed under the caret. Fenced-code syntax
   highlighting stays as source for now (waits on the `codeLanguages` prop);
-  rendered table cells show their text verbatim, without inline formatting.
+  rendered table cells show inline formatting (`**bold**`, `` `code` ``, links,
+  wikilinks, `$math$`) but the caret entering a table line reveals the source.
   Architecture and node set in
   [ADR-004](../../journal/2026-09/2026-09-01_adr-004-in-place-decoration-canvas.md).
 - `source` — raw CodeMirror Markdown text surface; loads no render chunk.
