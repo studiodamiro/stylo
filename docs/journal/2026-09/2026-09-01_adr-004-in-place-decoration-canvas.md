@@ -105,6 +105,17 @@ Approach **A** is the only one that does not fork the source of truth.
    > the caret cumulatively further off the further down the document the click
    > was. See the
    > [click-to-position journal note](./2026-09-02_in-place-click-mapping.md).
+   >
+   > **Amended 2026-09-03 (boxed-block gutter):** the in-place horizontal gutter
+   > moved from `.cm-line` to `.cm-content`. A `.cm-line` padding insets the
+   > line's text but not a background or border painted on that line, nor a
+   > `block: true` widget (which renders outside `.cm-line`) — so fenced code,
+   > the blockquote bar, rendered tables, and `$$` math blocks were all bleeding
+   > to the editor frame. `padding` on `.cm-content` (in `inPlaceTheme` only,
+   > with `.cm-line` horizontal padding zeroed) holds every block off the edge
+   > by the same `0.75rem`; `source` mode keeps the base `.cm-line` gutter.
+   > Companion to the no-vertical-`margin` rule above. See the
+   > [boxed-block gutter journal note](./2026-09-03_boxed-block-gutter.md).
 
 5. **Math is typeset directly with `katex`.** Widgets call
    `katex.renderToString(src, { throwOnError: false, displayMode })` — not the
