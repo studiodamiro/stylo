@@ -157,6 +157,12 @@ export const inPlaceTheme = EditorView.theme({
     position: "relative",
     display: "inline-block",
     maxWidth: "100%",
+    // Reserve the right / bottom gutters the edge strips occupy. `border-collapse`
+    // makes the browser ignore padding on the `<table>` itself, so without this
+    // the wrapper is sized to the bare grid and the strips overflow it — the row
+    // strip spilling into the block below. Padding (not margin) so CodeMirror's
+    // height map still measures the widget correctly.
+    padding: "0 calc(1em + 4px) calc(1em + 4px) 0",
   },
   ".cm-inplace-table-gizmos": {
     position: "absolute",
