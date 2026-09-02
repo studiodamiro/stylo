@@ -28,6 +28,7 @@ milestones and Architectural Decision Records, newest first.
 
 | Date       | Entry                                                                                                                                             |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-03 | [In-place canvas — boxed blocks hold off the editor frame](./journal/2026-09/2026-09-03_boxed-block-gutter.md)                                    |
 | 2026-09-02 | [Structural controls on the editable table](./journal/2026-09/2026-09-02_table-structural-controls.md)                                            |
 | 2026-09-02 | [Syntax highlighting — a token palette for fenced code](./journal/2026-09/2026-09-02_syntax-highlighting.md)                                      |
 | 2026-09-02 | [Toolbar inline commands inside editable table cells](./journal/2026-09/2026-09-02_table-cell-inline-commands.md)                                 |
