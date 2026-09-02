@@ -7,20 +7,26 @@ const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
  * extension (via `EditorView.theme`), so `source` mode is untouched. Sizes are
  * relative to the editor font so they track the host's type scale; colour stays
  * inherited from the `--stylo-*` tokens.
+ *
+ * Vertical rhythm mirrors the `preview` surface, which follows Tailwind's
+ * `prose` scale (reference only, no plugin). The match is approximate here: a
+ * `.cm-line` cannot take a `margin` without drifting click-to-position (see the
+ * 2026-09-02 click-mapping note), and a blank source line already supplies most
+ * of the inter-block gap, so heading `padding-top` is trimmed accordingly.
  */
 export const inPlaceTheme = EditorView.theme({
   // The canvas reads as prose, not source. Code spans opt back into monospace.
   "& .cm-content": {
     fontFamily:
       '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-    lineHeight: "1.6",
+    lineHeight: "1.75",
   },
 
-  ".cm-inplace-heading": { fontWeight: "600", lineHeight: "1.25" },
-  ".cm-inplace-h1": { fontSize: "1.6em" },
-  ".cm-inplace-h2": { fontSize: "1.35em" },
-  ".cm-inplace-h3": { fontSize: "1.15em" },
-  ".cm-inplace-h4": { fontSize: "1em" },
+  ".cm-inplace-heading": { fontWeight: "600" },
+  ".cm-inplace-h1": { fontSize: "2.25em", lineHeight: "1.1111111", paddingTop: "0.35em" },
+  ".cm-inplace-h2": { fontSize: "1.5em", lineHeight: "1.3333333", paddingTop: "0.7em" },
+  ".cm-inplace-h3": { fontSize: "1.25em", lineHeight: "1.6", paddingTop: "0.6em" },
+  ".cm-inplace-h4": { fontSize: "1em", lineHeight: "1.5", paddingTop: "0.5em" },
   ".cm-inplace-h5": { fontSize: "0.9em" },
   ".cm-inplace-h6": { fontSize: "0.9em", color: "var(--stylo-text-muted)" },
 
@@ -71,23 +77,31 @@ export const inPlaceTheme = EditorView.theme({
 
   ".cm-inplace-math-block": {
     display: "block",
-    padding: "0.6em 0",
+    padding: "0.9em 0",
     textAlign: "center",
   },
   ".cm-inplace-math-block .katex-display": { margin: "0" },
 
+  // The `---` line's own text row is zeroed (same recipe as the fenced-code
+  // fence rows) so it does not stack under the widget's height — that stacking
+  // was the extra space above and below the rule.
+  ".cm-inplace-hr-line": { fontSize: "0", lineHeight: "0" },
   ".cm-inplace-hr": {
     display: "block",
+    // ~one text row, so the rule renders in the `---`'s own footprint with no
+    // extra space and no shift when the caret enters (Obsidian's behaviour).
+    // `rem` not `em` because the line's font-size is zeroed above. No margin,
+    // so CodeMirror's height map measures it right (2026-09-02 click-mapping).
+    height: "1.6rem",
+    margin: "0",
     border: "none",
-    height: "0",
-    padding: "0.5em 0",
-    // The rule is painted as a centred 1px background so the padding gives it
-    // breathing room without a margin CodeMirror can't see.
+    // A 1px hairline painted at the row's centre line.
     background:
       "linear-gradient(var(--stylo-border), var(--stylo-border)) left center / 100% 1px no-repeat",
   },
   ".cm-inplace-quote": {
-    borderLeft: "3px solid var(--stylo-border)",
+    borderLeft: "0.25rem solid var(--stylo-border)",
+    paddingLeft: "1.75rem",
     color: "var(--stylo-text-muted)",
   },
   ".cm-inplace-bullet": { color: "var(--stylo-text-muted)" },
@@ -115,7 +129,7 @@ export const inPlaceTheme = EditorView.theme({
 
   ".cm-inplace-table": {
     borderCollapse: "collapse",
-    padding: "0.3em 0 0.9em",
+    padding: "1em 0 1.4em",
     fontSize: "0.95em",
   },
   ".cm-inplace-table th": {

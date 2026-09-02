@@ -119,6 +119,15 @@ untouched, and must not gate v1.
   > "held to seven" line below is superseded — the set is eight, and the bar
   > against growth still stands (one token per real role, no shadcn-style
   > sprawl).
+  >
+  > **Amended 2026-09-02 (typography):** the rendered-content vertical rhythm
+  > (`.preview` and the in-place theme) takes **Tailwind's `prose`
+  > (`@tailwindcss/typography`) as a second visual reference** alongside
+  > shadcn — its `em`-based `line-height` / margin scale only, no plugin
+  > bundled, same terms as the shadcn reference. Divergences (tighter `hr`, no
+  > `max-width`, no `code` backticks, colour-only links, non-italic
+  > blockquotes) and the full scale are in the
+  > [typography note](./2026-09-02_typography-rhythm.md).
 
 #### 4. Icons: inline SVG, no icon dependency
 

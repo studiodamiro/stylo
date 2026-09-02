@@ -132,10 +132,13 @@
   min-height: 0;
 }
 
+/* Vertical rhythm follows Tailwind's `prose` (@tailwindcss/typography) as a
+   visual reference — the em-based scale only, no plugin bundled. Consumer CSS
+   wins: `.stylo p`, `.stylo h2`, … load after and match our specificity. */
 .preview {
   padding: 0.75rem 1rem;
   font-size: 0.9375rem;
-  line-height: 1.6;
+  line-height: 1.75;
   overflow-wrap: break-word;
 }
 
@@ -148,25 +151,47 @@
 }
 
 .preview :is(h1, h2, h3, h4, h5, h6) {
-  margin: 1.4em 0 0.5em;
   font-weight: 600;
-  line-height: 1.25;
 }
 
 .preview h1 {
-  font-size: 1.6em;
+  margin: 0 0 0.8888889em;
+  font-size: 2.25em;
+  line-height: 1.1111111;
 }
 
 .preview h2 {
-  font-size: 1.35em;
+  margin: 2em 0 1em;
+  font-size: 1.5em;
+  line-height: 1.3333333;
 }
 
 .preview h3 {
-  font-size: 1.15em;
+  margin: 1.6em 0 0.6em;
+  font-size: 1.25em;
+  line-height: 1.6;
 }
 
-.preview :is(p, ul, ol, blockquote, pre, table) {
-  margin: 0 0 0.9em;
+.preview :is(h4, h5, h6) {
+  margin: 1.5em 0 0.5em;
+  line-height: 1.5;
+}
+
+.preview p {
+  margin: 1.25em 0;
+}
+
+.preview :is(ul, ol) {
+  margin: 1.25em 0;
+  padding-left: 1.625em;
+}
+
+.preview li {
+  margin: 0.5em 0;
+}
+
+.preview li > :is(ul, ol) {
+  margin: 0.75em 0;
 }
 
 .preview a {
@@ -183,6 +208,7 @@
 }
 
 .preview pre {
+  margin: 1.7142857em 0;
   padding: 0.75rem 0.9rem;
   border-radius: var(--stylo-radius);
   background: color-mix(in srgb, var(--stylo-border) 35%, transparent);
@@ -226,13 +252,15 @@
 }
 
 .preview blockquote {
-  padding-left: 0.9em;
-  border-left: 3px solid var(--stylo-border);
+  margin: 1.6em 0;
+  padding-left: 1em;
+  border-left: 0.25rem solid var(--stylo-border);
   color: var(--stylo-text-muted);
 }
 
 .preview table {
   display: block;
+  margin: 2em 0;
   border-collapse: collapse;
   overflow-x: auto;
 }
@@ -243,8 +271,10 @@
   text-align: left;
 }
 
+/* prose sets `hr { margin: 3em 0 }`, which reads as a page break, not a rule.
+   GitHub / VS Code render it tight; `1em` each side matches that. */
 .preview hr {
-  margin: 1.5em 0;
+  margin: 1em 0;
   border: none;
   border-top: 1px solid var(--stylo-border);
 }

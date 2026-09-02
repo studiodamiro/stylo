@@ -91,6 +91,8 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
     if (!toggles.horizontalRule) return false
     const line = doc.lineAt(node.from)
     if (!revealed.has(line.number)) {
+      // Zero the line's own text-row strut; the widget alone sets the height.
+      out.push(Decoration.line({ class: "cm-inplace-hr-line" }).range(line.from))
       out.push(Decoration.replace({ widget: new HrWidget() }).range(line.from, line.to))
     }
     return false
