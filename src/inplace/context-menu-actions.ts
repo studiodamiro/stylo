@@ -144,7 +144,16 @@ const clipboardRows = (view: EditorView): MenuRow[] => {
  * when there is a selection; `null` when neither applies. Wikilinks keep the
  * plain toggle for now — the same field is a fast follow.
  */
-function linkRow(view: EditorView): MenuField | null {
+/** The `(...)` destination for a link — angle-bracketed when it has whitespace
+ *  or parens, so `[a](b c)` (invalid Markdown) becomes `[a](<b c>)`. */
+const linkDest = (url: string): string => {
+  const bare = url.trim().replace(/^<([^]*)>$/, "$1")
+  return /[\s()]/.test(bare) ? `<${bare.replace(/[<>]/g, "")}>` : bare
+}
+/** Strip angle brackets for display in the URL input. */
+const bareUrl = (url: string): string => url.replace(/^<([^]*)>$/, "$1")
+
+export function linkRow(view: EditorView): MenuField | null {
   const { state } = view
   const sel = state.selection.main
   const line = state.doc.lineAt(sel.head)
@@ -178,10 +187,10 @@ function linkRow(view: EditorView): MenuField | null {
       field: true,
       label: "Link",
       icon: ICON_PATHS.link,
-      value: parts.url,
+      value: bareUrl(parts.url),
       placeholder: "https://…",
       onSubmit: (url) => {
-        view.dispatch({ changes: { from: urlFrom, to: urlTo, insert: url } })
+        view.dispatch({ changes: { from: urlFrom, to: urlTo, insert: linkDest(url) } })
         view.focus()
       },
       actions: rowActions,
@@ -199,7 +208,7 @@ function linkRow(view: EditorView): MenuField | null {
       onSubmit: (url) => {
         const text = label || "link"
         view.dispatch({
-          changes: { from: sel.from, to: sel.to, insert: `[${text}](${url})` },
+          changes: { from: sel.from, to: sel.to, insert: `[${text}](${linkDest(url)})` },
           selection: { anchor: sel.from + 1, head: sel.from + 1 + text.length },
         })
         view.focus()

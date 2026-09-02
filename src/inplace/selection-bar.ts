@@ -10,12 +10,15 @@ import type { ToolbarCommandId } from "../types"
 import { BUILTIN_BY_ID } from "../toolbar/commands"
 import { ICON_PATHS, iconSvg } from "../toolbar/icon-paths"
 import { selectionBarEnabled } from "./config"
+import { createContextMenu, type ContextMenu } from "./context-menu"
+import { linkRow } from "./context-menu-actions"
 
 const IDS: ToolbarCommandId[] = ["bold", "italic", "strike", "code", "link", "wikilink", "math"]
 
 class SelectionBar implements PluginValue {
   private bar: HTMLElement
   private buttons = new Map<ToolbarCommandId, HTMLButtonElement>()
+  private linkMenu: ContextMenu
   // Scrolling detaches the bar from its selection — just dismiss it. It returns,
   // repositioned, on the next selection change.
   private onScroll = () => {
@@ -24,6 +27,8 @@ class SelectionBar implements PluginValue {
 
   constructor(private view: EditorView) {
     const doc = view.dom.ownerDocument
+    this.linkMenu = createContextMenu(doc)
+    view.dom.appendChild(this.linkMenu.el)
     this.bar = doc.createElement("div")
     this.bar.className = "cm-inplace-selbar"
     this.bar.setAttribute("contenteditable", "false")
@@ -39,6 +44,14 @@ class SelectionBar implements PluginValue {
       b.addEventListener("mousedown", (e) => e.preventDefault())
       b.addEventListener("click", (e) => {
         e.preventDefault()
+        // The link button opens the URL editor rather than dropping a
+        // `[text](url)` placeholder.
+        const field = id === "link" ? linkRow(view) : null
+        if (field) {
+          const r = b.getBoundingClientRect()
+          this.linkMenu.showField(field, r.left, r.bottom + 6)
+          return
+        }
         cmd.run(view)
         view.focus()
         this.schedule()
@@ -125,6 +138,7 @@ class SelectionBar implements PluginValue {
 
   destroy() {
     this.view.dom.ownerDocument.removeEventListener("scroll", this.onScroll, true)
+    this.linkMenu.destroy()
     this.bar.remove()
   }
 }
