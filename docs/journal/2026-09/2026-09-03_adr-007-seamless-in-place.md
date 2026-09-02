@@ -120,6 +120,16 @@ throughout.
 | 5 | Autoformat-on-type input rules (`## `, `- `, `> `, `**…**`, `` `…` ``, `[…](…)`). |
 | 6 | Flip the default to `"never"` once 2–5 are solid and dogfooded. `"caret"` stays available. |
 
+### Rollout log
+
+- **2026-09-03 — Stage 1 landed.** `inPlace.reveal: "caret" | "never"` added
+  (`RevealMode` in `types.ts`, `revealModeFacet` seeded by `inPlaceExtension`).
+  Under `"never"`, `buildDecorations` swaps the caret reveal set for an empty
+  one, so every inline marker stays hidden on every line; inline `$…$` math is
+  the one exception and keeps caret reveal for now. No boundary rules yet —
+  editing near a hidden marker is expected to misbehave; that is the Stage 2
+  input. Playground has a `reveal` selector next to `table editing`.
+
 ## Consequences
 
 ### Positive
