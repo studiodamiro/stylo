@@ -49,10 +49,10 @@ Every key is optional and defaults to `true`.
 
 How the caret entering a table behaves. Optional, defaults to `"source"`.
 
-| Value      | Behaviour                                                                                                                                                                                                                                                                                                      |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `"source"` | The rendered `<table>` reveals its aligned pipe source under the caret — Tab / Shift-Tab / Enter walk the cells, widths and the delimiter rebuild live. Obsidian's _Source mode_.                                                                                                                              |
-| `"cells"`  | The rendered `<table>` stays on screen with `contenteditable` cells. Typing rewrites the matching Markdown, re-aligned on every keystroke; Tab / Enter move between cells, past the last cell adds a row; `↓` from the last row and `↑` from the header row return to the document. Obsidian's _Live Preview_. |
+| Value      | Behaviour                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `"source"` | The rendered `<table>` reveals its aligned pipe source under the caret — Tab / Shift-Tab / Enter walk the cells, widths and the delimiter rebuild live. Obsidian's _Source mode_.                                                                                                                                                                                                                                                                                    |
+| `"cells"`  | The rendered `<table>` stays on screen with `contenteditable` cells. Typing rewrites the matching Markdown, re-aligned on every keystroke; Tab / Enter move between cells, past the last cell adds a row; `↓` from the last row and `↑` from the header row return to the document. Hovering the table shows an edge `+` to append a column or row; right-click (or long-press on touch) a cell for insert, delete, and column alignment. Obsidian's _Live Preview_. |
 
 Either way a rendered cell shows inline formatting — `**bold**`, `*em*`,
 `~~strike~~`, `` `code` ``, `[links]`, `[[wikilinks]]`, `$math$`. In `"source"`
@@ -78,8 +78,7 @@ Deferred, each its own later decision:
 - `inPlace.reveal` — `"line" | "node"` cursor-reveal granularity.
 - `inPlace.frontmatter` — a `source` / `inline` / `properties` display mode; the
   `properties` panel needs YAML parsing and its own dependency.
-- Structural controls on the `"cells"` widget — add/remove column, remove row,
-  set alignment.
+- Drag-to-reorder rows / columns and multi-cell selection on the `"cells"` widget.
 - A consumer-supplied decorator hook for custom in-place node types.
 
 See the [in-place canvas tracker](../../journal/2026-09/2026-09-01_in-place-canvas.md)
