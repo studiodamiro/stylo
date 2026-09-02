@@ -165,8 +165,13 @@ export const inPlaceTheme = EditorView.theme({
   },
   // right edge → add column; bottom edge → add row. Click anywhere along the
   // strip; it only shows itself (and its centred `+`) while the pointer is on it.
+  // The clearance from the grid edge is set in `table-gizmos.ts` `layout()` so it
+  // is identical on both strips; the tint matches the header-row fill.
   ".cm-inplace-tg-edge": {
     position: "absolute",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     pointerEvents: "auto",
     padding: "0",
     font: "inherit",
@@ -178,15 +183,11 @@ export const inPlaceTheme = EditorView.theme({
   },
   ".cm-inplace-tg-edge:hover": {
     opacity: "1",
-    background: "color-mix(in srgb, var(--stylo-ring) 10%, transparent)",
+    background: "color-mix(in srgb, var(--stylo-border) 30%, transparent)",
   },
-  ".cm-inplace-tg-addcol": { width: "1em", transform: "translateX(3px)" },
-  ".cm-inplace-tg-addrow": { height: "1em", transform: "translateY(3px)" },
+  ".cm-inplace-tg-addcol": { width: "1em" },
+  ".cm-inplace-tg-addrow": { height: "1em" },
   ".cm-inplace-tg-plus": {
-    position: "absolute",
-    left: "50%",
-    top: "50%",
-    transform: "translate(-50%, -50%)",
     fontSize: "0.95em",
     lineHeight: "1",
     color: "var(--stylo-text-muted)",
