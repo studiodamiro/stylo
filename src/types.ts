@@ -1,6 +1,48 @@
+import type { ReactNode } from "react"
 import type { Language, LanguageDescription } from "@codemirror/language"
 
 export type StyloMode = "in-place" | "source" | "preview" | "split"
+
+/**
+ * How `preview` (and the preview pane of `split`) treats the leading `---` YAML
+ * block. `"hidden"` (default) drops it from the render; `"code"` renders it as a
+ * styled `<pre class="stylo-frontmatter">` a consumer can restyle with its own
+ * CSS. A parsed key/value panel is deferred (ADR-001, needs a YAML parser).
+ */
+export type FrontmatterDisplay = "hidden" | "code"
+
+/**
+ * Built-in toolbar command identifiers. In a `ToolbarConfig["items"]` list,
+ * `"|"` inserts a visual separator. See ADR-002 §2.
+ */
+export type ToolbarCommandId =
+  | "undo"
+  | "redo"
+  | "h1"
+  | "h2"
+  | "h3"
+  | "bold"
+  | "italic"
+  | "strike"
+  | "code"
+  | "codeBlock"
+  | "link"
+  | "quote"
+  | "bulletList"
+  | "orderedList"
+  | "task"
+  | "hr"
+  | "frontmatter"
+  | "math"
+  | "mathBlock"
+
+export interface ToolbarConfig {
+  /**
+   * Ordered toolbar items — any subset of the built-in command ids, in any
+   * order, with `"|"` for a separator. Omit for the full default bar.
+   */
+  items?: (ToolbarCommandId | "|")[]
+}
 
 /**
  * Grammars for fenced-code sub-highlighting, forwarded verbatim to
@@ -53,10 +95,27 @@ export interface StyloProps {
   /** Configures the in-place canvas (ADR-005). Applied when it mounts. */
   inPlace?: InPlaceConfig
   /**
+   * How `preview` (and `split`'s preview pane) shows the leading `---` YAML
+   * block. `"hidden"` (default) drops it; `"code"` renders it as a styled
+   * `<pre class="stylo-frontmatter">`.
+   */
+  frontmatter?: FrontmatterDisplay
+  /**
    * Grammars for fenced-code sub-highlighting on the CodeMirror surfaces
    * (`source`, `split`, `in-place`). None by default. Read once, at mount.
    */
   codeLanguages?: CodeLanguages
+  /**
+   * Formatting toolbar above the editing surface (`source`, `in-place`,
+   * `split`; never `preview`). Omit or `true` for the default bar, `false` to
+   * hide it, or an object to choose and order the buttons. See ADR-002 §2.
+   */
+  toolbar?: boolean | ToolbarConfig
+  /**
+   * Replace individual toolbar glyphs, keyed by command id. Any id left out
+   * keeps its built-in inline-SVG icon — Stylo ships no icon dependency.
+   */
+  icons?: Partial<Record<ToolbarCommandId, ReactNode>>
   /** Render the source surface read-only. */
   readOnly?: boolean
   /** Placeholder text shown when the document is empty (source surface). */

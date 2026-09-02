@@ -10,6 +10,8 @@
 }
 
 .source {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
 }
 
@@ -23,7 +25,78 @@
 }
 
 .inplace {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  background: var(--stylo-bg);
+  border-bottom: 1px solid var(--stylo-border);
+}
+
+.toolbarButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 5px;
+  border: 0;
+  border-radius: calc(var(--stylo-radius) - 3px);
+  background: none;
+  color: var(--stylo-text-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.toolbarButton:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--stylo-border) 45%, transparent);
+  color: var(--stylo-text);
+}
+
+.toolbarButton[data-active] {
+  background: color-mix(in srgb, var(--stylo-accent) 12%, transparent);
+  color: var(--stylo-text);
+}
+
+.toolbarButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.toolbarButton:focus-visible {
+  outline: 2px solid var(--stylo-ring);
+  outline-offset: -2px;
+}
+
+.toolbarButton svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+/* Text glyphs that stand in for an icon (e.g. `fm`) — monospace to read as syntax. */
+.toolbarButton code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.toolbarSep {
+  align-self: stretch;
+  width: 1px;
+  margin: 4px 3px;
+  background: var(--stylo-border);
 }
 
 .inplace :global(.cm-editor) {
@@ -97,8 +170,8 @@
 }
 
 .preview a {
-  color: var(--stylo-accent);
-  text-underline-offset: 0.15em;
+  color: var(--stylo-link);
+  text-decoration: none;
 }
 
 .preview code {
@@ -120,6 +193,36 @@
   padding: 0;
   font-size: 0.85em;
   background: none;
+}
+
+/* frontmatter="code": the raw `---` block, recessed. `.stylo-frontmatter` is a
+   plain (unscoped) class so a consumer's own CSS overrides it at equal
+   specificity — restyle the block, or rename / remove the label:
+     .stylo-frontmatter::before { content: "Meta" }
+     .stylo-frontmatter::before { content: none } */
+:global(.stylo-frontmatter) {
+  margin: 0 0 1.2em;
+  padding: 0.7rem 0.9rem;
+  border-left: 3px solid var(--stylo-border);
+  border-radius: calc(var(--stylo-radius) - 3px);
+  background: color-mix(in srgb, var(--stylo-border) 22%, transparent);
+  color: var(--stylo-text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+:global(.stylo-frontmatter)::before {
+  content: "Frontmatter";
+  display: block;
+  margin-bottom: 0.5em;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .preview blockquote {

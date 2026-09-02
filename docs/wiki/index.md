@@ -28,6 +28,8 @@ _Pending first release._
 
 - [[reference/props|`<Stylo>` props]] — the current prop surface, styling tokens,
   and math setup.
+- [[reference/toolbar|Formatting toolbar]] — the `toolbar` prop, command ids,
+  keyboard shortcuts, and the `icons` override.
 - [[reference/in-place-config|In-place canvas configuration]] — the `inPlace`
   prop and its decoration toggles.
 - [[reference/code-languages|Fenced-code highlighting]] — the `codeLanguages`

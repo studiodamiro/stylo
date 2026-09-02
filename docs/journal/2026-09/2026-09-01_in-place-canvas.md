@@ -175,6 +175,16 @@ onChange />` with no `mode` now lazy-loads the in-place chunk (and the shared
   grammar-highlighted fenced code when a consumer opts in — no in-place-specific
   code. Container styling unchanged. Full write-up:
   [`codeLanguages` prop](./2026-09-02_code-languages-prop.md).
+- 2026-09-02 — the recessed YAML block's `::before` label changed from
+  `"Properties"` to `"Frontmatter"`, matching the new `preview` `frontmatter`
+  prop and keeping the raw block clearly distinct from a parsed-properties view.
+  See the [preview-frontmatter note](./2026-09-02_preview-frontmatter.md).
+- 2026-09-02 — links restyled to colour, not underline. `.cm-inplace-link` and
+  `.cm-inplace-wikilink` now take a standard link blue from the new
+  `--stylo-link` token (default `#2563eb`); the underline is gone. `preview`'s
+  `<a>` follows the same token, also without an underline, so both surfaces
+  match. `--stylo-accent` is left for active / pressed states. Recorded as the
+  ADR-002 §3 amendment (the token set is now eight).
 
 ## After in-place
 

@@ -23,6 +23,22 @@ test("renders GFM and keeps YAML frontmatter out of the body", () => {
   expect(container.textContent).not.toContain("title: Hidden")
 })
 
+test('frontmatter="code" renders the raw block under a stable class', () => {
+  const md = "---\ntitle: Shown\ntags: [x]\n---\n\n# Head"
+  const { container } = render(<Preview value={md} frontmatter="code" />)
+
+  const block = container.querySelector(".stylo-frontmatter")
+  expect(block?.textContent).toBe("title: Shown\ntags: [x]")
+  expect(container.querySelector("h1")?.textContent).toBe("Head")
+  // still not duplicated into the rendered body
+  expect(container.querySelector("h1")?.textContent).not.toContain("title")
+})
+
+test("frontmatter defaults to hidden even with a block present", () => {
+  const { container } = render(<Preview value={"---\nk: v\n---\n\nbody"} />)
+  expect(container.querySelector(".stylo-frontmatter")).toBeNull()
+})
+
 test("typesets inline math with KaTeX", () => {
   const { container } = render(<Preview value="Euler: $e^{i\\pi} + 1 = 0$" />)
   expect(container.querySelector(".katex")).not.toBeNull()

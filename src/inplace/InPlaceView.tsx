@@ -1,4 +1,5 @@
 import { useRef, useState } from "react"
+import type { EditorView } from "@codemirror/view"
 import { useCodeMirror } from "../editor/useCodeMirror"
 import styles from "../styles/stylo.module.css"
 import type { CodeLanguages, InPlaceConfig } from "../types"
@@ -14,6 +15,8 @@ export interface InPlaceViewProps {
   inPlace?: InPlaceConfig
   /** Fenced-code grammars, forwarded to the Markdown language. Read once. */
   codeLanguages?: CodeLanguages
+  /** Called with the `EditorView` once created, and with `null` on teardown. */
+  onViewChange?: (view: EditorView | null) => void
 }
 
 /**
@@ -33,6 +36,7 @@ export function InPlaceView({
   onWikiLinkClick,
   inPlace,
   codeLanguages,
+  onViewChange,
 }: InPlaceViewProps) {
   const clickRef = useRef(onWikiLinkClick)
   clickRef.current = onWikiLinkClick
@@ -42,6 +46,14 @@ export function InPlaceView({
     inPlaceExtension({ onWikiLinkClick: (target) => clickRef.current?.(target), inPlace }),
   ])
 
-  const ref = useCodeMirror({ value, onChange, readOnly, placeholder, extensions, codeLanguages })
+  const ref = useCodeMirror({
+    value,
+    onChange,
+    readOnly,
+    placeholder,
+    extensions,
+    codeLanguages,
+    onViewChange,
+  })
   return <div className={styles.inplace} ref={ref} />
 }

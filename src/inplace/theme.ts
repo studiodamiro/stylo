@@ -61,13 +61,13 @@ export const inPlaceTheme = EditorView.theme({
   // Off-caret fence row: no text, no height — the container is padding + code.
   ".cm-inplace-code-pad": { fontSize: "0", lineHeight: "0" },
 
+  // Links read by colour, not underline (a standard link blue via the token).
   ".cm-inplace-link": {
-    color: "var(--stylo-accent)",
-    textDecoration: "underline",
-    textUnderlineOffset: "0.15em",
+    color: "var(--stylo-link)",
+    textDecoration: "none",
     cursor: "pointer",
   },
-  ".cm-inplace-wikilink": { textDecoration: "none" },
+  ".cm-inplace-wikilink": { color: "var(--stylo-link)" },
 
   ".cm-inplace-math-block": {
     display: "block",
@@ -102,7 +102,7 @@ export const inPlaceTheme = EditorView.theme({
     color: "var(--stylo-text-muted)",
   },
   ".cm-inplace-fm-first::before": {
-    content: '"Properties"',
+    content: '"Frontmatter"',
     marginRight: "0.6em",
     fontFamily:
       '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
