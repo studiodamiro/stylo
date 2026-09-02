@@ -162,7 +162,7 @@ export const inPlaceTheme = EditorView.theme({
     // the wrapper is sized to the bare grid and the strips overflow it — the row
     // strip spilling into the block below. Padding (not margin) so CodeMirror's
     // height map still measures the widget correctly.
-    padding: "0 calc(1em + 4px) calc(1em + 4px) 0",
+    padding: "0 calc(1.15em + 4px) calc(1.15em + 4px) 0",
   },
   ".cm-inplace-table-gizmos": {
     position: "absolute",
@@ -191,10 +191,13 @@ export const inPlaceTheme = EditorView.theme({
     opacity: "1",
     background: "color-mix(in srgb, var(--stylo-border) 30%, transparent)",
   },
-  ".cm-inplace-tg-addcol": { width: "1em" },
-  ".cm-inplace-tg-addrow": { height: "1em" },
+  ".cm-inplace-tg-addcol": { width: "1.15em" },
+  ".cm-inplace-tg-addrow": { height: "1.15em" },
+  // Sized so the glyph's ink sits well inside the strip (a `+` at 0.95em renders
+  // ~17px of extent and was overflowing the old 1em / 15px strip, reading as
+  // off-centre). `line-height: 1` + flex centring keeps it exact.
   ".cm-inplace-tg-plus": {
-    fontSize: "0.95em",
+    fontSize: "0.8em",
     lineHeight: "1",
     color: "var(--stylo-text-muted)",
     pointerEvents: "none",
