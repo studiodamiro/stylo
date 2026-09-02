@@ -1,5 +1,5 @@
 ---
-title: "Toolbar — inline marks nest, and a wikilink button"
+title: "Toolbar — inline marks nest, a wikilink button, table-aware block commands"
 created: 2026-09-02
 type: journal
 parent: index
@@ -8,9 +8,9 @@ tags:
   - engineering/milestone
 ---
 
-# Toolbar — inline marks nest, and a wikilink button
+# Toolbar — inline marks nest, a wikilink button, table-aware block commands
 
-Two toolbar changes, unrelated to the table work they ship alongside.
+Three toolbar changes shipped alongside the table work.
 
 ## Inline marks were eating each other
 
@@ -52,10 +52,31 @@ in-place collapse, `remark-wikilink`). Added `wikilink`:
 - `wikiLinkAt` scans the caret's line with the shared `WIKILINK_PATTERN` from
   `src/wikilink.ts`, so it never drifts from the render and in-place scanners.
 
+## Block commands inside a table
+
+A table cell holds one line between pipes — a `## ` prefix, a `- ` marker, or a
+`---` line just corrupts the row. `ToolbarCommand` gains an optional
+`disabled?(state)`. `tableActive` (the same line scan `insertTable` uses) fills
+it for the block commands: `h1`–`h3`, `quote`, `bulletList`, `orderedList`,
+`task`, `hr`, `frontmatter`, `table`. In a table the button renders `disabled`
+and the shortcut (`Mod-Alt-1..3`) is a no-op; the wrapper in `keymap.ts` checks
+`disabled` before running.
+
+`codeBlock` and `mathBlock` are **not** disabled — they degrade: their `run` and
+`isActive` call `toggleWrap` / `wrapActive` with `` ` `` or `$` when
+`tableActive`, so the button wraps the cell selection in inline code / inline
+math instead of a fenced block. Inline commands (`bold`, `italic`, `strike`,
+`code`, `math`, `link`, `wikilink`) are untouched — `[text](url)` and
+`[[target]]` carry no `|`, so they are safe in a cell.
+
 ## Verification
 
-`typecheck`, 110 Vitest tests (9 new in `test/toolbar.test.tsx` — bold/italic
+`typecheck`, 127 Vitest tests (13 new in `test/toolbar.test.tsx` — bold/italic
 nesting in both orders, bold+italic+strike on then off, toggling one mark off
-mid-stack, and the three wikilink cases), `build`, `format:check`. Confirmed in
-a real Chromium against the playground: `Bold` then `Italic` yields
-`***word***`, and the wikilink button wraps and unwraps.
+mid-stack, the three wikilink cases, block commands reporting `disabled` in a
+table while inline ones do not, `codeBlock`/`mathBlock` degrading to inline in a
+cell but still fencing outside, and the `h2` button toggling its `disabled`
+attribute as the caret enters and leaves a table row), `build`, `format:check`.
+Confirmed in a real Chromium: `Bold` then `Italic` yields `***word***`, the
+wikilink button wraps and unwraps, and with the caret in a cell the block
+buttons grey out while `Code block` produces ``| `c` | d |``.

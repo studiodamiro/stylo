@@ -312,6 +312,77 @@ test("wikilink toggling a plain [[target]] off leaves the bare target", () => {
   expect(view.state.doc.toString()).toBe("go Notes here")
 })
 
+const TABLE_DOC = "intro\n\n| A | B |\n| - | - |\n| c | d |\n\ntail"
+
+test("block commands are disabled inside a table; inline ones are not", () => {
+  const inCell = mkView(TABLE_DOC, 29, 30) // caret in body cell "c"
+  const outside = mkView(TABLE_DOC, 2)
+
+  for (const id of [
+    "h1",
+    "h2",
+    "h3",
+    "quote",
+    "bulletList",
+    "orderedList",
+    "task",
+    "hr",
+    "frontmatter",
+    "table",
+  ] as const) {
+    expect(BUILTIN_BY_ID[id]!.disabled?.(inCell.state), `${id} in cell`).toBe(true)
+    expect(BUILTIN_BY_ID[id]!.disabled?.(outside.state), `${id} outside`).toBeFalsy()
+  }
+  for (const id of [
+    "bold",
+    "italic",
+    "strike",
+    "code",
+    "math",
+    "link",
+    "wikilink",
+    "codeBlock",
+    "mathBlock",
+  ] as const) {
+    expect(BUILTIN_BY_ID[id]!.disabled?.(inCell.state), `${id} in cell`).toBeFalsy()
+  }
+})
+
+test("codeBlock and mathBlock degrade to inline inside a table cell", () => {
+  const view = mkView(TABLE_DOC, 29, 30) // "c"
+  BUILTIN_BY_ID.codeBlock!.run(view)
+  expect(view.state.doc.toString()).toContain("| `c` | d |")
+  expect(BUILTIN_BY_ID.codeBlock!.isActive!(view.state)).toBe(true)
+
+  const v2 = mkView(TABLE_DOC, 29, 30)
+  BUILTIN_BY_ID.mathBlock!.run(v2)
+  expect(v2.state.doc.toString()).toContain("| $c$ | d |")
+})
+
+test("codeBlock still fences whole lines outside a table", () => {
+  const view = mkView("a = 1\nb = 2", 0, 11)
+  BUILTIN_BY_ID.codeBlock!.run(view)
+  expect(view.state.doc.toString()).toBe("```\na = 1\nb = 2\n```")
+})
+
+test("the h2 button renders disabled when the caret is in a table row", async () => {
+  function Host() {
+    const [v, setV] = useState(TABLE_DOC)
+    return <Stylo value={v} onChange={setV} mode="source" />
+  }
+  const { container } = render(<Host />)
+  const view = EditorView.findFromDOM(container.querySelector(".cm-editor")!)!
+  const h2 = container.querySelector<HTMLButtonElement>('button[aria-label="Heading 2"]')!
+
+  view.dispatch({ selection: EditorSelection.single(29) }) // into "| c | d |"
+  container.querySelector(".cm-content")!.dispatchEvent(new Event("keyup"))
+  await vi.waitFor(() => expect(h2.disabled).toBe(true))
+
+  view.dispatch({ selection: EditorSelection.single(2) }) // back to plain text
+  container.querySelector(".cm-content")!.dispatchEvent(new Event("keyup"))
+  await vi.waitFor(() => expect(h2.disabled).toBe(false))
+})
+
 test("resolveToolbarItems: default, explicit true, hidden, custom", () => {
   expect(resolveToolbarItems(undefined)).toEqual(DEFAULT_TOOLBAR_ITEMS)
   expect(resolveToolbarItems(true)).toEqual(DEFAULT_TOOLBAR_ITEMS)

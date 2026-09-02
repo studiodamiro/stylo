@@ -31,6 +31,12 @@ export interface ToolbarCommand {
   run: (view: EditorView) => boolean
   /** Reflected as the button's pressed state. */
   isActive?: (state: EditorState) => boolean
+  /**
+   * True when the command can't apply at the current selection — the button is
+   * rendered `disabled` and the shortcut is a no-op. Block commands set this
+   * inside a table, where a `## ` prefix or a `---` line would break the row.
+   */
+  disabled?: (state: EditorState) => boolean
   /** Default key bindings in CodeMirror `key` syntax. */
   keys?: string[]
 }
@@ -84,6 +90,7 @@ function heading(level: 1 | 2 | 3): ToolbarCommand {
     title: `Heading ${level}`,
     run: (view) => toggleHeading(view, level),
     isActive: (state) => marker.test(state.doc.lineAt(state.selection.main.head).text),
+    disabled: tableActive,
     keys: [`Mod-Alt-${level}`],
   }
 }
@@ -94,6 +101,7 @@ function prefix(id: ToolbarCommandId, title: string, spec: LinePrefixSpec): Tool
     title,
     run: (view) => toggleLinePrefix(view, spec),
     isActive: (state) => linePrefixActive(state, spec.match),
+    disabled: tableActive,
   }
 }
 
@@ -109,10 +117,12 @@ export const BUILTIN_COMMANDS: ToolbarCommand[] = [
   wrap("strike", "Strikethrough", "~~"),
   wrap("code", "Inline code", "`"),
   {
+    // In a table cell a fenced block has no valid Markdown, so degrade to
+    // inline `` `code` `` there.
     id: "codeBlock",
     title: "Code block",
-    run: toggleFencedCode,
-    isActive: fencedCodeActive,
+    run: (view) => (tableActive(view.state) ? toggleWrap(view, "`") : toggleFencedCode(view)),
+    isActive: (state) => (tableActive(state) ? wrapActive(state, "`") : fencedCodeActive(state)),
   },
   { id: "link", title: "Link", run: toggleLink, isActive: linkActive, keys: ["Mod-k"] },
   {
@@ -126,15 +136,28 @@ export const BUILTIN_COMMANDS: ToolbarCommand[] = [
   prefix("bulletList", "Bulleted list", BULLET),
   prefix("orderedList", "Numbered list", ORDERED),
   prefix("task", "Task list", TASK),
-  { id: "hr", title: "Divider", run: toggleHorizontalRule, isActive: horizontalRuleActive },
-  { id: "frontmatter", title: "Frontmatter", run: toggleFrontmatter, isActive: frontmatterActive },
-  { id: "table", title: "Table", run: insertTable, isActive: tableActive },
+  {
+    id: "hr",
+    title: "Divider",
+    run: toggleHorizontalRule,
+    isActive: horizontalRuleActive,
+    disabled: tableActive,
+  },
+  {
+    id: "frontmatter",
+    title: "Frontmatter",
+    run: toggleFrontmatter,
+    isActive: frontmatterActive,
+    disabled: tableActive,
+  },
+  { id: "table", title: "Table", run: insertTable, isActive: tableActive, disabled: tableActive },
   wrap("math", "Inline math", "$"),
   {
+    // In a table cell, degrade the `$$` block to inline `$…$` math.
     id: "mathBlock",
     title: "Block math",
-    run: toggleMathBlock,
-    isActive: mathBlockActive,
+    run: (view) => (tableActive(view.state) ? toggleWrap(view, "$") : toggleMathBlock(view)),
+    isActive: (state) => (tableActive(state) ? wrapActive(state, "$") : mathBlockActive(state)),
   },
 ]
 

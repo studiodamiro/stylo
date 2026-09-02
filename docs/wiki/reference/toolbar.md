@@ -67,6 +67,16 @@ structure (`quote` `hr` `frontmatter` `table`) · code and math.
 CodeMirror surface whether or not the visible bar is mounted; `toolbar={false}`
 does not remove them.
 
+### Inside a table
+
+A cell is a single line between pipes, so the block commands — `h1`–`h3`,
+`quote`, `bulletList`, `orderedList`, `task`, `hr`, `frontmatter`, `table` —
+have no valid Markdown there. With the caret in a table their buttons render
+**disabled** and their shortcuts are inert. `codeBlock` and `mathBlock` instead
+**degrade**: in a cell they wrap the selection in inline `` `code` `` / `$math$`
+rather than a fenced block. The inline commands (`bold`, `italic`, `strike`,
+`code`, `math`, `link`, `wikilink`) work normally.
+
 Every command toggles. The line-prefix commands operate on whole lines: they add
 the prefix to the lines in the selection that lack it, and strip it when every
 non-blank selected line already carries it; `orderedList` numbers them `1.`,
