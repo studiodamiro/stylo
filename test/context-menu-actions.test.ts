@@ -97,6 +97,25 @@ test("a selection gets a 'Link' field row that wraps it on submit", () => {
   expect(view.state.doc.toString()).toBe("make [this](https://x.test) a link")
 })
 
+test("a URL with spaces is angle-bracketed so it stays a valid link", () => {
+  const view = mkView("wrap word here", 5, 9) // "word"
+  const link = menuRows(view).find(
+    (r): r is MenuField => isField(r) && r.label === "Link",
+  )!
+  link.onSubmit("https://ex.test/a b c")
+  expect(view.state.doc.toString()).toBe("wrap [word](<https://ex.test/a b c>) here")
+})
+
+test("editing a link's URL to one with spaces re-brackets it", () => {
+  const doc = "see [x](https://a.test) end"
+  const view = mkView(doc, doc.indexOf("x") + 1)
+  const link = menuRows(view).find(
+    (r): r is MenuField => isField(r) && r.label === "Link",
+  )!
+  link.onSubmit("https://a.test/with space")
+  expect(view.state.doc.toString()).toBe("see [x](<https://a.test/with space>) end")
+})
+
 test("the caret in a link gets a prefilled 'Link' field with Remove link", () => {
   const doc = "go to [home](https://a.test) please"
   const view = mkView(doc, doc.indexOf("home") + 1)
