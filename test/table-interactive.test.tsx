@@ -289,18 +289,23 @@ test("the link command wraps a cell selection as [text](url)", async () => {
   expect(view.state.doc.toString()).toContain("[1](url)")
 })
 
-function hoverGizmos(view: EditorView) {
-  view.contentDOM
-    .querySelector(".cm-inplace-table-wrap")!
-    .dispatchEvent(new MouseEvent("mouseenter", { bubbles: false }))
-}
-
 function menuItem(view: EditorView, label: string): HTMLButtonElement {
   const it = [...view.contentDOM.querySelectorAll<HTMLButtonElement>(".cm-inplace-tm-item")].find(
     (b) => b.textContent === label,
   )
   if (!it) throw new Error(`no menu item "${label}"`)
   return it
+}
+
+/** Right-click the nth cell matching `selector` and return the menu labels. */
+function rightClick(view: EditorView, selector: "thead th" | "tbody td", nth = 0): string[] {
+  const cell = view.contentDOM.querySelectorAll<HTMLTableCellElement>(
+    `.cm-inplace-table-edit ${selector}`,
+  )[nth]!
+  cell.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, clientX: 10, clientY: 10 }))
+  return [...view.contentDOM.querySelectorAll(".cm-inplace-tm-item")].map(
+    (b) => b.textContent ?? "",
+  )
 }
 
 test("the add-column gizmo appends a column", async () => {
@@ -321,54 +326,46 @@ test("the add-row gizmo appends a row", async () => {
   )
 })
 
-test("a column handle menu deletes its column", async () => {
+test("the cell context menu deletes a column", async () => {
   const { view } = await mount(T, { table: "cells" })
   await editCells(view)
-  hoverGizmos(view)
-  view.contentDOM.querySelectorAll<HTMLButtonElement>(".cm-inplace-tg-handle-col")[1]!.click()
+  rightClick(view, "tbody td", 1) // second column
   menuItem(view, "Delete column").click()
   expect(view.state.doc.toString()).toBe("| A   |\n| --- |\n| 1   |")
 })
 
-test("a column handle menu writes alignment into the delimiter", async () => {
+test("the cell context menu writes alignment into the delimiter", async () => {
   const { view } = await mount(T, { table: "cells" })
   await editCells(view)
-  hoverGizmos(view)
-  view.contentDOM.querySelectorAll<HTMLButtonElement>(".cm-inplace-tg-handle-col")[0]!.click()
+  rightClick(view, "thead th", 0)
   menuItem(view, "Align center").click()
   expect(view.state.doc.toString().split("\n")[1]).toBe("| :-: | --- |")
 })
 
-test("a handle menu stays hidden until opened and closes on an outside click", async () => {
+test("the context menu is hidden until a right-click and closes on an outside click", async () => {
   const { view } = await mount(T, { table: "cells" })
   await editCells(view)
   const menu = view.contentDOM.querySelector<HTMLElement>(".cm-inplace-table-menu")!
   expect(menu.hidden).toBe(true)
 
-  hoverGizmos(view)
-  view.contentDOM.querySelectorAll<HTMLButtonElement>(".cm-inplace-tg-handle-col")[0]!.click()
+  rightClick(view, "tbody td", 0)
   expect(menu.hidden).toBe(false)
 
   document.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }))
   expect(menu.hidden).toBe(true)
 })
 
-test("a body row handle menu deletes its row; the header handle cannot", async () => {
+test("the context menu omits Delete row on the header and the last body row", async () => {
   const { view } = await mount("| A | B |\n| - | - |\n| 1 | 2 |\n| 3 | 4 |", { table: "cells" })
   await editCells(view)
-  hoverGizmos(view)
-  const rowHandles = view.contentDOM.querySelectorAll<HTMLButtonElement>(
-    ".cm-inplace-tg-handle-row",
-  )
 
-  rowHandles[0]!.click() // header
-  expect(
-    [...view.contentDOM.querySelectorAll(".cm-inplace-tm-item")].map((b) => b.textContent),
-  ).toEqual(["Insert below"])
+  expect(rightClick(view, "thead th", 0)).not.toContain("Delete row")
 
-  rowHandles[1]!.click() // first body row
+  expect(rightClick(view, "tbody td", 0)).toContain("Delete row") // 2 body rows — allowed
   menuItem(view, "Delete row").click()
   expect(view.state.doc.toString()).toBe("| A   | B   |\n| --- | --- |\n| 3   | 4   |")
+
+  expect(rightClick(view, "tbody td", 0)).not.toContain("Delete row") // 1 body row left
 })
 
 test("Enter in the last row appends a row", async () => {
