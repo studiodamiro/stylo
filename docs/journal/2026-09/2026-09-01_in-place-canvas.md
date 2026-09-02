@@ -194,10 +194,13 @@ onChange />` with no `mode` now lazy-loads the in-place chunk (and the shared
   callout blockquotes (`> [!note]`), image previews, nested-list indent guides,
   and any hook for consumer-supplied decorators — each its own future decision.
 - **Table rendering options** — v1 renders one fixed table style and shows cell
-  text verbatim. Follow-ups for the customization pass: inline formatting inside
-  cells (`**bold**`, `` `code` ``, links, math), and consumer-facing style hooks
-  (borders, striping, colours that track the host's `--stylo-*` tokens or
-  branding).
+  text verbatim. _Table **editing** landed 2026-09-02_ — a `table` toolbar
+  command, Tab/Shift-Tab/Enter cell navigation, and live pipe alignment on the
+  raw source ([note](./2026-09-02_table-editing.md)); the interactive
+  rendered-table editor is [ADR-006](./2026-09-02_adr-006-interactive-table-editing.md).
+  Still open for the customization pass: inline formatting inside rendered cells
+  (`**bold**`, `` `code` ``, links, math), and consumer-facing style hooks
+  (borders, striping, colours that track the host's `--stylo-*` tokens).
 - **Frontmatter display mode** — the canvas recesses the YAML block in place
   (muted monospace, a "Properties" label, `---` fences hidden off-caret). Make
   this configurable: at least `source` (leave it raw), `inline` (current default

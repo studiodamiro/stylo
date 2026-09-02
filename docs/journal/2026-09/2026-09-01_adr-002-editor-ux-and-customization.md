@@ -88,9 +88,11 @@ untouched, and must not gate v1.
   > levels ship as discrete `h1` / `h2` / `h3` command ids, so every toolbar
   > entry is uniformly "a command id or a separator". The built-in ids are
   > `undo`, `redo`, `h1`–`h3`, `bold`, `italic`, `strike`, `link`, `bulletList`,
-  > `orderedList`, `task`, `quote`, `hr`, `frontmatter`, `code`, `codeBlock`,
-  > `math`, `mathBlock`. Shipped in the
-  > [toolbar milestone](./2026-09-02_toolbar.md).
+  > `orderedList`, `task`, `quote`, `hr`, `frontmatter`, `table`, `code`,
+  > `codeBlock`, `math`, `mathBlock`. Shipped in the
+  > [toolbar milestone](./2026-09-02_toolbar.md); `table` also brings a
+  > cell-navigation keymap and live pipe alignment
+  > ([note](./2026-09-02_table-editing.md)).
 
 #### 3. Styling: CSS Modules + a small custom-property token set
 

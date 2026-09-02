@@ -46,6 +46,7 @@ export const DEFAULT_ICONS: Record<ToolbarCommandId, ReactNode> = {
   task: <Svg d="m9 11 2.5 2.5L20 5|M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9" />,
   hr: <Svg d="M4 12h4|M10 12h4|M16 12h4" />,
   frontmatter: <code aria-hidden="true">fm</code>,
+  table: <Svg d="M4 5h16v14H4z|M4 10h16|M4 15h16|M10 5v14" />,
   math: <Svg d="M19 5H7l5.5 7L7 19h12" />,
   mathBlock: <Svg d="M4 4h16v16H4z|M15 8H9l4 4-4 4h6" />,
 }

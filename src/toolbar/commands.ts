@@ -14,6 +14,7 @@ import {
 } from "./block"
 import { fencedCodeActive, mathBlockActive, toggleFencedCode, toggleMathBlock } from "./fence"
 import { linkActive, toggleLink, toggleWrap, wrapActive } from "./inline"
+import { insertTable, tableActive } from "./table"
 
 export interface ToolbarCommand {
   id: ToolbarCommandId
@@ -113,6 +114,7 @@ export const BUILTIN_COMMANDS: ToolbarCommand[] = [
   prefix("task", "Task list", TASK),
   { id: "hr", title: "Divider", run: toggleHorizontalRule, isActive: horizontalRuleActive },
   { id: "frontmatter", title: "Frontmatter", run: toggleFrontmatter, isActive: frontmatterActive },
+  { id: "table", title: "Table", run: insertTable, isActive: tableActive },
   wrap("math", "Inline math", "$"),
   {
     id: "mathBlock",

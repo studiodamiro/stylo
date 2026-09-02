@@ -28,6 +28,7 @@ export const DEFAULT_TOOLBAR_ITEMS: ToolbarItem[] = [
   "quote",
   "hr",
   "frontmatter",
+  "table",
   "|",
   "code",
   "codeBlock",

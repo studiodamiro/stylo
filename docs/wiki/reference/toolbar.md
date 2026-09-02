@@ -54,12 +54,13 @@ skipped.
 | `task`          | Toggle a `- [ ]` line prefix         | —                       |
 | `hr`            | Insert / remove a `---` divider      | —                       |
 | `frontmatter`   | Wrap the doc top in `---`, or unwrap | —                       |
+| `table`         | Insert a starter pipe table          | —                       |
 | `math`          | Wrap in `$…$`                        | —                       |
 | `mathBlock`     | Fence the selected lines in `$$`     | —                       |
 
 The default bar shows every id above, grouped by kind: history · headings ·
 inline text (with `link`) · the three list markers · block structure
-(`quote` `hr` `frontmatter`) · code and math.
+(`quote` `hr` `frontmatter` `table`) · code and math.
 
 `Mod` is `Cmd` on macOS and `Ctrl` elsewhere. The shortcuts are bound on the
 CodeMirror surface whether or not the visible bar is mounted; `toolbar={false}`
@@ -85,6 +86,23 @@ fences, so you can type the keys, select them, and click. With a block present,
 only the two fence lines are removed; the YAML text stays in the document.
 Keeping frontmatter out of rendered output is the `preview` pipeline's job (it
 already strips it), not this toggle's.
+
+## Editing tables
+
+`table` drops a 2-column starter (header, delimiter, one empty row) and selects
+`Column 1`. While the caret is inside any pipe table — on every CodeMirror
+surface, `toolbar={false}` or not:
+
+- **Tab** / **Shift-Tab** move to the next / previous cell, wrapping across
+  rows. Tab past the last cell **adds a row**.
+- **Enter** moves to the cell below, **adding a row** at the bottom.
+- Every edit **re-aligns the pipes** — each column padded to its widest cell,
+  the delimiter rebuilt with the right `:` alignment markers — in the same
+  undo step as the edit.
+
+Outside a table, Tab and Enter behave normally. Editing happens on the raw
+pipe source (kept tidy); an interactive rendered-table editor is
+[ADR-006](../../journal/2026-09/2026-09-02_adr-006-interactive-table-editing.md).
 
 ## Replacing icons
 

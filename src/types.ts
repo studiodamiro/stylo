@@ -33,6 +33,7 @@ export type ToolbarCommandId =
   | "task"
   | "hr"
   | "frontmatter"
+  | "table"
   | "math"
   | "mathBlock"
 
