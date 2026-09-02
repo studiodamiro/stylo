@@ -152,7 +152,7 @@ export const inPlaceTheme = EditorView.theme({
     boxShadow: "inset 0 0 0 2px var(--stylo-ring)",
   },
 
-  // --- structural handles on the editable table (hover to reveal) ---
+  // --- editable-table affordances: edge `+` (hover) and a right-click menu ---
   ".cm-inplace-table-wrap": {
     position: "relative",
     display: "inline-block",
@@ -163,39 +163,37 @@ export const inPlaceTheme = EditorView.theme({
     inset: "0",
     pointerEvents: "none",
   },
-  ".cm-inplace-tg-add, .cm-inplace-tg-handle": {
+  ".cm-inplace-tg-add": {
     position: "absolute",
     pointerEvents: "auto",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    width: "1.15em",
+    height: "1.15em",
     padding: "0",
     font: "inherit",
+    fontSize: "0.85em",
     lineHeight: "1",
     color: "var(--stylo-text-muted)",
-    background: "var(--stylo-bg, #fff)",
-    border: "1px solid var(--stylo-border)",
-    borderRadius: "4px",
+    background: "color-mix(in srgb, var(--stylo-border) 22%, transparent)",
+    border: "none",
+    borderRadius: "3px",
     cursor: "pointer",
     opacity: "0",
     transition: "opacity 0.12s ease",
   },
-  ".cm-inplace-table-wrap:hover .cm-inplace-tg-add, .cm-inplace-table-wrap:hover .cm-inplace-tg-handle":
-    { opacity: "1" },
-  ".cm-inplace-tg-add:hover, .cm-inplace-tg-handle:hover": {
+  ".cm-inplace-table-wrap:hover .cm-inplace-tg-add": { opacity: "1" },
+  ".cm-inplace-tg-add:hover": {
     color: "var(--stylo-text)",
-    borderColor: "var(--stylo-ring)",
+    background: "color-mix(in srgb, var(--stylo-border) 45%, transparent)",
   },
-  ".cm-inplace-tg-add": { width: "1.3em", height: "1.3em", fontSize: "0.9em" },
-  ".cm-inplace-tg-addcol": { transform: "translate(4px, -50%)" },
-  ".cm-inplace-tg-addrow": { transform: "translate(-50%, 4px)" },
-  ".cm-inplace-tg-handle": { width: "1.7em", height: "0.95em", fontSize: "0.8em" },
-  ".cm-inplace-tg-handle-col": { transform: "translate(-50%, calc(-100% - 3px))" },
-  ".cm-inplace-tg-handle-row": { transform: "translate(calc(-100% - 3px), -50%)" },
+  ".cm-inplace-tg-addcol": { transform: "translate(5px, -50%)" },
+  ".cm-inplace-tg-addrow": { transform: "translate(-50%, 5px)" },
   ".cm-inplace-table-menu": {
     position: "absolute",
     zIndex: "5",
-    minWidth: "9em",
+    minWidth: "11em",
     padding: "0.25em",
     flexDirection: "column",
     pointerEvents: "auto",
@@ -206,6 +204,11 @@ export const inPlaceTheme = EditorView.theme({
   },
   ".cm-inplace-table-menu:not([hidden])": { display: "flex" },
   ".cm-inplace-table-menu[hidden]": { display: "none" },
+  ".cm-inplace-tm-sep": {
+    height: "1px",
+    margin: "0.25em 0.3em",
+    background: "var(--stylo-border)",
+  },
   ".cm-inplace-tm-item": {
     all: "unset",
     padding: "0.35em 0.6em",
