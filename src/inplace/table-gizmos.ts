@@ -67,13 +67,13 @@ export function createTableGizmos(doc: Document, host: GizmoHost): TableGizmos {
   /**
    * A full-edge hit strip: the whole right edge adds a column, the whole bottom
    * edge adds a row — click anywhere along it, Obsidian style. The strip is
-   * invisible until the pointer is over it; the centred `+` is its only mark.
+   * invisible until the pointer is over it; a CSS-drawn `+` cross is its only
+   * mark (a font glyph never sits at the optical centre of its box).
    */
   const edge = (axis: "col" | "row", label: string, onClick: () => void) => {
     const strip = button(`cm-inplace-tg-edge cm-inplace-tg-add${axis}`, label, onClick)
     const plus = doc.createElement("span")
     plus.className = "cm-inplace-tg-plus"
-    plus.textContent = "+"
     strip.appendChild(plus)
     return strip
   }
