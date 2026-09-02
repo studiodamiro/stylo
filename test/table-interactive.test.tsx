@@ -339,6 +339,20 @@ test("a column handle menu writes alignment into the delimiter", async () => {
   expect(view.state.doc.toString().split("\n")[1]).toBe("| :-: | --- |")
 })
 
+test("a handle menu stays hidden until opened and closes on an outside click", async () => {
+  const { view } = await mount(T, { table: "cells" })
+  await editCells(view)
+  const menu = view.contentDOM.querySelector<HTMLElement>(".cm-inplace-table-menu")!
+  expect(menu.hidden).toBe(true)
+
+  hoverGizmos(view)
+  view.contentDOM.querySelectorAll<HTMLButtonElement>(".cm-inplace-tg-handle-col")[0]!.click()
+  expect(menu.hidden).toBe(false)
+
+  document.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }))
+  expect(menu.hidden).toBe(true)
+})
+
 test("a body row handle menu deletes its row; the header handle cannot", async () => {
   const { view } = await mount("| A | B |\n| - | - |\n| 1 | 2 |\n| 3 | 4 |", { table: "cells" })
   await editCells(view)

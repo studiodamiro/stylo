@@ -151,25 +151,40 @@ export function createTableGizmos(doc: Document, host: GizmoHost): TableGizmos {
     return b
   }
 
+  const place = (b: HTMLElement, x: number, y: number) => {
+    b.style.left = `${x}px`
+    b.style.top = `${y}px`
+  }
+
   const layout = (table: HTMLTableElement) => {
     closeMenu()
+    const trs = [...table.rows]
+    const ths = [...(table.tHead?.rows[0]?.cells ?? [])]
+    if (!trs.length || !ths.length) return
+
+    // Position against the cell grid, not the table's border box (which carries
+    // vertical padding), so the handles sit exactly on the outer edges.
     const base = el.getBoundingClientRect()
-    const t = table.getBoundingClientRect()
+    const top = trs[0]!.getBoundingClientRect().top - base.top
+    const bottom = trs[trs.length - 1]!.getBoundingClientRect().bottom - base.top
+    const left = ths[0]!.getBoundingClientRect().left - base.left
+    const right = ths[ths.length - 1]!.getBoundingClientRect().right - base.left
+
+    place(addCol, right, (top + bottom) / 2)
+    place(addRow, (left + right) / 2, bottom)
     colWrap.replaceChildren(
-      ...[...(table.tHead?.rows[0]?.cells ?? [])].map((th, c) => {
+      ...ths.map((th, c) => {
         const b = handle("column", c)
         const r = th.getBoundingClientRect()
-        b.style.left = `${r.left + r.width / 2 - base.left}px`
-        b.style.top = `${t.top - base.top}px`
+        place(b, r.left + r.width / 2 - base.left, top)
         return b
       }),
     )
     rowWrap.replaceChildren(
-      ...[...table.rows].map((tr, r) => {
+      ...trs.map((tr, r) => {
         const b = handle("row", r)
-        const rect = tr.getBoundingClientRect()
-        b.style.top = `${rect.top + rect.height / 2 - base.top}px`
-        b.style.left = `${t.left - base.left}px`
+        const r0 = tr.getBoundingClientRect()
+        place(b, left, r0.top + r0.height / 2 - base.top)
         return b
       }),
     )
