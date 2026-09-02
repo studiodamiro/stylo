@@ -1,5 +1,5 @@
 import { Prec } from "@codemirror/state"
-import { keymap } from "@codemirror/view"
+import { type Command, keymap } from "@codemirror/view"
 import { BUILTIN_COMMANDS } from "./commands"
 
 /**
@@ -11,7 +11,11 @@ import { BUILTIN_COMMANDS } from "./commands"
 export const markdownKeymap = Prec.high(
   keymap.of(
     BUILTIN_COMMANDS.filter((c) => c.keys && c.keys.length > 0).flatMap((c) =>
-      c.keys!.map((key) => ({ key, preventDefault: true, run: c.run })),
+      c.keys!.map((key) => ({
+        key,
+        preventDefault: true,
+        run: ((view) => (c.disabled?.(view.state) ? false : c.run(view))) as Command,
+      })),
     ),
   ),
 )

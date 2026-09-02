@@ -20,6 +20,7 @@ export const DEFAULT_TOOLBAR_ITEMS: ToolbarItem[] = [
   "italic",
   "strike",
   "link",
+  "wikilink",
   "|",
   "bulletList",
   "orderedList",

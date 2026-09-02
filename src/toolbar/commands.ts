@@ -12,9 +12,39 @@ import {
   toggleLinePrefix,
   type LinePrefixSpec,
 } from "./block"
+import { frontmatterRange } from "../frontmatter"
 import { fencedCodeActive, mathBlockActive, toggleFencedCode, toggleMathBlock } from "./fence"
-import { linkActive, toggleLink, toggleWrap, wrapActive } from "./inline"
+import {
+  linkActive,
+  toggleLink,
+  toggleWikiLink,
+  toggleWrap,
+  wikiLinkActive,
+  wrapActive,
+} from "./inline"
 import { insertTable, tableActive } from "./table"
+
+// --- context predicates: where a command can't sensibly apply ---
+
+/** Caret's line is an ATX heading (`#` … `######`). */
+const inHeading = (s: EditorState): boolean =>
+  /^\s{0,3}#{1,6}(?:\s|$)/.test(s.doc.lineAt(s.selection.main.head).text)
+
+/** Caret is inside the leading `---` YAML block. */
+const inFrontmatter = (s: EditorState): boolean => {
+  const r = frontmatterRange(s.doc)
+  return r !== null && s.selection.main.head <= r.to
+}
+
+/** Contexts where inline markup is literal or would break the syntax. */
+const inLiteral = (s: EditorState): boolean =>
+  inFrontmatter(s) || fencedCodeActive(s) || mathBlockActive(s)
+
+/** A `disabled` predicate that fires when any of `checks` matches. */
+const disabledWhen =
+  (...checks: ((s: EditorState) => boolean)[]) =>
+  (s: EditorState): boolean =>
+    checks.some((c) => c(s))
 
 export interface ToolbarCommand {
   id: ToolbarCommandId
@@ -24,6 +54,13 @@ export interface ToolbarCommand {
   run: (view: EditorView) => boolean
   /** Reflected as the button's pressed state. */
   isActive?: (state: EditorState) => boolean
+  /**
+   * True when the command can't produce valid Markdown at the current selection
+   * — the button is rendered `disabled` and the shortcut is a no-op. Driven by
+   * the context predicates above (a table cell, a heading line, a frontmatter /
+   * fenced-code / `$$` block).
+   */
+  disabled?: (state: EditorState) => boolean
   /** Default key bindings in CodeMirror `key` syntax. */
   keys?: string[]
 }
@@ -66,6 +103,7 @@ function wrap(id: ToolbarCommandId, title: string, mark: string, keys?: string[]
     title,
     run: (view) => toggleWrap(view, mark),
     isActive: (state) => wrapActive(state, mark),
+    disabled: inLiteral,
     keys,
   }
 }
@@ -77,16 +115,23 @@ function heading(level: 1 | 2 | 3): ToolbarCommand {
     title: `Heading ${level}`,
     run: (view) => toggleHeading(view, level),
     isActive: (state) => marker.test(state.doc.lineAt(state.selection.main.head).text),
+    disabled: disabledWhen(tableActive, inLiteral),
     keys: [`Mod-Alt-${level}`],
   }
 }
 
-function prefix(id: ToolbarCommandId, title: string, spec: LinePrefixSpec): ToolbarCommand {
+function prefix(
+  id: ToolbarCommandId,
+  title: string,
+  spec: LinePrefixSpec,
+  ...extra: ((s: EditorState) => boolean)[]
+): ToolbarCommand {
   return {
     id,
     title,
     run: (view) => toggleLinePrefix(view, spec),
     isActive: (state) => linePrefixActive(state, spec.match),
+    disabled: disabledWhen(tableActive, inLiteral, ...extra),
   }
 }
 
@@ -102,25 +147,73 @@ export const BUILTIN_COMMANDS: ToolbarCommand[] = [
   wrap("strike", "Strikethrough", "~~"),
   wrap("code", "Inline code", "`"),
   {
+    // In a table cell a fenced block has no valid Markdown, so degrade to
+    // inline `` `code` `` there. Disabled on a heading / in frontmatter / in a
+    // `$$` block; inside a fence it is the unwrap toggle, so stays live.
     id: "codeBlock",
     title: "Code block",
-    run: toggleFencedCode,
-    isActive: fencedCodeActive,
+    run: (view) => (tableActive(view.state) ? toggleWrap(view, "`") : toggleFencedCode(view)),
+    isActive: (state) => (tableActive(state) ? wrapActive(state, "`") : fencedCodeActive(state)),
+    disabled: disabledWhen(inFrontmatter, mathBlockActive, inHeading),
   },
-  { id: "link", title: "Link", run: toggleLink, isActive: linkActive, keys: ["Mod-k"] },
+  {
+    id: "link",
+    title: "Link",
+    run: toggleLink,
+    isActive: linkActive,
+    disabled: inLiteral,
+    keys: ["Mod-k"],
+  },
+  {
+    id: "wikilink",
+    title: "Wikilink",
+    run: toggleWikiLink,
+    isActive: wikiLinkActive,
+    disabled: inLiteral,
+    keys: ["Mod-Shift-k"],
+  },
   prefix("quote", "Blockquote", QUOTE),
-  prefix("bulletList", "Bulleted list", BULLET),
-  prefix("orderedList", "Numbered list", ORDERED),
-  prefix("task", "Task list", TASK),
-  { id: "hr", title: "Divider", run: toggleHorizontalRule, isActive: horizontalRuleActive },
-  { id: "frontmatter", title: "Frontmatter", run: toggleFrontmatter, isActive: frontmatterActive },
-  { id: "table", title: "Table", run: insertTable, isActive: tableActive },
+  prefix("bulletList", "Bulleted list", BULLET, inHeading),
+  prefix("orderedList", "Numbered list", ORDERED, inHeading),
+  prefix("task", "Task list", TASK, inHeading),
+  {
+    id: "hr",
+    title: "Divider",
+    run: toggleHorizontalRule,
+    isActive: horizontalRuleActive,
+    disabled: disabledWhen(tableActive, inLiteral),
+  },
+  {
+    id: "frontmatter",
+    title: "Frontmatter",
+    run: toggleFrontmatter,
+    isActive: frontmatterActive,
+    // live inside the block itself (to toggle it off), disabled where it makes no sense
+    disabled: disabledWhen(tableActive, fencedCodeActive, mathBlockActive, inHeading),
+  },
+  {
+    id: "table",
+    title: "Table",
+    run: insertTable,
+    isActive: tableActive,
+    disabled: disabledWhen(
+      tableActive,
+      inFrontmatter,
+      fencedCodeActive,
+      mathBlockActive,
+      inHeading,
+    ),
+  },
   wrap("math", "Inline math", "$"),
   {
+    // In a table cell, degrade the `$$` block to inline `$…$` math. Disabled on
+    // a heading / in frontmatter / in a fence; inside `$$` it is the unwrap
+    // toggle, so stays live.
     id: "mathBlock",
     title: "Block math",
-    run: toggleMathBlock,
-    isActive: mathBlockActive,
+    run: (view) => (tableActive(view.state) ? toggleWrap(view, "$") : toggleMathBlock(view)),
+    isActive: (state) => (tableActive(state) ? wrapActive(state, "$") : mathBlockActive(state)),
+    disabled: disabledWhen(inFrontmatter, fencedCodeActive, inHeading),
   },
 ]
 
