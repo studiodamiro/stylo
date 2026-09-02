@@ -74,7 +74,7 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
   const cancelClose = () => win?.clearTimeout(flyoutTimer)
   const armClose = () => {
     win?.clearTimeout(flyoutTimer)
-    flyoutTimer = win?.setTimeout(clearFlyout, 300)
+    flyoutTimer = win?.setTimeout(clearFlyout, 450)
   }
 
   const hide = () => {
@@ -136,7 +136,7 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
       panel.addEventListener("pointerleave", armClose)
       root.appendChild(panel)
       const host = b.getBoundingClientRect()
-      place(panel, host.right - 4, host.top - 4)
+      placeFlyout(panel, host)
       flyout = panel
       // `preventScroll` — a focus-induced scroll would trip the menu's own
       // dismiss-on-scroll handler and close it the instant the field opens.
@@ -199,6 +199,21 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
     const { width, height } = panel.getBoundingClientRect()
     panel.style.left = `${Math.max(4, Math.min(x, vw - width - 4))}px`
     panel.style.top = `${Math.max(4, Math.min(y, vh - height - 4))}px`
+  }
+
+  // A flyout sits to the right of its parent row; if it would run off-screen it
+  // flips to the left instead of being shoved back over the menu (which would
+  // leave a gap the pointer has to cross, closing it mid-approach).
+  const placeFlyout = (panel: HTMLElement, host: DOMRect) => {
+    const vw = win?.innerWidth ?? 0
+    const vh = win?.innerHeight ?? 0
+    panel.style.left = "0"
+    panel.style.top = "0"
+    const { width, height } = panel.getBoundingClientRect()
+    const right = host.right - 4
+    const left = right + width > vw - 4 ? host.left - width + 4 : right
+    panel.style.left = `${Math.max(4, left)}px`
+    panel.style.top = `${Math.max(4, Math.min(host.top - 4, vh - height - 4))}px`
   }
 
   const show = (rows: MenuRow[], x: number, y: number) => {
