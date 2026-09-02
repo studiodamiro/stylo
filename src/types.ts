@@ -27,6 +27,7 @@ export type ToolbarCommandId =
   | "code"
   | "codeBlock"
   | "link"
+  | "wikilink"
   | "quote"
   | "bulletList"
   | "orderedList"

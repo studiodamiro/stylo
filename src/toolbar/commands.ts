@@ -13,7 +13,14 @@ import {
   type LinePrefixSpec,
 } from "./block"
 import { fencedCodeActive, mathBlockActive, toggleFencedCode, toggleMathBlock } from "./fence"
-import { linkActive, toggleLink, toggleWrap, wrapActive } from "./inline"
+import {
+  linkActive,
+  toggleLink,
+  toggleWikiLink,
+  toggleWrap,
+  wikiLinkActive,
+  wrapActive,
+} from "./inline"
 import { insertTable, tableActive } from "./table"
 
 export interface ToolbarCommand {
@@ -108,6 +115,13 @@ export const BUILTIN_COMMANDS: ToolbarCommand[] = [
     isActive: fencedCodeActive,
   },
   { id: "link", title: "Link", run: toggleLink, isActive: linkActive, keys: ["Mod-k"] },
+  {
+    id: "wikilink",
+    title: "Wikilink",
+    run: toggleWikiLink,
+    isActive: wikiLinkActive,
+    keys: ["Mod-Shift-k"],
+  },
   prefix("quote", "Blockquote", QUOTE),
   prefix("bulletList", "Bulleted list", BULLET),
   prefix("orderedList", "Numbered list", ORDERED),

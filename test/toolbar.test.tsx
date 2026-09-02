@@ -43,6 +43,118 @@ test("wrapActive reports the pressed state for bold", () => {
   expect(BUILTIN_BY_ID.bold!.isActive!(view.state)).toBe(false)
 })
 
+/** Move the selection back onto the "word" run, whatever marks now flank it. */
+function reSelectWord(view: EditorView) {
+  const i = view.state.doc.toString().indexOf("word")
+  view.dispatch({ selection: EditorSelection.range(i, i + 4) })
+}
+
+/** Run a sequence of built-in commands over the word in "x word y". */
+function seq(...ids: (keyof typeof BUILTIN_BY_ID)[]) {
+  const view = mkView("x word y", 2, 6)
+  for (const id of ids) {
+    BUILTIN_BY_ID[id]!.run(view)
+    reSelectWord(view)
+  }
+  return view.state.doc.toString()
+}
+
+test("bold then italic nests to ***word*** — it does not eat a marker", () => {
+  expect(seq("bold", "italic")).toBe("x ***word*** y")
+})
+
+test("italic then bold also nests to ***word***", () => {
+  expect(seq("italic", "bold")).toBe("x ***word*** y")
+})
+
+test("bold+italic, then bold off leaves italic; then italic off leaves plain", () => {
+  const view = mkView("x word y", 2, 6)
+  BUILTIN_BY_ID.bold!.run(view)
+  BUILTIN_BY_ID.italic!.run(view)
+  expect(view.state.doc.toString()).toBe("x ***word*** y")
+
+  reSelectWord(view)
+  BUILTIN_BY_ID.bold!.run(view)
+  expect(view.state.doc.toString()).toBe("x *word* y")
+
+  reSelectWord(view)
+  BUILTIN_BY_ID.italic!.run(view)
+  expect(view.state.doc.toString()).toBe("x word y")
+})
+
+test("bold+italic, then italic off leaves bold", () => {
+  const view = mkView("x word y", 2, 6)
+  BUILTIN_BY_ID.bold!.run(view)
+  BUILTIN_BY_ID.italic!.run(view)
+  reSelectWord(view)
+  BUILTIN_BY_ID.italic!.run(view)
+  expect(view.state.doc.toString()).toBe("x **word** y")
+})
+
+test("bold, italic, strike all on then all off round-trips cleanly", () => {
+  const view = mkView("x word y", 2, 6)
+  for (const id of ["bold", "italic", "strike"] as const) {
+    BUILTIN_BY_ID[id]!.run(view)
+    reSelectWord(view)
+  }
+  expect(view.state.doc.toString()).toBe("x ***~~word~~*** y")
+
+  for (const id of ["strike", "italic", "bold"] as const) {
+    BUILTIN_BY_ID[id]!.run(view)
+    reSelectWord(view)
+  }
+  expect(view.state.doc.toString()).toBe("x word y")
+})
+
+test("a mark strips out of the middle of a stack, leaving the others", () => {
+  const view = mkView("x word y", 2, 6)
+  for (const id of ["bold", "italic", "strike"] as const) {
+    BUILTIN_BY_ID[id]!.run(view)
+    reSelectWord(view)
+  }
+  expect(view.state.doc.toString()).toBe("x ***~~word~~*** y")
+
+  // italic sits between the outer *** and the inner ~~ — toggling it off must
+  // leave `**~~word~~**`, not stack another pair or eat a `*`.
+  BUILTIN_BY_ID.italic!.run(view)
+  expect(view.state.doc.toString()).toBe("x **~~word~~** y")
+
+  reSelectWord(view)
+  BUILTIN_BY_ID.strike!.run(view)
+  expect(view.state.doc.toString()).toBe("x **word** y")
+})
+
+test("B I S I S I S I S settles to plain bold, never stacks (the reported case)", () => {
+  const view = mkView("x word y", 2, 6)
+  BUILTIN_BY_ID.bold!.run(view)
+  for (const id of [
+    "italic",
+    "strike",
+    "italic",
+    "strike",
+    "italic",
+    "strike",
+    "italic",
+    "strike",
+  ] as const) {
+    reSelectWord(view)
+    BUILTIN_BY_ID[id]!.run(view)
+  }
+  // italic and strike each toggled an even number of times → both off, bold left.
+  expect(view.state.doc.toString()).toBe("x **word** y")
+})
+
+test("strike toggles independently of bold", () => {
+  const view = mkView("x word y", 2, 6)
+  BUILTIN_BY_ID.bold!.run(view)
+  reSelectWord(view)
+  BUILTIN_BY_ID.strike!.run(view)
+  expect(view.state.doc.toString()).toBe("x **~~word~~** y")
+  reSelectWord(view)
+  BUILTIN_BY_ID.strike!.run(view)
+  expect(view.state.doc.toString()).toBe("x **word** y")
+})
+
 test("h2 sets a heading, swaps from another level, then clears", () => {
   const view = mkView("Title", 0)
   BUILTIN_BY_ID.h2!.run(view)
@@ -177,6 +289,27 @@ test("link toggles off by unlinking — the label stays, the url goes", () => {
   expect(BUILTIN_BY_ID.link!.isActive!(view.state)).toBe(true)
   BUILTIN_BY_ID.link!.run(view)
   expect(view.state.doc.toString()).toBe("see the docs now")
+})
+
+test("wikilink wraps the selection as [[…]] with the target selected", () => {
+  const view = mkView("Home Page", 0, 9)
+  BUILTIN_BY_ID.wikilink!.run(view)
+  expect(view.state.doc.toString()).toBe("[[Home Page]]")
+  const { from, to } = view.state.selection.main
+  expect(view.state.sliceDoc(from, to)).toBe("Home Page")
+})
+
+test("wikilink toggles off to the label, dropping the target and pipe", () => {
+  const view = mkView("see [[api/ref|the API]] now", 12) // caret inside the wikilink
+  expect(BUILTIN_BY_ID.wikilink!.isActive!(view.state)).toBe(true)
+  BUILTIN_BY_ID.wikilink!.run(view)
+  expect(view.state.doc.toString()).toBe("see the API now")
+})
+
+test("wikilink toggling a plain [[target]] off leaves the bare target", () => {
+  const view = mkView("go [[Notes]] here", 6)
+  BUILTIN_BY_ID.wikilink!.run(view)
+  expect(view.state.doc.toString()).toBe("go Notes here")
 })
 
 test("resolveToolbarItems: default, explicit true, hidden, custom", () => {

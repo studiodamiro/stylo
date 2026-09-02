@@ -48,6 +48,7 @@ skipped.
 | `code`          | Wrap in `` `…` ``                    | —                       |
 | `codeBlock`     | Fence the selected lines in ` ``` `  | —                       |
 | `link`          | `[text](url)`, or unlink             | `Mod-k`                 |
+| `wikilink`      | `[[target]]`, or unwrap to the label | `Mod-Shift-k`           |
 | `quote`         | Toggle a `>` line prefix             | —                       |
 | `bulletList`    | Toggle a `-` line prefix             | —                       |
 | `orderedList`   | Toggle a `1.` `2.` `3.` line prefix  | —                       |
@@ -59,8 +60,8 @@ skipped.
 | `mathBlock`     | Fence the selected lines in `$$`     | —                       |
 
 The default bar shows every id above, grouped by kind: history · headings ·
-inline text (with `link`) · the three list markers · block structure
-(`quote` `hr` `frontmatter` `table`) · code and math.
+inline text (with `link` and `wikilink`) · the three list markers · block
+structure (`quote` `hr` `frontmatter` `table`) · code and math.
 
 `Mod` is `Cmd` on macOS and `Ctrl` elsewhere. The shortcuts are bound on the
 CodeMirror surface whether or not the visible bar is mounted; `toolbar={false}`
@@ -74,8 +75,12 @@ non-blank selected line already carries it; `orderedList` numbers them `1.`,
 another list marker swaps the marker in place rather than stacking a second one.
 Heading levels swap the same way — `h2` on an `# ` line rewrites it to `## `.
 `link` with the caret inside a `[label](url)` **unlinks** it: the label stays,
-the `](url)` wrapper is removed. `codeBlock` and `mathBlock` unwrap when the
-caret is inside their fence pair. `hr` drops the divider on its own line,
+the `](url)` wrapper is removed. `wikilink` behaves the same for `[[target]]` /
+`[[target|label]]` — the display text is kept, the brackets and any `|label` go.
+The `bold` / `italic` / `strike` marks **nest** rather than consume one another:
+`italic` on `**word**` gives `***word***`, and toggling one mark back off leaves
+the others intact. `codeBlock` and `mathBlock` unwrap when the caret is inside
+their fence pair. `hr` drops the divider on its own line,
 inserting a blank line first when the current line has text so CommonMark reads
 a thematic break rather than a setext H2; with the caret on an existing `---` it
 removes it.
