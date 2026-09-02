@@ -2,8 +2,11 @@
 export { Stylo } from "./Stylo"
 export type {
   CodeLanguages,
+  FrontmatterDisplay,
   InPlaceConfig,
   InPlaceDecorationToggles,
   StyloMode,
   StyloProps,
+  ToolbarCommandId,
+  ToolbarConfig,
 } from "./types"

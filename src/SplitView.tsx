@@ -3,7 +3,7 @@ import type { EditorView } from "@codemirror/view"
 import { SourceView } from "./editor/SourceView"
 import { LazyPreview } from "./render/lazyPreview"
 import styles from "./styles/stylo.module.css"
-import type { CodeLanguages } from "./types"
+import type { CodeLanguages, FrontmatterDisplay } from "./types"
 
 export interface SplitViewProps {
   value: string
@@ -12,6 +12,9 @@ export interface SplitViewProps {
   readOnly?: boolean
   placeholder?: string
   codeLanguages?: CodeLanguages
+  frontmatter?: FrontmatterDisplay
+  /** Forwarded the source pane's `EditorView` for the shared toolbar. */
+  onViewChange?: (view: EditorView | null) => void
 }
 
 /**
@@ -27,10 +30,17 @@ export function SplitView({
   readOnly,
   placeholder,
   codeLanguages,
+  frontmatter,
+  onViewChange,
 }: SplitViewProps) {
   const [view, setView] = useState<EditorView | null>(null)
   const previewPane = useRef<HTMLDivElement | null>(null)
   const syncing = useRef(false)
+
+  const handleView = (next: EditorView | null) => {
+    setView(next)
+    onViewChange?.(next)
+  }
 
   useEffect(() => {
     const source = view?.scrollDOM
@@ -67,7 +77,7 @@ export function SplitView({
           readOnly={readOnly}
           placeholder={placeholder}
           codeLanguages={codeLanguages}
-          onViewChange={setView}
+          onViewChange={handleView}
         />
       </div>
       <div className={styles.splitPane} ref={previewPane}>
