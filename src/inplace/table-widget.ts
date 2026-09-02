@@ -337,6 +337,15 @@ export class EditableTableWidget extends WidgetType {
       const text = (e.clipboardData?.getData("text/plain") ?? "").replace(/\r?\n/g, " ")
       document.execCommand("insertText", false, text)
     })
+    // Right-click (and long-press on touch) opens the structural menu for the
+    // cell under the pointer.
+    table.addEventListener("contextmenu", (e) => {
+      const cell = (e.target as HTMLElement).closest<HTMLTableCellElement>("td, th")
+      if (!cell) return
+      e.preventDefault()
+      e.stopPropagation()
+      this.gizmos?.openFor(cell, e.clientX, e.clientY)
+    })
 
     this.gizmos = createTableGizmos(document, {
       dims: () => ({
