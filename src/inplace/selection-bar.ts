@@ -16,7 +16,11 @@ const IDS: ToolbarCommandId[] = ["bold", "italic", "strike", "code", "link", "wi
 class SelectionBar implements PluginValue {
   private bar: HTMLElement
   private buttons = new Map<ToolbarCommandId, HTMLButtonElement>()
-  private onScroll = () => this.schedule()
+  // Scrolling detaches the bar from its selection — just dismiss it. It returns,
+  // repositioned, on the next selection change.
+  private onScroll = () => {
+    this.bar.hidden = true
+  }
 
   constructor(private view: EditorView) {
     const doc = view.dom.ownerDocument
@@ -49,7 +53,9 @@ class SelectionBar implements PluginValue {
   }
 
   update(u: ViewUpdate) {
-    if (u.selectionSet || u.docChanged || u.geometryChanged || u.focusChanged) this.schedule()
+    // Not `geometryChanged` — scrolling dismisses the bar (see `onScroll`)
+    // rather than re-chasing the selection.
+    if (u.selectionSet || u.docChanged || u.focusChanged) this.schedule()
   }
 
   /**
@@ -90,6 +96,9 @@ class SelectionBar implements PluginValue {
       disabled[id] = off
       active[id] = !off && Boolean(cmd.isActive?.(view.state))
     }
+    // Nothing the bar offers applies here (a fenced code / `$$` / frontmatter
+    // selection) — show no bar rather than a row of dead buttons.
+    if (IDS.every((id) => disabled[id])) return null
     return {
       left: Math.max(4, Math.min(midX - rect.width / 2, vw - rect.width - 4)),
       top: aboveTop < editorTop + 2 ? belowTop : aboveTop,
