@@ -49,7 +49,9 @@ class SelectionBar implements PluginValue {
     // Inside `.cm-editor` so the `inPlaceTheme` rules and `--stylo-*` tokens
     // reach it; the bar is `position: fixed`, positioned against the viewport.
     view.dom.appendChild(this.bar)
-    view.scrollDOM.addEventListener("scroll", this.onScroll, { passive: true })
+    // Capture phase catches a scroll on any ancestor — the editor's own
+    // scroller, or the page, when the editor grows with its content.
+    view.dom.ownerDocument.addEventListener("scroll", this.onScroll, true)
   }
 
   update(u: ViewUpdate) {
@@ -122,7 +124,7 @@ class SelectionBar implements PluginValue {
   }
 
   destroy() {
-    this.view.scrollDOM.removeEventListener("scroll", this.onScroll)
+    this.view.dom.ownerDocument.removeEventListener("scroll", this.onScroll, true)
     this.bar.remove()
   }
 }
