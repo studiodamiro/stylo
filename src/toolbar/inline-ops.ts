@@ -146,6 +146,28 @@ export function linkAtIn(
   return null
 }
 
+/**
+ * Like {@link linkAtIn} but also breaks out the URL and its `[from, to)` span
+ * within `text`, for editing just the `(…)` part in place.
+ */
+export function linkPartsIn(
+  text: string,
+  head: number,
+): { from: number; to: number; label: string; url: string; urlFrom: number; urlTo: number } | null {
+  const re = /\[([^\]]*)\]\(([^)]*)\)/g
+  for (let m: RegExpExecArray | null; (m = re.exec(text));) {
+    const from = m.index
+    const to = from + m[0].length
+    if (head >= from && head <= to) {
+      const label = m[1] ?? ""
+      const url = m[2] ?? ""
+      const urlFrom = from + 1 + label.length + 2 // `[` + label + `](`
+      return { from, to, label, url, urlFrom, urlTo: urlFrom + url.length }
+    }
+  }
+  return null
+}
+
 /** Toggle `[text](url)` around `[from, to)` of `text` — wrap, or unlink to the label. */
 export function linkString(text: string, from: number, to: number): InlineStr {
   const hit = linkAtIn(text, from)

@@ -7,7 +7,8 @@ import {
   menuRows,
   type MenuContext,
 } from "../src/inplace/context-menu-actions"
-import type { MenuRow, MenuSubmenu } from "../src/inplace/context-menu"
+import type { MenuField, MenuRow, MenuSubmenu } from "../src/inplace/context-menu"
+import { linkPartsIn } from "../src/toolbar/inline-ops"
 
 function mkView(doc: string, anchor = doc.length, head = anchor): EditorView {
   return new EditorView({
@@ -26,6 +27,7 @@ const labels = (rows: MenuRow[]): string[] =>
   rows.filter((r): r is Exclude<MenuRow, "separator"> => r !== "separator").map((r) => r.label)
 
 const isSubmenu = (r: MenuRow): r is MenuSubmenu => typeof r !== "string" && "rows" in r
+const isField = (r: MenuRow): r is MenuField => typeof r !== "string" && "field" in r
 
 test("a non-empty selection classifies as 'selection'", () => {
   expect(ctx("hello world", 0, 5)).toBe("selection")
@@ -73,6 +75,43 @@ test("block-context rows include block actions, an Insert submenu, and clipboard
   const l = labels(rows)
   expect(l).toEqual(expect.arrayContaining(["Blockquote", "Insert", "Copy"]))
   expect(rows.some(isSubmenu)).toBe(true)
+})
+
+test("linkPartsIn breaks out the URL and its span", () => {
+  const text = "see [the docs](https://example.com) now"
+  const parts = linkPartsIn(text, text.indexOf("docs"))
+  expect(parts).not.toBeNull()
+  expect(parts!.label).toBe("the docs")
+  expect(parts!.url).toBe("https://example.com")
+  expect(text.slice(parts!.urlFrom, parts!.urlTo)).toBe("https://example.com")
+})
+
+test("a selection gets a 'Link' field row that wraps it on submit", () => {
+  const view = mkView("make this a link", 5, 9) // "this"
+  const link = menuRows(view).find(
+    (r): r is MenuField => isField(r) && r.label === "Link",
+  )
+  expect(link).toBeDefined()
+  expect(link!.value).toBe("")
+  link!.onSubmit("https://x.test")
+  expect(view.state.doc.toString()).toBe("make [this](https://x.test) a link")
+})
+
+test("the caret in a link gets a prefilled 'Link' field with Remove link", () => {
+  const doc = "go to [home](https://a.test) please"
+  const view = mkView(doc, doc.indexOf("home") + 1)
+  const link = menuRows(view).find(
+    (r): r is MenuField => isField(r) && r.label === "Link",
+  )
+  expect(link).toBeDefined()
+  expect(link!.value).toBe("https://a.test")
+  expect(link!.actions?.some((a) => a.label === "Remove link")).toBe(true)
+
+  link!.onSubmit("https://b.test")
+  expect(view.state.doc.toString()).toBe("go to [home](https://b.test) please")
+
+  link!.actions!.find((a) => a.label === "Remove link")!.onSelect()
+  expect(view.state.doc.toString()).toBe("go to home please")
 })
 
 test("disabled commands are dropped from the block group but kept for a selection", () => {

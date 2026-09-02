@@ -303,6 +303,19 @@ export const inPlaceTheme = EditorView.theme({
   ".cm-inplace-menu-item[data-active]": { color: "var(--stylo-ring)", fontWeight: "600" },
   ".cm-inplace-menu-item[data-active] svg": { color: "var(--stylo-ring)" },
   ".cm-inplace-menu-parent::after": { content: '"\\203A"', marginLeft: "auto", paddingLeft: "1.5em" },
+  ".cm-inplace-menu-input": {
+    all: "unset",
+    boxSizing: "border-box",
+    width: "17em",
+    margin: "0.15em",
+    padding: "0.4em 0.55em",
+    border: "1px solid var(--stylo-border)",
+    borderRadius: "4px",
+    fontSize: "0.9em",
+    fontFamily: "inherit",
+    color: "var(--stylo-text)",
+  },
+  ".cm-inplace-menu-input:focus": { borderColor: "var(--stylo-ring)" },
 
   // --- Selection bar (selection-bar.ts) ---
   // `[hidden]` toggles visibility, not `display` — the bar stays laid out so

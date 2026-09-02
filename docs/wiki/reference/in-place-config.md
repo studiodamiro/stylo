@@ -73,7 +73,8 @@ context-aware Stylo menu instead of the browser's:
 
 | Where you right-click                        | The menu offers                                              |
 | -------------------------------------------- | ----------------------------------------------------------- |
-| Over a selection                             | Inline marks (bold / italic / strike / code / link / wikilink / math) + Cut / Copy / Paste |
+| Over a selection                             | Inline marks (bold / italic / strike / code / math), a **Link** URL field, a wikilink toggle, + Cut / Copy / Paste |
+| In a `[text](url)` link (caret, no selection) | A prefilled **Link** URL field — edit the URL, **Open link** (fires `onLinkClick`), **Remove link** |
 | In a code block, quote, list, heading, divider, `$$` math, or frontmatter | That block's toggles + an **Insert** submenu + clipboard |
 | In a plain paragraph                         | **Insert** (table / divider / code block / block math / frontmatter) + clipboard |
 | In a table cell, caret only                  | Insert / delete row · column, column alignment              |

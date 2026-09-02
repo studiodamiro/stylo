@@ -137,6 +137,15 @@ throughout.
   than chasing the selection, and it is suppressed where no inline action
   applies (a fenced-code / `$$` / frontmatter selection). Playground now
   defaults to `reveal: "never"` and `table: "cells"`.
+- **2026-09-03 — Stage 4 landed (links).** The right-click menu's "Link" row is
+  now a URL field flyout (`MenuField` in `context-menu.ts`): empty over a
+  selection (wraps it as `[sel](url)` on Enter); prefilled with **Open link** /
+  **Remove link** when the caret is inside a `[text](url)`. New `onLinkClick`
+  prop (`StyloProps` → `InPlaceView` → `linkOpenFacet`); Stylo does not
+  navigate. **Wikilinks still use the plain toggle** — the same field for
+  `[[target|label]]` is the immediate next step. Deferred within Stage 4: a
+  click / hover affordance on a collapsed link (right-click is the only route
+  for now), and paste-a-URL-onto-a-selection autoformat (Stage 5).
 
 ## Consequences
 

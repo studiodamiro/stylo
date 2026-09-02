@@ -26,6 +26,7 @@ export function Stylo({
   onChange,
   mode = "in-place",
   onWikiLinkClick,
+  onLinkClick,
   readOnly,
   placeholder,
   className,
@@ -86,6 +87,7 @@ export function Stylo({
             readOnly={readOnly}
             placeholder={placeholder}
             onWikiLinkClick={onWikiLinkClick}
+            onLinkClick={onLinkClick}
             inPlace={inPlace}
             codeLanguages={codeLanguages}
             onViewChange={setView}
