@@ -11,6 +11,15 @@ import {
   trimGrid,
   unescapePipe,
 } from "./table-cell-dom"
+import { createTableGizmos, type StructOp, type TableGizmos } from "./table-gizmos"
+import {
+  deleteColumn,
+  deleteRow,
+  type GridModel,
+  insertColumn,
+  insertRow,
+  setAlign,
+} from "./table-structure"
 
 /** Marks a transaction that came from an editable table widget's own DOM. */
 export const fromTableWidget = Annotation.define<boolean>()
@@ -42,6 +51,7 @@ export class EditableTableWidget extends WidgetType {
   /** Rendered-text offset from the mousedown that is bringing a cell into edit. */
   private pendingOffset: number | null = null
   private current: string[][]
+  private gizmos: TableGizmos | null = null
 
   constructor(readonly data: ParsedTable) {
     super()
@@ -110,12 +120,47 @@ export class EditableTableWidget extends WidgetType {
     return el
   }
 
-  private appendRow(): HTMLTableRowElement {
-    this.rows.push(new Array(this.cols()).fill(""))
-    const r = this.rows.length - 1
-    const tr = this.table!.tBodies[0]!.insertRow()
-    for (let c = 0; c < this.cols(); c++) tr.appendChild(this.mkCell(r, c, false))
-    return tr
+  /** Rebuild `<thead>` / `<tbody>` from the current grid model. */
+  private renderCells() {
+    const table = this.table!
+    table.replaceChildren()
+    const hr = table.createTHead().insertRow()
+    for (let c = 0; c < this.cols(); c++) hr.appendChild(this.mkCell(0, c, true))
+    const tbody = table.createTBody()
+    for (let r = 1; r < this.rows.length; r++) {
+      const tr = tbody.insertRow()
+      for (let c = 0; c < this.cols(); c++) tr.appendChild(this.mkCell(r, c, false))
+    }
+  }
+
+  private appendRow() {
+    insertRow(this.model(), this.rows.length)
+    this.renderCells()
+    this.gizmos?.layout(this.table!)
+  }
+
+  private model(): GridModel {
+    return { rows: this.rows, aligns: this.data.aligns }
+  }
+
+  /** Apply a structural edit from a gizmo, rebuild, restore focus, reserialize. */
+  private runOp(view: EditorView, op: StructOp) {
+    const g = this.model()
+    if (op.kind === "insertColumn") insertColumn(g, op.at)
+    else if (op.kind === "deleteColumn") deleteColumn(g, op.at)
+    else if (op.kind === "insertRow") insertRow(g, op.at)
+    else if (op.kind === "deleteRow") deleteRow(g, op.at)
+    else setAlign(g, op.at, g.aligns[op.at] === op.value ? "" : op.value)
+
+    this.editing = null
+    this.renderCells()
+    this.gizmos?.layout(this.table!)
+    if (op.kind !== "align") {
+      const r = Math.max(0, Math.min(op.focus[0], this.rows.length - 1))
+      const c = Math.max(0, Math.min(op.focus[1], this.cols() - 1))
+      this.cellAt(r, c)?.focus()
+    }
+    this.sync(view)
   }
 
   /** Commit `cell`'s edited text into `rows` and, unless it keeps focus, re-render it. */
@@ -243,18 +288,13 @@ export class EditableTableWidget extends WidgetType {
   }
 
   toDOM(view: EditorView) {
+    const wrap = document.createElement("div")
+    wrap.className = "cm-inplace-table-wrap"
     const table = document.createElement("table")
     this.table = table
     this.editing = null
     table.className = "cm-inplace-table cm-inplace-table-edit"
-
-    const hr = table.createTHead().insertRow()
-    for (let c = 0; c < this.cols(); c++) hr.appendChild(this.mkCell(0, c, true))
-    const tbody = table.createTBody()
-    for (let r = 1; r < this.rows.length; r++) {
-      const tr = tbody.insertRow()
-      for (let c = 0; c < this.cols(); c++) tr.appendChild(this.mkCell(r, c, false))
-    }
+    this.renderCells()
 
     // Keep the pointer event away from CodeMirror's delegated handler: it would
     // snap the click to the atomic widget boundary and pull focus back to
@@ -288,10 +328,24 @@ export class EditableTableWidget extends WidgetType {
       const text = (e.clipboardData?.getData("text/plain") ?? "").replace(/\r?\n/g, " ")
       document.execCommand("insertText", false, text)
     })
-    return table
+
+    this.gizmos = createTableGizmos(document, {
+      dims: () => ({
+        cols: this.cols(),
+        rows: this.rows.length,
+        alignAt: (c) => this.data.aligns[c] ?? "",
+      }),
+      run: (op) => this.runOp(view, op),
+    })
+    wrap.append(table, this.gizmos.el)
+    wrap.addEventListener("mouseenter", () => this.gizmos?.layout(table))
+    requestAnimationFrame(() => this.gizmos?.layout(table))
+    return wrap
   }
 
   override destroy() {
+    this.gizmos?.destroy()
+    this.gizmos = null
     this.table = null
     this.editing = null
   }
