@@ -107,6 +107,27 @@ test("bold text is styled and its ** markers hide off-line, reveal on-line", asy
   expect(hidesAMarker(view)).toBe(false)
 })
 
+test("reveal: 'never' keeps the ** markers hidden even with the caret on the line", async () => {
+  const { view } = await mount("normal **bold** normal\n\nsecond line", { reveal: "never" })
+
+  view.dispatch({ selection: { anchor: 10 } }) // inside "bold"
+  expect(hasClass(view, "cm-inplace-strong")).toBe(true)
+  expect(hidesAMarker(view)).toBe(true)
+
+  view.dispatch({ selection: { anchor: 1 } }) // start of the line
+  expect(hidesAMarker(view)).toBe(true)
+})
+
+test("reveal: 'never' still lets inline $…$ math reveal its source on-caret", async () => {
+  const { view } = await mount("before $x^2$ after\n\ntail", { reveal: "never" })
+
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+  expect(mathWidgets(view).some((w) => !w.block)).toBe(true)
+
+  view.dispatch({ selection: { anchor: 9 } }) // inside the math
+  expect(mathWidgets(view).some((w) => !w.block)).toBe(false)
+})
+
 test("italic, strikethrough, and inline code each get a decoration", async () => {
   const { view } = await mount("an *emphasis*, a ~~strike~~, and `code` here\n\nx")
 

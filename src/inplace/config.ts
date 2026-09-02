@@ -1,5 +1,10 @@
 import { Facet } from "@codemirror/state"
-import type { InPlaceConfig, InPlaceDecorationToggles, TableEditing } from "../types"
+import type {
+  InPlaceConfig,
+  InPlaceDecorationToggles,
+  RevealMode,
+  TableEditing,
+} from "../types"
 
 /** `InPlaceDecorationToggles` with every key resolved to a concrete boolean. */
 export type ResolvedToggles = Required<InPlaceDecorationToggles>
@@ -35,6 +40,14 @@ export const inPlaceConfigFacet = Facet.define<ResolvedToggles, ResolvedToggles>
 /** Table editing mode, seeded once by `inPlaceExtension`; read by `tables.ts`. */
 export const tableEditingFacet = Facet.define<TableEditing, TableEditing>({
   combine: (values) => values[0] ?? "source",
+})
+
+/**
+ * Marker reveal behaviour (ADR-007). `"never"` makes `decorate.ts` hide every
+ * inline marker regardless of the caret line. Seeded once by `inPlaceExtension`.
+ */
+export const revealModeFacet = Facet.define<RevealMode, RevealMode>({
+  combine: (values) => values[0] ?? "caret",
 })
 
 /**

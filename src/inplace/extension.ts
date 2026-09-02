@@ -6,6 +6,7 @@ import {
   contextMenuEnabled,
   inPlaceConfigFacet,
   resolveToggles,
+  revealModeFacet,
   selectionBarEnabled,
   tableEditingFacet,
 } from "./config"
@@ -74,6 +75,7 @@ export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
   return [
     inPlaceConfigFacet.of(resolveToggles(opts.inPlace)),
     tableEditingFacet.of(opts.inPlace?.table ?? "source"),
+    revealModeFacet.of(opts.inPlace?.reveal ?? "caret"),
     contextMenuEnabled.of(opts.inPlace?.contextMenu ?? true),
     selectionBarEnabled.of(opts.inPlace?.selectionBar ?? true),
     inPlaceDecorations(),

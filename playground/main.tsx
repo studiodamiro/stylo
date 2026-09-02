@@ -4,6 +4,7 @@ import { languages } from "@codemirror/language-data"
 import {
   Stylo,
   type InPlaceDecorationToggles,
+  type RevealMode,
   type StyloMode,
   type TableEditing,
   type ToolbarConfig,
@@ -88,6 +89,7 @@ function App() {
   const [toolbar, setToolbar] = useState<keyof typeof TOOLBARS>("default")
   const [frontmatter, setFrontmatter] = useState<"hidden" | "code">("hidden")
   const [tableEdit, setTableEdit] = useState<TableEditing>("source")
+  const [reveal, setReveal] = useState<RevealMode>("caret")
   const [lastLink, setLastLink] = useState<string | null>(null)
   // ADR-005: inPlace config is read once at mount, so a changed toggle remounts
   // the canvas via `key` below — a deliberate demo of that construction-time rule.
@@ -198,6 +200,15 @@ function App() {
             <option value="source">source</option>
             <option value="cells">cells</option>
           </select>
+          <span style={{ marginLeft: "0.75rem" }}>reveal (ADR-007)</span>
+          <select
+            value={reveal}
+            onChange={(e) => setReveal(e.target.value as RevealMode)}
+            style={{ padding: "0.2rem 0.4rem", borderRadius: 6, border: "1px solid #d4d4d8" }}
+          >
+            <option value="caret">caret</option>
+            <option value="never">never</option>
+          </select>
         </label>
       )}
 
@@ -229,12 +240,16 @@ function App() {
       )}
 
       <Stylo
-        key={mode === "in-place" ? `${JSON.stringify(decorations)}:${tableEdit}` : "static"}
+        key={
+          mode === "in-place"
+            ? `${JSON.stringify(decorations)}:${tableEdit}:${reveal}`
+            : "static"
+        }
         value={doc}
         onChange={setDoc}
         mode={mode}
         onWikiLinkClick={setLastLink}
-        inPlace={{ decorations, table: tableEdit }}
+        inPlace={{ decorations, table: tableEdit, reveal }}
         toolbar={TOOLBARS[toolbar]}
         frontmatter={frontmatter}
         codeLanguages={languages}

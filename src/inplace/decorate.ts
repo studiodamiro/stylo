@@ -1,12 +1,15 @@
 import { syntaxTree } from "@codemirror/language"
 import type { Range } from "@codemirror/state"
 import { Decoration, type DecorationSet, type EditorView } from "@codemirror/view"
-import { inPlaceConfigFacet } from "./config"
+import { inPlaceConfigFacet, revealModeFacet } from "./config"
 import { frontmatterRange } from "./frontmatter"
 import { scanInlineMath } from "./math"
 import { decorateNode } from "./nodes"
 import { revealedLines } from "./reveal"
 import { scanWikilinks } from "./wikilinks"
+
+/** Shared empty set for `reveal: "never"` — no line ever counts as revealed. */
+const NO_LINES: Set<number> = new Set()
 
 export interface InPlaceDecorations {
   decorations: DecorationSet
@@ -25,7 +28,11 @@ export interface InPlaceDecorations {
  */
 export function buildDecorations(view: EditorView): InPlaceDecorations {
   const out: Range<Decoration>[] = []
-  const revealed = revealedLines(view.state)
+  // `reveal: "never"` (ADR-007) — no line reveals its markers. Inline `$…$` math
+  // is the exception: its widget still needs the caret line to show `$…$` source
+  // for editing, so it keeps the real reveal set until a later ADR-007 stage.
+  const caretRevealed = revealedLines(view.state)
+  const revealed = view.state.facet(revealModeFacet) === "never" ? NO_LINES : caretRevealed
   const tree = syntaxTree(view.state)
   const { doc } = view.state
   const toggles = view.state.facet(inPlaceConfigFacet)
@@ -38,7 +45,7 @@ export function buildDecorations(view: EditorView): InPlaceDecorations {
       enter: (node) => decorateNode(node, ctx),
     })
     if (toggles.wikilinks) scanWikilinks(view, range.from, range.to, revealed, tree, out)
-    if (toggles.math) scanInlineMath(view, range.from, range.to, revealed, tree, out)
+    if (toggles.math) scanInlineMath(view, range.from, range.to, caretRevealed, tree, out)
   }
 
   // Every replacing decoration (marker-hiding and widgets) is atomic, so the

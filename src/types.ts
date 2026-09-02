@@ -84,11 +84,26 @@ export interface InPlaceDecorationToggles {
  */
 export type TableEditing = "source" | "cells"
 
+/**
+ * Whether the in-place canvas shows a construct's Markdown markers when the
+ * caret is on its line. `"caret"` (default) reveals them for editing and
+ * re-hides them on the way out — Obsidian's Live Preview. `"never"` keeps every
+ * inline marker hidden at all times; formatting is changed through the toolbar,
+ * the right-click menu, shortcuts, and autoformat-on-type instead. See ADR-007;
+ * `"never"` is being rolled out in stages.
+ */
+export type RevealMode = "caret" | "never"
+
 export interface InPlaceConfig {
   /** Which decoration types the in-place canvas renders. Read once, at mount. */
   decorations?: InPlaceDecorationToggles
   /** Table editing mode (see `TableEditing`). Read once, at mount. */
   table?: TableEditing
+  /**
+   * Marker reveal behaviour (see `RevealMode`). Optional, defaults to
+   * `"caret"`. Read once, at mount.
+   */
+  reveal?: RevealMode
   /**
    * Right-click a block for a context menu (inline actions on a selection,
    * block + insert actions otherwise). `false` keeps the browser's own menu.
