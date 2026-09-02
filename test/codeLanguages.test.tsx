@@ -51,3 +51,20 @@ test("codeLanguages nests the matching grammar inside a fenced block", async () 
     expect(names).toContain("VariableDefinition")
   })
 })
+
+test("the highlight style paints token spans in a fenced block", async () => {
+  const { container } = render(
+    <Harness value={DOC} onChange={() => {}} codeLanguages={languages} />,
+  )
+  const view = viewIn(container)
+
+  await vi.waitFor(() => {
+    const codeLine = view.dom.querySelectorAll<HTMLElement>(".cm-line")[1]
+    const keyword = [...(codeLine?.querySelectorAll("span") ?? [])].find(
+      (s) => s.textContent === "const",
+    )
+    if (!keyword) throw new Error("token spans not rendered yet")
+    // A HighlightStyle rule wraps the token and gives it a generated class.
+    expect(keyword.className).not.toBe("")
+  })
+})

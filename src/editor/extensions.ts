@@ -5,6 +5,7 @@ import { EditorView, keymap, placeholder as placeholderExt } from "@codemirror/v
 import { markdownKeymap } from "../toolbar/keymap"
 import { tableKeymap, tableRealign } from "../toolbar/table"
 import type { CodeLanguages } from "../types"
+import { styloHighlighting } from "./highlight"
 import { styloTheme } from "./theme"
 
 /**
@@ -25,6 +26,7 @@ export function baseExtensions(codeLanguages?: CodeLanguages): Extension {
     markdownKeymap,
     tableRealign,
     markdown({ base: markdownLanguage, codeLanguages }),
+    styloHighlighting,
     EditorView.lineWrapping,
     styloTheme,
   ]
