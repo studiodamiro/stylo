@@ -326,6 +326,20 @@ test("the add-row gizmo appends a row", async () => {
   )
 })
 
+test("a selection-only transaction does not orphan the editable widget", async () => {
+  const { view } = await mount(`intro\n\n${T}\n\ntail`, { table: "cells" })
+  const table = await editCells(view)
+
+  // Caret moves elsewhere in the document — a selection-only transaction that
+  // must not swap the widget instance behind its mounted DOM.
+  view.dispatch({ selection: { anchor: 0 } })
+  expect(view.contentDOM.querySelector("table.cm-inplace-table-edit")).toBe(table)
+
+  // A structural edit still lands (it would silently no-op on an orphaned widget).
+  view.contentDOM.querySelector<HTMLButtonElement>(".cm-inplace-tg-addcol")!.click()
+  expect(view.state.doc.toString()).toContain("| A   | B   |     |")
+})
+
 test("the cell context menu deletes a column", async () => {
   const { view } = await mount(T, { table: "cells" })
   await editCells(view)

@@ -130,6 +130,14 @@ export const tableField = StateField.define<DecorationSet>({
     // its `from` side is negative (→ change start), its `to` side positive
     // (→ change end) — so the mapped span is exactly the new table.
     if (tr.annotation(fromTableWidget)) return value.map(tr.changes)
+    // In "cells" mode the editable widget is always mounted and owns live DOM
+    // (contentEditable cells, an open context menu). A selection-only
+    // transaction must not rebuild it — that swaps the widget instance behind
+    // the mounted DOM and orphans an in-flight structural edit. Only a real
+    // external document change reloads it.
+    if (tr.state.facet(tableEditingFacet) === "cells") {
+      return tr.docChanged ? build(tr.state) : value.map(tr.changes)
+    }
     return tr.docChanged || tr.selection ? build(tr.state) : value
   },
   provide: (field) => [

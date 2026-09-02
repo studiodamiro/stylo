@@ -24,8 +24,9 @@ was the last deferred item in
 `<div class="cm-inplace-table-wrap">` holding the `<table>` and a thin overlay:
 
 - a hit strip along the whole **right edge** (append column) and the whole
-  **bottom edge** (append row), shown on table hover, with a `+` that tracks the
-  pointer so it stays in view on a tall table — click anywhere along the edge;
+  **bottom edge** (append row) — click anywhere along it. The strip is invisible
+  until the pointer is on it (not on whole-table hover, matching Obsidian); a
+  centred `+` is its only mark;
 - a **right-click / long-press context menu** on any cell — _insert row above /
   below_, _insert column left / right_, _delete row_, _delete column_, and
   _align left / center / right_ — contextual to the clicked cell.
@@ -68,9 +69,16 @@ pure functions, and a `contextmenu` listener on the table opens the menu.
   `posAtDOM` anchor — now that the widget root is a wrapper `<div>`, the anchor
   can land on an inner table line, and a one-directional scan would clip the
   replaced range and misplace the text.
-- `eq()` compares the last-synced grid to the other widget's `current`, not to
-  the now-stale `data` (which `head` / `body` never track after a structural
-  edit) — otherwise CodeMirror tears the widget down and rebuilds it every time.
+- `eq()` returns `false` while the instance owns mounted DOM. `tableField`'s
+  `update` used to run `build()` on any `tr.selection` — a selection-only
+  transaction (the caret moving elsewhere in the document) would mint a new
+  widget instance, and CodeMirror, seeing `eq` say "equal", swapped the instance
+  behind the live DOM **without** running its `toDOM` — the new instance's
+  `table` stayed `null`, so the next structural edit ran against a dead widget
+  and did nothing until a further interaction forced a real rebuild. This was
+  the intermittent "appears only after clicking elsewhere". Now: in `"cells"`
+  mode `update` only rebuilds on `tr.docChanged`, and `eq` forces a clean
+  `toDOM` on the rare genuine reload.
 
 ## Trade-offs
 
@@ -82,12 +90,13 @@ pure functions, and a `contextmenu` listener on the table opens the menu.
 
 ## Verification
 
-`typecheck`, 151 Vitest tests (7 in `test/table-structure.test.ts` for the pure
-ops, 6 in `test/table-interactive.test.tsx` — the edge `+` buttons appending, the
-cell context menu deleting a column and writing `:-:` into the delimiter, the
-menu hidden until a right-click then closing on an outside click, and _Delete
-row_ omitted on the header and the last body row), `build`, `format:check`.
-Confirmed in a real Chrome against the playground: no handle chrome, the `+`
-buttons append on a single click and appear immediately, right-click opens the
-menu at the pointer, Escape and outside-click close it, alignment and every
-delete round-trip through `serializeGrid`.
+`typecheck`, 152 Vitest tests (7 in `test/table-structure.test.ts` for the pure
+ops, 7 in `test/table-interactive.test.tsx` — the edge strips appending, the cell
+context menu deleting a column and writing `:-:` into the delimiter, the menu
+hidden until a right-click then closing on an outside click, _Delete row_ omitted
+on the header and the last body row, and a selection-only transaction not
+orphaning the widget), `build`, `format:check`. Confirmed in a real Chrome
+against the playground: no handle chrome, the edge strip shows only on edge
+hover, the strip and the context menu both apply on a single click even after the
+caret has moved elsewhere, Escape and outside-click close the menu, alignment and
+every delete round-trip through `serializeGrid`.

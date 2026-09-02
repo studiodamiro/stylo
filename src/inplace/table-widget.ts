@@ -60,10 +60,12 @@ export class EditableTableWidget extends WidgetType {
   }
 
   override eq(other: EditableTableWidget) {
-    // `current` reflects the last-synced grid — for a freshly parsed widget it is
-    // the constructor's `trimGrid(gridOf(data))`, for this instance after a
-    // structural edit it is `trimGrid(rows)`. Comparing `current` to `current`
-    // stays correct after add / remove column or row (where `data` goes stale).
+    // While this instance owns mounted DOM, force CodeMirror to run the new
+    // instance's `toDOM` on a rebuild rather than swapping the instance behind
+    // the live DOM (which leaves the new one un-initialised — `table` null).
+    // Widget-originated edits use the `fromTableWidget` annotation path, which
+    // never calls `eq`, so this only bites on a genuine external reload.
+    if (this.table) return false
     return JSON.stringify(this.current) === JSON.stringify(other.current)
   }
 
@@ -152,6 +154,7 @@ export class EditableTableWidget extends WidgetType {
 
   /** Apply a structural edit from a gizmo, rebuild, restore focus, reserialize. */
   private runOp(view: EditorView, op: StructOp) {
+    if (!this.table) return // a destroyed instance whose menu is still on screen
     const g = this.model()
     if (op.kind === "insertColumn") insertColumn(g, op.at)
     else if (op.kind === "deleteColumn") deleteColumn(g, op.at)
