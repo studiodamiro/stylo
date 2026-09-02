@@ -23,8 +23,9 @@ was the last deferred item in
 **Obsidian-style affordances.** The widget's `toDOM` returns a positioned
 `<div class="cm-inplace-table-wrap">` holding the `<table>` and a thin overlay:
 
-- a subtle `+` on the **right edge** (append column) and the **bottom edge**
-  (append row), shown on table hover;
+- a hit strip along the whole **right edge** (append column) and the whole
+  **bottom edge** (append row), shown on table hover, with a `+` that tracks the
+  pointer so it stays in view on a tall table — click anywhere along the edge;
 - a **right-click / long-press context menu** on any cell — _insert row above /
   below_, _insert column left / right_, _delete row_, _delete column_, and
   _align left / center / right_ — contextual to the clicked cell.
@@ -34,8 +35,8 @@ row. It was dropped: the handles need per-frame geometry math (a source of
 placement bugs), and a fixed top / left handle strip scrolls out of reach on a
 tall table. The context menu is always at the pointer, needs no layout, and
 matches Obsidian's own table UX — Stylo's reference. `contextmenu` covers
-right-click on desktop and long-press on mobile Safari / Chrome; only the two `+`
-buttons need positioning, from the first / last `<tr>`.
+right-click on desktop and long-press on mobile Safari / Chrome; only the two
+edge strips need positioning, sized to the grid from the first / last `<tr>`.
 
 **`src/inplace/table-structure.ts`** (new) — pure grid mutations on
 `{ rows, aligns }`: `insertColumn` / `deleteColumn` / `insertRow` / `deleteRow` /
