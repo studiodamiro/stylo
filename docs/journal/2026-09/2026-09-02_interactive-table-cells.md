@@ -125,10 +125,12 @@ override is needed — and this CM version's `WidgetType` type doesn't declare o
   live DOM — so this is deliberate, not a leak.
 - No structural controls yet (add/remove column, remove row, alignment toggle).
   Adding a row is the only structural edit, via Tab/Enter.
-- Cell content is still verbatim text — `**bold**` etc. inside a cell render as
-  literal characters. Shared follow-up with the read-only widget.
 - IME is handled minimally: `sync` is deferred to `compositionend` and skipped
   while `isComposing`. Deep IME edge cases are untested.
+
+(Cell content was verbatim text at this point; the follow-up that added a
+per-cell reveal is the
+[table-cell reveal note](./2026-09-02_table-cell-reveal.md).)
 
 ## Verification
 
@@ -149,5 +151,4 @@ playground. No new dependency; the widget lands in the lazy `InPlaceView` chunk.
 
 - Structural controls on the `"cells"` widget — add/remove column, remove row,
   set alignment — each a `serializeGrid` rewrite.
-- Inline formatting inside cells, both `table` modes.
 - IME composition hardening.
