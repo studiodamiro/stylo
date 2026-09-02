@@ -13,23 +13,17 @@ import { activeTableCell } from "../toolbar/cell-inline"
 import { BUILTIN_BY_ID } from "../toolbar/commands"
 import { fencedCodeActive, mathBlockActive } from "../toolbar/fence"
 import { ICON_PATHS } from "../toolbar/icon-paths"
+import { linkPartsIn } from "../toolbar/inline-ops"
 import { tableActive } from "../toolbar/table"
-import type { MenuAction, MenuRow } from "./context-menu"
+import { linkOpenFacet } from "./config"
+import type { MenuAction, MenuField, MenuRow } from "./context-menu"
 import { selectionOffsets } from "./table-cell-dom"
 
 /** Menu glyph for a command id — headings share one, the rest map by id. */
 const iconFor = (id: ToolbarCommandId): string | undefined =>
   id === "h1" || id === "h2" || id === "h3" ? ICON_PATHS.heading : ICON_PATHS[id]
 
-const INLINE_IDS: ToolbarCommandId[] = [
-  "bold",
-  "italic",
-  "strike",
-  "code",
-  "link",
-  "wikilink",
-  "math",
-]
+const INLINE_MARK_IDS: ToolbarCommandId[] = ["bold", "italic", "strike", "code"]
 const BLOCK_IDS: ToolbarCommandId[] = [
   "h1",
   "h2",
@@ -144,12 +138,99 @@ const clipboardRows = (view: EditorView): MenuRow[] => {
   ]
 }
 
+/**
+ * A "Link" row: an editable URL field. Prefilled + Open / Remove when the caret
+ * is inside an existing `[text](url)`; empty (wraps the selection on submit)
+ * when there is a selection; `null` when neither applies. Wikilinks keep the
+ * plain toggle for now — the same field is a fast follow.
+ */
+function linkRow(view: EditorView): MenuField | null {
+  const { state } = view
+  const sel = state.selection.main
+  const line = state.doc.lineAt(sel.head)
+  const parts = linkPartsIn(line.text, sel.head - line.from)
+
+  if (parts) {
+    const from = line.from + parts.from
+    const to = line.from + parts.to
+    const urlFrom = line.from + parts.urlFrom
+    const urlTo = line.from + parts.urlTo
+    const openHref = state.facet(linkOpenFacet)
+    const rowActions: MenuAction[] = []
+    if (openHref && parts.url) {
+      rowActions.push({
+        label: "Open link",
+        icon: ICON_PATHS.link,
+        onSelect: () => openHref(parts.url),
+      })
+    }
+    rowActions.push({
+      label: "Remove link",
+      onSelect: () => {
+        view.dispatch({
+          changes: { from, to, insert: parts.label },
+          selection: { anchor: from, head: from + parts.label.length },
+        })
+        view.focus()
+      },
+    })
+    return {
+      field: true,
+      label: "Link",
+      icon: ICON_PATHS.link,
+      value: parts.url,
+      placeholder: "https://…",
+      onSubmit: (url) => {
+        view.dispatch({ changes: { from: urlFrom, to: urlTo, insert: url } })
+        view.focus()
+      },
+      actions: rowActions,
+    }
+  }
+
+  if (!sel.empty) {
+    const label = state.sliceDoc(sel.from, sel.to)
+    return {
+      field: true,
+      label: "Link",
+      icon: ICON_PATHS.link,
+      value: "",
+      placeholder: "https://…",
+      onSubmit: (url) => {
+        const text = label || "link"
+        view.dispatch({
+          changes: { from: sel.from, to: sel.to, insert: `[${text}](${url})` },
+          selection: { anchor: sel.from + 1, head: sel.from + 1 + text.length },
+        })
+        view.focus()
+      },
+    }
+  }
+  return null
+}
+
+/** Inline-mark rows, then the Link field (or its plain toggle), the wikilink
+ *  toggle, and inline math. */
+function inlineGroup(view: EditorView): MenuRow[] {
+  const rows: MenuRow[] = actions(view, INLINE_MARK_IDS)
+  const link = linkRow(view)
+  const linkToggle = toAction(view, "link")
+  if (link) rows.push(link)
+  else if (linkToggle) rows.push(linkToggle)
+  const wiki = toAction(view, "wikilink")
+  if (wiki) rows.push(wiki)
+  rows.push(...actions(view, ["math"]))
+  return rows
+}
+
 /** The full row list for a right-click at the current selection. */
 export function menuRows(view: EditorView): MenuRow[] {
   const ctx = classifyContext(view.state)
+  const link = linkRow(view)
   if (ctx === "selection" || cellHasSelection(view)) {
-    return [...actions(view, INLINE_IDS), "separator", ...clipboardRows(view)]
+    return [...inlineGroup(view), "separator", ...clipboardRows(view)]
   }
+  const lead: MenuRow[] = link ? [link, "separator"] : []
   const insert: MenuRow = {
     label: "Insert",
     icon: ICON_PATHS.insert,
@@ -157,7 +238,14 @@ export function menuRows(view: EditorView): MenuRow[] {
   }
   if (ctx === "block") {
     const rows = actions(view, BLOCK_IDS, true)
-    return [...rows, ...(rows.length ? ["separator" as const] : []), insert, "separator", ...clipboardRows(view)]
+    return [
+      ...lead,
+      ...rows,
+      ...(rows.length ? ["separator" as const] : []),
+      insert,
+      "separator",
+      ...clipboardRows(view),
+    ]
   }
-  return [insert, "separator", ...clipboardRows(view)]
+  return [...lead, insert, "separator", ...clipboardRows(view)]
 }

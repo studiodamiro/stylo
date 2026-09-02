@@ -5,6 +5,7 @@ import type { InPlaceConfig } from "../types"
 import {
   contextMenuEnabled,
   inPlaceConfigFacet,
+  linkOpenFacet,
   resolveToggles,
   revealModeFacet,
   selectionBarEnabled,
@@ -21,6 +22,8 @@ import { inPlaceTheme } from "./theme"
 export interface InPlaceOptions {
   /** Fired when a collapsed `[[wikilink]]` is clicked in the canvas. */
   onWikiLinkClick?: (target: string) => void
+  /** Fired by the link editor's "Open link" action with the link's href. */
+  onLinkClick?: (href: string) => void
   /** Which decoration types render; see ADR-005. Applied once, at construction. */
   inPlace?: InPlaceConfig
 }
@@ -76,6 +79,7 @@ export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
     inPlaceConfigFacet.of(resolveToggles(opts.inPlace)),
     tableEditingFacet.of(opts.inPlace?.table ?? "source"),
     revealModeFacet.of(opts.inPlace?.reveal ?? "caret"),
+    linkOpenFacet.of(opts.onLinkClick ?? null),
     contextMenuEnabled.of(opts.inPlace?.contextMenu ?? true),
     selectionBarEnabled.of(opts.inPlace?.selectionBar ?? true),
     inPlaceDecorations(),

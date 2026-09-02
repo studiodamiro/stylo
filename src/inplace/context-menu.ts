@@ -24,7 +24,18 @@ export interface MenuSubmenu {
   rows: MenuRow[]
 }
 
-export type MenuRow = MenuAction | MenuSubmenu | "separator"
+/** A row whose flyout is a single text input plus optional action buttons. */
+export interface MenuField {
+  field: true
+  label: string
+  icon?: string
+  value: string
+  placeholder?: string
+  onSubmit: (value: string) => void
+  actions?: MenuAction[]
+}
+
+export type MenuRow = MenuAction | MenuSubmenu | MenuField | "separator"
 
 export interface ContextMenu {
   /** Append once to a stable container (typically `document.body`). */
@@ -38,6 +49,7 @@ export interface ContextMenu {
 }
 
 const isSubmenu = (r: MenuRow): r is MenuSubmenu => typeof r !== "string" && "rows" in r
+const isField = (r: MenuRow): r is MenuField => typeof r !== "string" && "field" in r
 
 export function createContextMenu(doc: Document, className = "cm-inplace-menu"): ContextMenu {
   const win = doc.defaultView
@@ -107,32 +119,54 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
     return b
   }
 
-  const submenuButton = (s: MenuSubmenu): HTMLElement => {
+  // A row that opens a flyout panel — used by both submenus and field rows.
+  const flyoutRow = (text: string, icon: string | undefined, build: () => HTMLElement) => {
     const b = doc.createElement("button")
     b.type = "button"
     b.className = `${className}-item ${className}-parent`
-    label(b, s.label, s.icon)
+    label(b, text, icon)
     holdFocus(b)
-    const openFlyout = () => {
+    const open = () => {
       cancelClose()
-      if (flyout?.dataset.for === s.label) return
+      if (flyout?.dataset.for === text) return
       clearFlyout()
-      const panel = buildPanel(s.rows)
-      panel.dataset.for = s.label
+      const panel = build()
+      panel.dataset.for = text
       panel.addEventListener("pointerenter", cancelClose)
       panel.addEventListener("pointerleave", armClose)
       root.appendChild(panel)
       const host = b.getBoundingClientRect()
       place(panel, host.right - 4, host.top - 4)
       flyout = panel
+      ;(panel.querySelector("input") as HTMLInputElement | null)?.focus()
     }
-    b.addEventListener("pointerenter", openFlyout)
+    b.addEventListener("pointerenter", open)
     b.addEventListener("pointerleave", armClose)
     b.addEventListener("click", (e) => {
       e.stopPropagation()
-      openFlyout()
+      open()
     })
     return b
+  }
+
+  const fieldPanel = (f: MenuField): HTMLElement => {
+    const panel = doc.createElement("div")
+    panel.className = `${className}-panel`
+    const input = doc.createElement("input")
+    input.type = "text"
+    input.className = `${className}-input`
+    input.value = f.value
+    if (f.placeholder) input.placeholder = f.placeholder
+    input.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return
+      e.preventDefault()
+      const v = input.value.trim()
+      hide()
+      f.onSubmit(v)
+    })
+    panel.appendChild(input)
+    for (const a of f.actions ?? []) panel.appendChild(actionButton(a))
+    return panel
   }
 
   const buildPanel = (rows: MenuRow[]): HTMLElement => {
@@ -143,8 +177,12 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
         const sep = doc.createElement("div")
         sep.className = `${className}-sep`
         panel.appendChild(sep)
+      } else if (isSubmenu(r)) {
+        panel.appendChild(flyoutRow(r.label, r.icon, () => buildPanel(r.rows)))
+      } else if (isField(r)) {
+        panel.appendChild(flyoutRow(r.label, r.icon, () => fieldPanel(r)))
       } else {
-        panel.appendChild(isSubmenu(r) ? submenuButton(r) : actionButton(r))
+        panel.appendChild(actionButton(r))
       }
     }
     return panel

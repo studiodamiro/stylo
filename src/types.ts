@@ -129,6 +129,11 @@ export interface StyloProps {
   mode?: StyloMode
   /** Invoked when a `[[wikilink]]` is activated in the preview or in-place canvas. */
   onWikiLinkClick?: (target: string) => void
+  /**
+   * Invoked by the in-place link editor's "Open link" action with the link's
+   * `href`. Stylo does not navigate on its own.
+   */
+  onLinkClick?: (href: string) => void
   /** Configures the in-place canvas (ADR-005). Applied when it mounts. */
   inPlace?: InPlaceConfig
   /**
