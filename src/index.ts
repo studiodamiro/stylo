@@ -5,6 +5,7 @@ export type {
   FrontmatterDisplay,
   InPlaceConfig,
   InPlaceDecorationToggles,
+  RevealMode,
   StyloMode,
   StyloProps,
   TableEditing,
