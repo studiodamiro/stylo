@@ -36,3 +36,19 @@ export const inPlaceConfigFacet = Facet.define<ResolvedToggles, ResolvedToggles>
 export const tableEditingFacet = Facet.define<TableEditing, TableEditing>({
   combine: (values) => values[0] ?? "source",
 })
+
+/**
+ * Whether the right-click menu takes over from the browser's own context menu
+ * in the canvas. Seeded once by `inPlaceExtension`; read by `menu-plugin.ts`.
+ */
+export const contextMenuEnabled = Facet.define<boolean, boolean>({
+  combine: (values) => values[0] ?? true,
+})
+
+/**
+ * Whether the floating inline-formatting bar follows a selection. Seeded once by
+ * `inPlaceExtension`; read by `selection-bar.ts`.
+ */
+export const selectionBarEnabled = Facet.define<boolean, boolean>({
+  combine: (values) => values[0] ?? true,
+})

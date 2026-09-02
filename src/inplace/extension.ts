@@ -2,10 +2,18 @@ import { Prec, type Extension } from "@codemirror/state"
 import { EditorView } from "@codemirror/view"
 import { cellSourcePos } from "../toolbar/table"
 import type { InPlaceConfig } from "../types"
-import { inPlaceConfigFacet, resolveToggles, tableEditingFacet } from "./config"
+import {
+  contextMenuEnabled,
+  inPlaceConfigFacet,
+  resolveToggles,
+  selectionBarEnabled,
+  tableEditingFacet,
+} from "./config"
 import { frontmatterField } from "./frontmatter"
 import { blockMathField } from "./math"
+import { contextMenuLayer } from "./menu-plugin"
 import { inPlaceDecorations } from "./plugin"
+import { selectionBar } from "./selection-bar"
 import { tableField } from "./tables"
 import { inPlaceTheme } from "./theme"
 
@@ -66,10 +74,14 @@ export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
   return [
     inPlaceConfigFacet.of(resolveToggles(opts.inPlace)),
     tableEditingFacet.of(opts.inPlace?.table ?? "source"),
+    contextMenuEnabled.of(opts.inPlace?.contextMenu ?? true),
+    selectionBarEnabled.of(opts.inPlace?.selectionBar ?? true),
     inPlaceDecorations(),
     blockMathField,
     frontmatterField,
     tableField,
+    contextMenuLayer,
+    selectionBar,
     Prec.high(inPlaceTheme),
     EditorView.domEventHandlers({
       mousedown(event, view) {
