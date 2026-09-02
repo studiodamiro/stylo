@@ -28,6 +28,7 @@ milestones and Architectural Decision Records, newest first.
 
 | Date       | Entry                                                                                                                                             |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-02 | [Editable table cells — per-cell Markdown reveal](./journal/2026-09/2026-09-02_table-cell-reveal.md)                                              |
 | 2026-09-02 | [In-place table cells — inline formatting](./journal/2026-09/2026-09-02_table-cell-inline-formatting.md)                                          |
 | 2026-09-02 | [Toolbar — inline marks nest, a wikilink button, table-aware block commands](./journal/2026-09/2026-09-02_toolbar-inline-nesting-and-wikilink.md) |
 | 2026-09-02 | [Interactive table cells — editing inside the rendered `<table>`](./journal/2026-09/2026-09-02_interactive-table-cells.md)                        |

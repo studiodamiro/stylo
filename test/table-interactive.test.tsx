@@ -63,6 +63,40 @@ test("editing a cell reserializes the whole table back into the document", async
   expect(doc()).toBe(view.state.doc.toString())
 })
 
+test("a cell renders Markdown while unfocused and shows raw source while focused", async () => {
+  const { view } = await mount("| Rich |\n| - |\n| **b** `c` |\n\ntail", { table: "cells" })
+  const table = await editCells(view)
+  const cell = table.querySelector<HTMLTableCellElement>("tbody td")!
+
+  // unfocused: rendered
+  expect(cell.querySelector("strong")?.textContent).toBe("b")
+  expect(cell.querySelector("code")?.textContent).toBe("c")
+
+  // focusin: swaps to the raw source, a single text node
+  cell.dispatchEvent(new FocusEvent("focusin", { bubbles: true }))
+  expect(cell.querySelector("strong")).toBeNull()
+  expect(cell.textContent).toBe("**b** `c`")
+
+  // focusout (leaving the table): re-renders from the (unchanged) source
+  cell.dispatchEvent(new FocusEvent("focusout", { bubbles: true, relatedTarget: view.contentDOM }))
+  expect(cell.querySelector("strong")?.textContent).toBe("b")
+})
+
+test("editing a cell's raw source keeps the change and re-renders it on blur", async () => {
+  const { view } = await mount("| H |\n| - |\n| *old* |\n\ntail", { table: "cells" })
+  const table = await editCells(view)
+  const cell = table.querySelector<HTMLTableCellElement>("tbody td")!
+
+  cell.dispatchEvent(new FocusEvent("focusin", { bubbles: true }))
+  expect(cell.textContent).toBe("*old*")
+  cell.textContent = "**new**"
+  cell.dispatchEvent(new Event("input", { bubbles: true }))
+  expect(view.state.doc.toString()).toContain("| **new** |")
+
+  cell.dispatchEvent(new FocusEvent("focusout", { bubbles: true, relatedTarget: view.contentDOM }))
+  expect(cell.querySelector("strong")?.textContent).toBe("new")
+})
+
 test("a widget edit maps the decoration instead of rebuilding it", async () => {
   const { view } = await mount(T, { table: "cells" })
   const table = await editCells(view)
