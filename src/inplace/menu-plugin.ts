@@ -12,6 +12,11 @@ import { cellHasSelection, menuRows } from "./context-menu-actions"
 class ContextMenuController implements PluginValue {
   private menu: ContextMenu
   private onContextMenu: (e: MouseEvent) => void
+  private onPointerDown: () => void
+  private contentDOM: HTMLElement
+  /** Selection captured at pointer-down — a right-click can collapse it before
+   *  `contextmenu` fires, which would drop the selection-aware menu rows. */
+  private stashed: { anchor: number; head: number } | null = null
 
   constructor(view: EditorView) {
     this.menu = createContextMenu(view.dom.ownerDocument)
@@ -19,6 +24,13 @@ class ContextMenuController implements PluginValue {
     // scoped to that element) reach it and the `--stylo-*` tokens inherit. The
     // panels are `position: fixed`, so placement is still viewport-relative.
     view.dom.appendChild(this.menu.el)
+
+    this.contentDOM = view.contentDOM
+    this.onPointerDown = () => {
+      const s = view.state.selection.main
+      this.stashed = s.empty ? null : { anchor: s.anchor, head: s.head }
+    }
+    this.contentDOM.addEventListener("pointerdown", this.onPointerDown, true)
 
     this.onContextMenu = (e: MouseEvent) => {
       if (!view.state.facet(contextMenuEnabled)) return
@@ -30,9 +42,14 @@ class ContextMenuController implements PluginValue {
       const inEditableTable = Boolean(target?.closest(".cm-inplace-table-edit"))
       if (inEditableTable && !cellHasSelection(view)) return
 
-      // With no selection outside a table, drop the caret where the pointer is
-      // so the menu reflects that block, not wherever the caret happened to rest.
-      if (!inEditableTable && view.state.selection.main.empty) {
+      // A right-click that landed inside a selection may have collapsed it in
+      // the DOM before this fired — put it back so the menu still offers the
+      // selection rows (Link field, inline marks).
+      if (this.stashed && view.state.selection.main.empty) {
+        view.dispatch({ selection: this.stashed })
+      } else if (!inEditableTable && view.state.selection.main.empty) {
+        // No prior selection: drop the caret where the pointer is so the menu
+        // reflects that block, not wherever the caret happened to rest.
         const pos = view.posAtCoords({ x: e.clientX, y: e.clientY })
         if (pos != null) view.dispatch({ selection: { anchor: pos } })
       }
@@ -44,10 +61,12 @@ class ContextMenuController implements PluginValue {
       e.preventDefault()
       this.menu.show(menuRows(view), e.clientX, e.clientY)
     }
-    view.contentDOM.addEventListener("contextmenu", this.onContextMenu)
+    this.contentDOM.addEventListener("contextmenu", this.onContextMenu)
   }
 
   destroy() {
+    this.contentDOM.removeEventListener("pointerdown", this.onPointerDown, true)
+    this.contentDOM.removeEventListener("contextmenu", this.onContextMenu)
     this.menu.destroy()
   }
 }
