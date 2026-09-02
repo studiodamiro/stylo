@@ -10,10 +10,11 @@ tags:
 
 # ADR-006 — Interactive rendered-table editing
 
-- **Status:** Accepted for post-v1 — a deferred milestone. The aligned-source
-  editor (the [table-editing note](./2026-09-02_table-editing.md)) ships now;
-  this records the decision to build the interactive version later and the shape
-  it should take.
+- **Status:** Accepted — implemented 2026-09-02 as `inPlace.table: "cells"`
+  (default `"source"`). See the
+  [implementation note](./2026-09-02_interactive-table-cells.md). Structural
+  controls (add/remove column, remove row, alignment) and inline formatting
+  inside cells remain deferred.
 - **Date:** 2026-09-02
 - **Deciders:** damiro, Grace
 

@@ -27,6 +27,7 @@ export type ToolbarCommandId =
   | "code"
   | "codeBlock"
   | "link"
+  | "wikilink"
   | "quote"
   | "bulletList"
   | "orderedList"
@@ -76,9 +77,18 @@ export interface InPlaceDecorationToggles {
   tables?: boolean
 }
 
+/**
+ * How the in-place canvas handles editing a table.
+ * `"source"` (default) reveals the aligned pipe source under the caret;
+ * `"cells"` keeps the rendered `<table>` and edits its cells in place.
+ */
+export type TableEditing = "source" | "cells"
+
 export interface InPlaceConfig {
   /** Which decoration types the in-place canvas renders. Read once, at mount. */
   decorations?: InPlaceDecorationToggles
+  /** Table editing mode (see `TableEditing`). Read once, at mount. */
+  table?: TableEditing
 }
 
 export interface StyloProps {

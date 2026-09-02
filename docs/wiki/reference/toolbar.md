@@ -48,6 +48,7 @@ skipped.
 | `code`          | Wrap in `` `…` ``                    | —                       |
 | `codeBlock`     | Fence the selected lines in ` ``` `  | —                       |
 | `link`          | `[text](url)`, or unlink             | `Mod-k`                 |
+| `wikilink`      | `[[target]]`, or unwrap to the label | `Mod-Shift-k`           |
 | `quote`         | Toggle a `>` line prefix             | —                       |
 | `bulletList`    | Toggle a `-` line prefix             | —                       |
 | `orderedList`   | Toggle a `1.` `2.` `3.` line prefix  | —                       |
@@ -59,12 +60,34 @@ skipped.
 | `mathBlock`     | Fence the selected lines in `$$`     | —                       |
 
 The default bar shows every id above, grouped by kind: history · headings ·
-inline text (with `link`) · the three list markers · block structure
-(`quote` `hr` `frontmatter` `table`) · code and math.
+inline text (with `link` and `wikilink`) · the three list markers · block
+structure (`quote` `hr` `frontmatter` `table`) · code and math.
 
 `Mod` is `Cmd` on macOS and `Ctrl` elsewhere. The shortcuts are bound on the
 CodeMirror surface whether or not the visible bar is mounted; `toolbar={false}`
 does not remove them.
+
+### Context-aware buttons
+
+A button renders **disabled** (and its shortcut is inert) when the command can't
+produce valid Markdown at the caret. What's disabled depends on the line the
+caret is on:
+
+| Caret in…                   | Disabled                                                                              | Notes                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| plain paragraph             | nothing                                                                               | —                                                                       |
+| **table** cell              | `h1`–`h3`, `quote`, `bulletList`, `orderedList`, `task`, `hr`, `frontmatter`, `table` | inline commands work; `codeBlock` / `mathBlock` **degrade** (see below) |
+| **heading** line            | `bulletList`, `orderedList`, `task`, `codeBlock`, `mathBlock`, `frontmatter`, `table` | `h1`–`h3` (the toggle), `quote`, `hr`, and inline stay live             |
+| **frontmatter** `---` block | everything except `frontmatter` itself                                                | `frontmatter` stays live so you can toggle the block off                |
+| **fenced code** block       | everything except `codeBlock`                                                         | `codeBlock` stays live to unwrap the fence                              |
+| **`$$` math** block         | everything except `mathBlock`                                                         | `mathBlock` stays live to unwrap                                        |
+
+**Degrade in a table:** `codeBlock` and `mathBlock` aren't disabled in a cell —
+they wrap the selection in inline `` `code` `` / `$math$` instead of a fenced
+block. Outside a table they still fence whole lines.
+
+The context check is a line scan plus a syntax-tree lookup, run whenever the
+selection, keys, or pointer move.
 
 Every command toggles. The line-prefix commands operate on whole lines: they add
 the prefix to the lines in the selection that lack it, and strip it when every
@@ -74,8 +97,12 @@ non-blank selected line already carries it; `orderedList` numbers them `1.`,
 another list marker swaps the marker in place rather than stacking a second one.
 Heading levels swap the same way — `h2` on an `# ` line rewrites it to `## `.
 `link` with the caret inside a `[label](url)` **unlinks** it: the label stays,
-the `](url)` wrapper is removed. `codeBlock` and `mathBlock` unwrap when the
-caret is inside their fence pair. `hr` drops the divider on its own line,
+the `](url)` wrapper is removed. `wikilink` behaves the same for `[[target]]` /
+`[[target|label]]` — the display text is kept, the brackets and any `|label` go.
+The `bold` / `italic` / `strike` marks **nest** rather than consume one another:
+`italic` on `**word**` gives `***word***`, and toggling one mark back off leaves
+the others intact. `codeBlock` and `mathBlock` unwrap when the caret is inside
+their fence pair. `hr` drops the divider on its own line,
 inserting a blank line first when the current line has text so CommonMark reads
 a thematic break rather than a setext H2; with the caret on an existing `---` it
 removes it.

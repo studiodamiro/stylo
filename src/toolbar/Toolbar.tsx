@@ -44,7 +44,8 @@ export function Toolbar({ view, items, icons, disabled }: ToolbarProps) {
         }
         const cmd = BUILTIN_BY_ID[item]
         if (!cmd) return null
-        const active = Boolean(!disabled && view && cmd.isActive?.(view.state))
+        const off = disabled || !view || Boolean(cmd.disabled?.(view.state))
+        const active = Boolean(!off && view && cmd.isActive?.(view.state))
         return (
           <button
             key={item}
@@ -54,7 +55,7 @@ export function Toolbar({ view, items, icons, disabled }: ToolbarProps) {
             aria-label={cmd.title}
             aria-pressed={cmd.isActive ? active : undefined}
             data-active={active ? "" : undefined}
-            disabled={disabled || !view}
+            disabled={off}
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => {
               if (!view) return

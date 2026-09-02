@@ -7,6 +7,7 @@ export type {
   InPlaceDecorationToggles,
   StyloMode,
   StyloProps,
+  TableEditing,
   ToolbarCommandId,
   ToolbarConfig,
 } from "./types"
