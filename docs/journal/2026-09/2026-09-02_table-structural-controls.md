@@ -26,7 +26,10 @@ was the last deferred item in
 - a hit strip along the whole **right edge** (append column) and the whole
   **bottom edge** (append row) — click anywhere along it. The strip is invisible
   until the pointer is on it (not on whole-table hover, matching Obsidian); a
-  centred `+` is its only mark;
+  flex-centred `+` is its only mark, and it tints to the header-row fill on
+  hover. The clearance from the grid edge is added once in `layout()` (the
+  table's own padding is asymmetric, `1em 0 1.4em`), so both strips sit the same
+  distance out;
 - a **right-click / long-press context menu** on any cell — _insert row above /
   below_, _insert column left / right_, _delete row_, _delete column_, and
   _align left / center / right_ — contextual to the clicked cell.

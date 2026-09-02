@@ -163,13 +163,16 @@ export function createTableGizmos(doc: Document, host: GizmoHost): TableGizmos {
     const rect = table.getBoundingClientRect()
     const left = rect.left - base.left
     const right = rect.right - base.left
+    // Identical clearance from the grid edge on both strips — the table's own
+    // padding is asymmetric (`1em 0 1.4em`), so the gap is added here, not in CSS.
+    const GAP = 3
     // right edge, spanning the grid height
-    addCol.style.left = `${right}px`
+    addCol.style.left = `${right + GAP}px`
     addCol.style.top = `${top}px`
     addCol.style.height = `${bottom - top}px`
     // bottom edge, spanning the grid width
     addRow.style.left = `${left}px`
-    addRow.style.top = `${bottom}px`
+    addRow.style.top = `${bottom + GAP}px`
     addRow.style.width = `${right - left}px`
   }
 
