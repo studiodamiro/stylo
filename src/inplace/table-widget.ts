@@ -1,6 +1,15 @@
 import { Annotation } from "@codemirror/state"
 import { EditorView, WidgetType } from "@codemirror/view"
-import { type Align, type Grid, serializeGrid } from "../toolbar/table-grid"
+import { type Align, serializeGrid } from "../toolbar/table-grid"
+import { renderInline } from "./inline-md"
+import {
+  gridOf,
+  offsetFromPoint,
+  placeCaret,
+  renderedCaretOffset,
+  trimGrid,
+  unescapePipe,
+} from "./table-cell-dom"
 
 /** Marks a transaction that came from an editable table widget's own DOM. */
 export const fromTableWidget = Annotation.define<boolean>()
@@ -11,30 +20,14 @@ export interface ParsedTable {
   aligns: Align[]
 }
 
-const trimmed = (t: ParsedTable): ParsedTable => ({
-  head: t.head.map((s) => s.trim()),
-  body: t.body.map((r) => r.map((s) => s.trim())),
-  aligns: t.aligns,
-})
-
-function focusEnd(cell: HTMLElement) {
-  cell.focus()
-  const range = document.createRange()
-  range.selectNodeContents(cell)
-  range.collapse(false)
-  const sel = window.getSelection()
-  sel?.removeAllRanges()
-  sel?.addRange(range)
-}
-
 /**
  * A GFM table rendered as an editable `<table>` (`inPlace.table === "cells"`).
- * The widget owns its DOM while mounted: every cell edit, row add, or paste
- * mutates the DOM, then serializes the whole table back into the document with
- * the `fromTableWidget` annotation so `tableField` remaps rather than rebuilds
- * and DOM focus survives. Document changes without the annotation (external
- * edits) rebuild the widget from scratch. `current` tracks the DOM state so a
- * post-edit rebuild still compares equal and is skipped.
+ * The widget owns its DOM while mounted and keeps `rows` — the raw cell strings —
+ * as its source of truth. A cell shows its Markdown **rendered** (`renderInline`)
+ * while unfocused and swaps to the **raw source** as a plain text node while it
+ * has focus, mirroring the per-line reveal on the main canvas. Every edit
+ * re-serializes `rows` into the document with the `fromTableWidget` annotation
+ * so `tableField` remaps rather than rebuilds and DOM focus survives.
  *
  * The widget never stores its document range — a serialize dispatch shifts it —
  * so `bounds()` re-derives it from `posAtDOM` plus a scan of contiguous pipe
@@ -42,19 +35,29 @@ function focusEnd(cell: HTMLElement) {
  */
 export class EditableTableWidget extends WidgetType {
   private table: HTMLTableElement | null = null
-  private current: ParsedTable
+  private rows: string[][]
+  private editing: HTMLTableCellElement | null = null
+  private syncing = false
+  /** Rendered-text offset from the mousedown that is bringing a cell into edit. */
+  private pendingOffset: number | null = null
+  private current: string[][]
 
   constructor(readonly data: ParsedTable) {
     super()
-    this.current = trimmed(data)
+    this.rows = gridOf(data)
+    this.current = trimGrid(this.rows)
   }
 
   override eq(other: EditableTableWidget) {
-    return JSON.stringify(this.current) === JSON.stringify(trimmed(other.data))
+    return JSON.stringify(this.current) === JSON.stringify(trimGrid(gridOf(other.data)))
   }
 
   override ignoreEvent() {
     return true
+  }
+
+  private cols(): number {
+    return this.data.aligns.length
   }
 
   /** The table's current `[from, to]` in the document, derived from the DOM. */
@@ -72,147 +75,157 @@ export class EditableTableWidget extends WidgetType {
     return { from, to }
   }
 
-  private mkCell(text: string, col: number, header: boolean): HTMLTableCellElement {
+  private cellAt(r: number, c: number): HTMLTableCellElement | null {
+    if (!this.table) return null
+    const row = r === 0 ? this.table.tHead!.rows[0]! : this.table.tBodies[0]!.rows[r - 1]
+    return (row?.cells[c] as HTMLTableCellElement) ?? null
+  }
+
+  private coords(cell: HTMLTableCellElement): { r: number; c: number } {
+    return { r: Number(cell.dataset.r), c: Number(cell.dataset.c) }
+  }
+
+  /** Draw `cell` from `rows[r][c]` — raw text when `raw`, rendered otherwise. */
+  private paint(cell: HTMLTableCellElement, raw: boolean) {
+    const { r, c } = this.coords(cell)
+    const text = this.rows[r]?.[c] ?? ""
+    cell.replaceChildren(
+      raw ? cell.ownerDocument.createTextNode(text) : renderInline(unescapePipe(text)),
+    )
+  }
+
+  private mkCell(r: number, c: number, header: boolean): HTMLTableCellElement {
     const el = document.createElement(header ? "th" : "td")
     el.className = "cm-inplace-tcell"
     // The attribute (not just the IDL prop) makes the cell a focus target, so
     // `document.activeElement` becomes the cell and CodeMirror's `updateSelection`
     // stops forcing the DOM caret back to the (atomic) widget boundary.
     el.setAttribute("contenteditable", "true")
-    el.textContent = text
-    const a = this.data.aligns[col]
+    el.dataset.r = String(r)
+    el.dataset.c = String(c)
+    const a = this.data.aligns[c]
     if (a) el.style.textAlign = a
+    this.paint(el, false)
     return el
   }
 
-  private mkRow(): HTMLTableRowElement {
-    const tr = document.createElement("tr")
-    for (let i = 0; i < this.data.aligns.length; i++) tr.appendChild(this.mkCell("", i, false))
+  private appendRow(): HTMLTableRowElement {
+    this.rows.push(new Array(this.cols()).fill(""))
+    const r = this.rows.length - 1
+    const tr = this.table!.tBodies[0]!.insertRow()
+    for (let c = 0; c < this.cols(); c++) tr.appendChild(this.mkCell(r, c, false))
     return tr
   }
 
-  private allCells(): HTMLTableCellElement[] {
-    if (!this.table) return []
-    return [
-      ...this.table.tHead!.rows[0]!.cells,
-      ...[...this.table.tBodies[0]!.rows].flatMap((r) => [...r.cells]),
-    ]
+  /** Commit `cell`'s edited text into `rows` and, unless it keeps focus, re-render it. */
+  private finish(cell: HTMLTableCellElement, keepRaw: boolean) {
+    const { r, c } = this.coords(cell)
+    if (this.rows[r]) this.rows[r]![c] = (cell.textContent ?? "").replace(/\r?\n/g, " ")
+    if (!keepRaw) this.paint(cell, false)
   }
 
-  /** The caret's spot inside the table as (cell index, character offset). */
-  private readCaret(): { index: number; offset: number } | null {
-    if (!this.table) return null
-    const sel = this.table.ownerDocument.getSelection()
-    const node = sel?.anchorNode
-    if (!node || !this.table.contains(node)) return null
-    const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : (node as Element)
-    const cell = el?.closest("th, td") as HTMLTableCellElement | null
-    if (!cell) return null
-    const index = this.allCells().indexOf(cell)
-    if (index < 0) return null
+  private onFocusIn(event: FocusEvent) {
+    const cell = (event.target as HTMLElement).closest<HTMLTableCellElement>("td, th")
+    if (!cell || cell === this.editing) return
+    // Prefer the offset from the mousedown that started this focus; the DOM
+    // selection isn't placed yet when `focusin` fires from a click.
+    const offset = this.pendingOffset ?? renderedCaretOffset(cell)
+    this.pendingOffset = null
+    if (this.editing) this.finish(this.editing, false)
+    this.editing = cell
+    this.paint(cell, true)
+    placeCaret(cell, offset)
+  }
+
+  private onFocusOut(event: FocusEvent) {
+    if (this.syncing || !this.editing) return
+    const to = event.relatedTarget as Node | null
+    if (to && this.table?.contains(to)) return // moving to another cell — its focusin handles it
+    this.finish(this.editing, false)
+    this.editing = null
+  }
+
+  /** The caret's spot as (row, col, char offset) within the editing cell. */
+  private readCaret(): { r: number; c: number; offset: number } | null {
+    if (!this.editing) return null
+    const { r, c } = this.coords(this.editing)
+    const sel = this.editing.ownerDocument.getSelection()
+    const text = this.editing.firstChild
     const offset =
-      node === cell
-        ? sel!.anchorOffset === 0
-          ? 0
-          : (cell.textContent ?? "").length
-        : sel!.anchorOffset
-    return { index, offset }
+      sel?.anchorNode === text ? (sel?.anchorOffset ?? 0) : (this.editing.textContent ?? "").length
+    return { r, c, offset }
   }
 
-  /**
-   * Put the caret back at (cell index, character offset). A `sync` dispatch runs
-   * CodeMirror's DOM reconciliation over the replaced range, which drops the
-   * selection out of the edited cell (or to the first one) — this restores it,
-   * once synchronously and once after CodeMirror's post-update measure.
-   */
-  private writeCaret(caret: { index: number; offset: number }) {
-    const cell = this.allCells()[caret.index]
-    if (!cell) return
-    const doc = cell.ownerDocument
-    const textNode = cell.firstChild?.nodeType === Node.TEXT_NODE ? cell.firstChild : null
-    const offset = Math.min(caret.offset, (cell.textContent ?? "").length)
-    const range = doc.createRange()
-    if (textNode) range.setStart(textNode, offset)
-    else range.selectNodeContents(cell)
-    range.collapse(true)
-    const sel = doc.getSelection()
-    sel?.removeAllRanges()
-    sel?.addRange(range)
-    cell.focus()
+  private writeCaret(caret: { r: number; c: number; offset: number }) {
+    const cell = this.cellAt(caret.r, caret.c)
+    if (cell) placeCaret(cell, caret.offset)
   }
 
-  /** Read the live DOM into a grid and push it to the document. */
+  /** Serialize `rows` into the document. */
   private sync(view: EditorView) {
     if (!this.table) return
     const caret = this.readCaret()
-    const head = [...this.table.tHead!.rows[0]!.cells].map((c) =>
-      (c.textContent ?? "").replace(/\r?\n/g, " "),
-    )
-    const body = [...this.table.tBodies[0]!.rows].map((r) =>
-      [...r.cells].map((c) => (c.textContent ?? "").replace(/\r?\n/g, " ")),
-    )
-    const grid: Grid = { rows: [head, ...body], aligns: this.data.aligns }
-    const text = serializeGrid(grid)
-    this.current = trimmed({ head, body, aligns: this.data.aligns })
+    const text = serializeGrid({ rows: this.rows, aligns: this.data.aligns })
+    this.current = trimGrid(this.rows)
     const { from, to } = this.bounds(view)
     if (view.state.sliceDoc(from, to) === text) return
+
+    // `syncing` is true only across the synchronous dispatch, so a blur that
+    // CodeMirror's reconciliation triggers there is ignored, while a real user
+    // focusout right after still re-renders the cell.
+    this.syncing = true
     view.dispatch({
       changes: { from, to, insert: text },
       annotations: fromTableWidget.of(true),
       userEvent: "input",
     })
+    this.syncing = false
     if (caret) {
       this.writeCaret(caret)
       requestAnimationFrame(() => {
-        if (this.table) this.writeCaret(caret)
+        if (this.table && caret) this.writeCaret(caret)
       })
     }
   }
 
   private onKey(event: KeyboardEvent, view: EditorView) {
-    const cell = (event.target as HTMLElement).closest("td, th") as HTMLTableCellElement | null
+    const cell = (event.target as HTMLElement).closest<HTMLTableCellElement>("td, th")
     if (!cell || !this.table) return
-    const cells = this.allCells()
-    const i = cells.indexOf(cell)
-    const row = cell.parentElement as HTMLTableRowElement
-    const col = [...row.cells].indexOf(cell)
+    const { r, c } = this.coords(cell)
+    const lastRow = this.rows.length - 1
 
     if (event.key === "Tab") {
       event.preventDefault()
       event.stopPropagation()
-      const next = event.shiftKey ? cells[i - 1] : cells[i + 1]
-      if (next) return focusEnd(next)
-      if (!event.shiftKey) {
-        const tr = this.mkRow()
-        this.table.tBodies[0]!.appendChild(tr)
-        focusEnd(tr.cells[0]!)
+      const flat = r * this.cols() + c + (event.shiftKey ? -1 : 1)
+      if (flat < 0) return
+      if (flat >= this.rows.length * this.cols()) {
+        if (event.shiftKey) return
+        this.appendRow()
+        this.cellAt(lastRow + 1, 0)?.focus()
         this.sync(view)
+        return
       }
+      this.cellAt(Math.floor(flat / this.cols()), flat % this.cols())?.focus()
       return
     }
     if (event.key === "Enter") {
       event.preventDefault()
       event.stopPropagation()
-      const below =
-        row.parentElement!.tagName === "THEAD"
-          ? this.table.tBodies[0]!.rows[0]
-          : (row.nextElementSibling as HTMLTableRowElement | null)
-      if (below) return focusEnd(below.cells[col]!)
-      const tr = this.mkRow()
-      this.table.tBodies[0]!.appendChild(tr)
-      focusEnd(tr.cells[col]!)
+      if (r < lastRow) return this.cellAt(r + 1, c)?.focus()
+      this.appendRow()
+      this.cellAt(lastRow + 1, c)?.focus()
       this.sync(view)
       return
     }
-    const lastBodyRow = row.parentElement?.tagName === "TBODY" && row.nextElementSibling === null
-    if (event.key === "ArrowDown" && lastBodyRow) {
+    if (event.key === "ArrowDown" && r === lastRow) {
       event.preventDefault()
       event.stopPropagation()
       const { to } = this.bounds(view)
       view.focus()
       view.dispatch({ selection: { anchor: Math.min(to + 1, view.state.doc.length) } })
     }
-    if (event.key === "ArrowUp" && cell.tagName === "TH") {
+    if (event.key === "ArrowUp" && r === 0) {
       event.preventDefault()
       event.stopPropagation()
       const { from } = this.bounds(view)
@@ -224,29 +237,43 @@ export class EditableTableWidget extends WidgetType {
   toDOM(view: EditorView) {
     const table = document.createElement("table")
     this.table = table
+    this.editing = null
     table.className = "cm-inplace-table cm-inplace-table-edit"
 
     const hr = table.createTHead().insertRow()
-    this.data.head.forEach((t, i) => hr.appendChild(this.mkCell(t, i, true)))
+    for (let c = 0; c < this.cols(); c++) hr.appendChild(this.mkCell(0, c, true))
     const tbody = table.createTBody()
-    for (const bodyRow of this.data.body) {
+    for (let r = 1; r < this.rows.length; r++) {
       const tr = tbody.insertRow()
-      for (let i = 0; i < this.data.aligns.length; i++) {
-        tr.appendChild(this.mkCell(bodyRow[i] ?? "", i, false))
-      }
+      for (let c = 0; c < this.cols(); c++) tr.appendChild(this.mkCell(r, c, false))
     }
 
     // Keep the pointer event away from CodeMirror's delegated handler: it would
     // snap the click to the atomic widget boundary and pull focus back to
-    // `.cm-content`, landing the caret in the first cell. Not `preventDefault` —
-    // the browser still focuses the clicked cell and places the caret there.
-    table.addEventListener("mousedown", (e) => e.stopPropagation())
-
+    // `.cm-content`. Not `preventDefault` — the browser still focuses the cell.
+    table.addEventListener("mousedown", (e) => {
+      e.stopPropagation()
+      const cell = (e.target as HTMLElement).closest<HTMLTableCellElement>("td, th")
+      this.pendingOffset =
+        cell && cell !== this.editing ? offsetFromPoint(cell, e.clientX, e.clientY) : null
+    })
+    table.addEventListener("focusin", (e) => this.onFocusIn(e))
+    table.addEventListener("focusout", (e) => this.onFocusOut(e))
+    const onEdit = (cell: HTMLTableCellElement | null) => {
+      if (!cell) return
+      // `focusin` normally sets `editing` first; adopt the cell if an `input`
+      // somehow beat it (or a test dispatches one directly).
+      this.editing = cell
+      this.finish(cell, true)
+      this.sync(view)
+    }
     table.addEventListener("input", (e) => {
       if ((e as InputEvent).isComposing) return
-      this.sync(view)
+      onEdit((e.target as HTMLElement).closest<HTMLTableCellElement>("td, th"))
     })
-    table.addEventListener("compositionend", () => this.sync(view))
+    table.addEventListener("compositionend", (e) =>
+      onEdit((e.target as HTMLElement).closest<HTMLTableCellElement>("td, th")),
+    )
     table.addEventListener("keydown", (e) => this.onKey(e, view))
     table.addEventListener("paste", (e) => {
       e.preventDefault()
@@ -258,5 +285,6 @@ export class EditableTableWidget extends WidgetType {
 
   override destroy() {
     this.table = null
+    this.editing = null
   }
 }
