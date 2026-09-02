@@ -88,8 +88,8 @@ function App() {
   const [mode, setMode] = useState<StyloMode>("in-place")
   const [toolbar, setToolbar] = useState<keyof typeof TOOLBARS>("default")
   const [frontmatter, setFrontmatter] = useState<"hidden" | "code">("hidden")
-  const [tableEdit, setTableEdit] = useState<TableEditing>("source")
-  const [reveal, setReveal] = useState<RevealMode>("caret")
+  const [tableEdit, setTableEdit] = useState<TableEditing>("cells")
+  const [reveal, setReveal] = useState<RevealMode>("never")
   const [lastLink, setLastLink] = useState<string | null>(null)
   // ADR-005: inPlace config is read once at mount, so a changed toggle remounts
   // the canvas via `key` below — a deliberate demo of that construction-time rule.
