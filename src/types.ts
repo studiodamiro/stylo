@@ -89,6 +89,17 @@ export interface InPlaceConfig {
   decorations?: InPlaceDecorationToggles
   /** Table editing mode (see `TableEditing`). Read once, at mount. */
   table?: TableEditing
+  /**
+   * Right-click a block for a context menu (inline actions on a selection,
+   * block + insert actions otherwise). `false` keeps the browser's own menu.
+   * Defaults to `true`. Read once, at mount.
+   */
+  contextMenu?: boolean
+  /**
+   * Show a floating inline-formatting bar above a non-empty selection. `false`
+   * turns it off. Defaults to `true`. Read once, at mount.
+   */
+  selectionBar?: boolean
 }
 
 export interface StyloProps {

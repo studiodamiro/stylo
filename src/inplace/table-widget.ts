@@ -341,10 +341,21 @@ export class EditableTableWidget extends WidgetType {
       document.execCommand("insertText", false, text)
     })
     // Right-click (and long-press on touch) opens the structural menu for the
-    // cell under the pointer.
+    // cell under the pointer — but only for a collapsed caret. A text selection
+    // inside the cell falls through to the canvas context menu, which offers
+    // inline formatting for the selected characters.
     table.addEventListener("contextmenu", (e) => {
       const cell = (e.target as HTMLElement).closest<HTMLTableCellElement>("td, th")
       if (!cell) return
+      const sel = cell.ownerDocument.getSelection()
+      if (
+        sel &&
+        !sel.isCollapsed &&
+        cell.contains(sel.anchorNode) &&
+        cell.contains(sel.focusNode)
+      ) {
+        return
+      }
       e.preventDefault()
       e.stopPropagation()
       this.gizmos?.openFor(cell, e.clientX, e.clientY)

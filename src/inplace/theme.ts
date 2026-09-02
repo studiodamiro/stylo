@@ -251,4 +251,86 @@ export const inPlaceTheme = EditorView.theme({
     background: "color-mix(in srgb, var(--stylo-border) 40%, transparent)",
   },
   ".cm-inplace-tm-item[data-active]": { color: "var(--stylo-ring)", fontWeight: "600" },
+
+  // --- Right-click menu (menu-plugin.ts / context-menu.ts) ---
+  // `.cm-inplace-menu` is a non-interactive full-viewport layer; each panel
+  // inside it is a fixed-positioned popup.
+  ".cm-inplace-menu": {
+    position: "fixed",
+    inset: "0",
+    zIndex: "20",
+    pointerEvents: "none",
+  },
+  ".cm-inplace-menu-panel": {
+    position: "fixed",
+    minWidth: "12em",
+    padding: "0.25em",
+    display: "flex",
+    flexDirection: "column",
+    pointerEvents: "auto",
+    background: "var(--stylo-bg, #fff)",
+    border: "1px solid var(--stylo-border)",
+    borderRadius: "6px",
+    boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
+    font: "inherit",
+  },
+  ".cm-inplace-menu-sep": {
+    height: "1px",
+    margin: "0.25em 0.3em",
+    background: "var(--stylo-border)",
+  },
+  ".cm-inplace-menu-item": {
+    all: "unset",
+    display: "flex",
+    alignItems: "center",
+    gap: "0.55em",
+    padding: "0.35em 0.6em",
+    borderRadius: "4px",
+    fontSize: "0.9em",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+  },
+  ".cm-inplace-menu-item svg": {
+    width: "1em",
+    height: "1em",
+    flex: "0 0 auto",
+    color: "var(--stylo-text-muted)",
+  },
+  ".cm-inplace-menu-item:hover:not(:disabled)": {
+    background: "color-mix(in srgb, var(--stylo-border) 40%, transparent)",
+  },
+  ".cm-inplace-menu-item:disabled": { opacity: "0.4", cursor: "default" },
+  ".cm-inplace-menu-item[data-active]": { color: "var(--stylo-ring)", fontWeight: "600" },
+  ".cm-inplace-menu-item[data-active] svg": { color: "var(--stylo-ring)" },
+  ".cm-inplace-menu-parent::after": { content: '"\\203A"', marginLeft: "auto", paddingLeft: "1.5em" },
+
+  // --- Selection bar (selection-bar.ts) ---
+  // `display` is gated on `[hidden]` so `bar.hidden = true` actually hides it —
+  // a bare `display: flex` would override the browser's `[hidden]` rule.
+  ".cm-inplace-selbar": {
+    position: "fixed",
+    zIndex: "20",
+    gap: "0.1em",
+    padding: "0.2em",
+    background: "var(--stylo-bg, #fff)",
+    border: "1px solid var(--stylo-border)",
+    borderRadius: "6px",
+    boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
+  },
+  ".cm-inplace-selbar:not([hidden])": { display: "flex" },
+  ".cm-inplace-selbar[hidden]": { display: "none" },
+  ".cm-inplace-selbar-btn": {
+    all: "unset",
+    display: "flex",
+    padding: "0.3em",
+    borderRadius: "4px",
+    cursor: "pointer",
+    color: "var(--stylo-text-muted)",
+  },
+  ".cm-inplace-selbar-btn svg": { width: "1.05em", height: "1.05em", display: "block" },
+  ".cm-inplace-selbar-btn:hover": {
+    background: "color-mix(in srgb, var(--stylo-border) 40%, transparent)",
+    color: "var(--stylo-text)",
+  },
+  ".cm-inplace-selbar-btn[data-active]": { color: "var(--stylo-text)", background: "color-mix(in srgb, var(--stylo-border) 55%, transparent)" },
 })

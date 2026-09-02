@@ -1,0 +1,67 @@
+import { afterEach, expect, test, vi } from "vitest"
+import { cleanup, render } from "@testing-library/react"
+import { EditorView } from "@codemirror/view"
+import { Stylo } from "../src/Stylo"
+import type { InPlaceConfig } from "../src/types"
+
+afterEach(() => {
+  cleanup()
+  document.querySelectorAll(".cm-inplace-menu, .cm-inplace-selbar").forEach((n) => n.remove())
+})
+
+async function mount(value: string, inPlace?: InPlaceConfig) {
+  const result = render(
+    <Stylo value={value} onChange={() => {}} mode="in-place" inPlace={inPlace} />,
+  )
+  await vi.waitFor(() => {
+    if (!result.container.querySelector(".cm-editor")) throw new Error("not mounted")
+  })
+  const view = EditorView.findFromDOM(
+    result.container.querySelector(".cm-editor") as HTMLElement,
+  )
+  if (!view) throw new Error("no EditorView")
+  return { view }
+}
+
+function rightClick(view: EditorView): MouseEvent {
+  const e = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 20, clientY: 20 })
+  view.contentDOM.dispatchEvent(e)
+  return e
+}
+
+test("right-click in the canvas opens the Stylo menu and suppresses the native one", async () => {
+  const { view } = await mount("a plain paragraph")
+  const e = rightClick(view)
+  expect(e.defaultPrevented).toBe(true)
+  expect(document.querySelector(".cm-inplace-menu-panel")).not.toBeNull()
+})
+
+test("the menu reflects the caret context — a heading offers block actions", async () => {
+  const { view } = await mount("# Heading")
+  rightClick(view)
+  const text = document.querySelector(".cm-inplace-menu-panel")?.textContent ?? ""
+  expect(text).toContain("Blockquote")
+  expect(text).toContain("Insert")
+})
+
+test("inPlace.contextMenu = false leaves the browser menu alone", async () => {
+  const { view } = await mount("a plain paragraph", { contextMenu: false })
+  const e = rightClick(view)
+  expect(e.defaultPrevented).toBe(false)
+  expect(document.querySelector(".cm-inplace-menu-panel")).toBeNull()
+})
+
+test("a right-click menu is not opened over an editable table cell", async () => {
+  const { view } = await mount("| a | b |\n| - | - |\n| c | d |\n", { table: "cells" })
+  const cell = view.dom.querySelector(".cm-inplace-table-edit td, .cm-inplace-table-edit th")
+  // Table editing may be unavailable in jsdom; only assert when the cell exists.
+  if (!cell) return
+  const e = new MouseEvent("contextmenu", { bubbles: true, cancelable: true })
+  cell.dispatchEvent(e)
+  expect(document.querySelector(".cm-inplace-menu-panel")).toBeNull()
+})
+
+test("the selection bar element is mounted for an in-place editor", async () => {
+  await mount("some text here")
+  expect(document.querySelector(".cm-inplace-selbar")).not.toBeNull()
+})

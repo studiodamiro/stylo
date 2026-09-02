@@ -22,6 +22,8 @@ Specified in [ADR-005](../../journal/2026-09/2026-09-01_adr-005-in-place-decorat
   inPlace={{
     decorations: { tables: false, frontmatter: false },
     table: "cells",
+    contextMenu: true,
+    selectionBar: true,
   }}
 />
 ```
@@ -63,6 +65,38 @@ toolbar's inline buttons and their shortcuts (`Mod-b`, `Mod-i`, `Mod-k`,
 `Mod-Shift-k`) wrap the cell's selection; `codeBlock` / `mathBlock` degrade to
 inline `` `code` `` / `$math$` there. Specified in
 [ADR-006](../../journal/2026-09/2026-09-02_adr-006-interactive-table-editing.md).
+
+## `inPlace.contextMenu`
+
+Optional, defaults to `true`. A right-click inside the canvas opens a
+context-aware Stylo menu instead of the browser's:
+
+| Where you right-click                        | The menu offers                                              |
+| -------------------------------------------- | ----------------------------------------------------------- |
+| Over a selection                             | Inline marks (bold / italic / strike / code / link / wikilink / math) + Cut / Copy / Paste |
+| In a code block, quote, list, heading, divider, `$$` math, or frontmatter | That block's toggles + an **Insert** submenu + clipboard |
+| In a plain paragraph                         | **Insert** (table / divider / code block / block math / frontmatter) + clipboard |
+| In a table cell, caret only                  | Insert / delete row · column, column alignment              |
+| In a table cell, with text selected          | Inline marks + clipboard                                    |
+| Outside the text area                        | The browser's own menu                                      |
+
+Set `false` to keep the browser's menu everywhere. The menu carries the same
+enabled / active state as the toolbar — an action that can't produce valid
+Markdown at that spot is shown greyed or left out.
+
+## `inPlace.selectionBar`
+
+Optional, defaults to `true`. A floating bar appears above a non-empty text
+selection (below it near the top of the editor) with the inline-mark buttons
+only — bold, italic, strikethrough, inline code, link, wikilink, inline math.
+Block and insert actions are on the right-click menu, not here. Set `false` to
+turn the bar off.
+
+Both surfaces are styled through stable class names — `.cm-inplace-menu`,
+`.cm-inplace-menu-item`, `.cm-inplace-selbar`, `.cm-inplace-selbar-btn` — and
+inherit the `--stylo-*` tokens. Specified in the
+[right-click menu and selection bar note](../../journal/2026-09/2026-09-03_context-menu-and-selection-bar.md)
+and the [ADR-002 §Deferred amendment](../../journal/2026-09/2026-09-01_adr-002-editor-ux-and-customization.md).
 
 ## Applied at mount
 
