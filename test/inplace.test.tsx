@@ -305,6 +305,18 @@ test("mousedown on a rendered <hr> widget reveals its source", async () => {
   expect(countWidgets(view, HrWidget)).toBe(0)
 })
 
+test("mousedown on a rendered table cell reveals the source at that cell", async () => {
+  const { view } = await mount("intro\n\n| A | B |\n| - | - |\n|  | hi |\n\ntail")
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+
+  const cell = await elementIn(view, 'td[data-stylo-row="1"][data-stylo-col="1"]') // the "hi" cell
+  cell.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }))
+
+  const { head } = view.state.selection.main
+  expect(view.state.doc.lineAt(head).text).toBe("|  | hi |")
+  expect(view.state.sliceDoc(head, head + 2)).toBe("hi") // caret at the cell, not column 0
+})
+
 function atomicCount(view: EditorView): number {
   let n = 0
   view.plugin(inPlacePlugin)!.atomic.between(0, view.state.doc.length, (from, to) => {
@@ -380,6 +392,56 @@ test("column alignment from the delimiter row reaches the rendered cells", async
   const cells = tableDOM(view)?.querySelectorAll<HTMLTableCellElement>("tbody td")
   expect(cells?.[0]?.style.textAlign).toBe("left")
   expect(cells?.[1]?.style.textAlign).toBe("center")
+})
+
+test("empty cells keep their column — a leading blank cell is not collapsed", async () => {
+  // The Lezer parser emits no TableCell node for a whitespace-only cell, so a
+  // tree read would render "x" in column 1. The grid parser keeps the blank.
+  const { view } = await mount("intro\n\n| A | B |\n| - | - |\n|  | x |\n| y |  |\n\ntail")
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+
+  const rows = tableDOM(view)?.querySelectorAll<HTMLTableRowElement>("tbody tr")
+  expect([...(rows?.[0]?.cells ?? [])].map((c) => c.textContent)).toEqual(["", "x"])
+  expect([...(rows?.[1]?.cells ?? [])].map((c) => c.textContent)).toEqual(["y", ""])
+})
+
+test("inline Markdown inside a cell renders — bold, code, link, wikilink, math", async () => {
+  const { view } = await mount(
+    "intro\n\n| Plain | Rich |\n| - | - |\n" +
+      "| **b** `c` | [t](u) [[Page\\|lbl]] $x^2$ |\n\ntail",
+  )
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+  const table = tableDOM(view)!
+
+  const c0 = table.querySelector("tbody td")!
+  expect(c0.querySelector("strong")?.textContent).toBe("b")
+  expect(c0.querySelector("code.cm-inplace-code")?.textContent).toBe("c")
+
+  const c1 = table.querySelectorAll("tbody td")[1]!
+  expect(c1.querySelector("a.cm-inplace-link")?.getAttribute("href")).toBe("u")
+  const wiki = c1.querySelector<HTMLElement>(".cm-inplace-wikilink")
+  expect(wiki?.dataset.styloWikilink).toBe("Page")
+  expect(wiki?.textContent).toBe("lbl")
+  expect(c1.querySelector(".katex")).not.toBeNull()
+})
+
+test("a wikilink inside a rendered cell is clickable through the delegated handler", async () => {
+  const targets: string[] = []
+  const { container } = render(
+    <Stylo
+      value={"x\n\n| H |\n| - |\n| [[Notes/Home]] |\n\ntail"}
+      onChange={() => {}}
+      mode="in-place"
+      onWikiLinkClick={(t) => targets.push(t)}
+    />,
+  )
+  await vi.waitFor(() => {
+    if (!container.querySelector(".cm-inplace-wikilink")) throw new Error("no wikilink")
+  })
+  container
+    .querySelector<HTMLElement>(".cm-inplace-wikilink")!
+    .dispatchEvent(new MouseEvent("click", { bubbles: true }))
+  expect(targets).toEqual(["Notes/Home"])
 })
 
 test("inPlace.decorations.headings=false leaves a heading as plain source", async () => {

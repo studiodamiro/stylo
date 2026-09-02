@@ -38,6 +38,7 @@ export const DEFAULT_ICONS: Record<ToolbarCommandId, ReactNode> = {
   link: (
     <Svg d="M10 13a5 5 0 0 0 7.07 0l3-3A5 5 0 0 0 13 3l-1.5 1.5|M14 11a5 5 0 0 0-7.07 0l-3 3A5 5 0 0 0 11 21l1.5-1.5" />
   ),
+  wikilink: <Svg d="M10 5H6v14h4|M18 5H14v14h4" />,
   quote: <Svg d="M7 7H4v6h3l-2 4|M17 7h-3v6h3l-2 4" />,
   bulletList: <Svg d="M9 6h11|M9 12h11|M9 18h11|M4.5 6h.01|M4.5 12h.01|M4.5 18h.01" />,
   orderedList: (
