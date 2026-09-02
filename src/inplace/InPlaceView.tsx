@@ -11,6 +11,8 @@ export interface InPlaceViewProps {
   readOnly?: boolean
   placeholder?: string
   onWikiLinkClick?: (target: string) => void
+  /** Fired by the link editor's "Open link" action. */
+  onLinkClick?: (href: string) => void
   /** Read once, when the canvas mounts — see ADR-005. */
   inPlace?: InPlaceConfig
   /** Fenced-code grammars, forwarded to the Markdown language. Read once. */
@@ -34,16 +36,23 @@ export function InPlaceView({
   readOnly,
   placeholder,
   onWikiLinkClick,
+  onLinkClick,
   inPlace,
   codeLanguages,
   onViewChange,
 }: InPlaceViewProps) {
   const clickRef = useRef(onWikiLinkClick)
   clickRef.current = onWikiLinkClick
+  const linkRef = useRef(onLinkClick)
+  linkRef.current = onLinkClick
 
   // Built once; a changed handler is picked up through the ref, not a rebuild.
   const [extensions] = useState(() => [
-    inPlaceExtension({ onWikiLinkClick: (target) => clickRef.current?.(target), inPlace }),
+    inPlaceExtension({
+      onWikiLinkClick: (target) => clickRef.current?.(target),
+      onLinkClick: (href) => linkRef.current?.(href),
+      inPlace,
+    }),
   ])
 
   const ref = useCodeMirror({

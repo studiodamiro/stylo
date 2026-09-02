@@ -51,6 +51,14 @@ export const revealModeFacet = Facet.define<RevealMode, RevealMode>({
 })
 
 /**
+ * The host's `onLinkClick` (the "Open link" action in the right-click link
+ * editor), or `null`. Seeded once by `inPlaceExtension`.
+ */
+export const linkOpenFacet = Facet.define<((href: string) => void) | null, ((href: string) => void) | null>({
+  combine: (values) => values[0] ?? null,
+})
+
+/**
  * Whether the right-click menu takes over from the browser's own context menu
  * in the canvas. Seeded once by `inPlaceExtension`; read by `menu-plugin.ts`.
  */

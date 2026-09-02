@@ -249,6 +249,7 @@ function App() {
         onChange={setDoc}
         mode={mode}
         onWikiLinkClick={setLastLink}
+        onLinkClick={(href) => window.open(href, "_blank", "noopener")}
         inPlace={{ decorations, table: tableEdit, reveal }}
         toolbar={TOOLBARS[toolbar]}
         frontmatter={frontmatter}
