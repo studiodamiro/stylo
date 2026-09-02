@@ -65,10 +65,9 @@ export function createTableGizmos(doc: Document, host: GizmoHost): TableGizmos {
   }
 
   /**
-   * A full-edge hit strip (the whole right edge adds a column, the whole bottom
-   * edge adds a row — click anywhere along it, Obsidian style). The `+` glyph
-   * tracks the pointer down / across the strip so it stays in view on a tall
-   * table.
+   * A full-edge hit strip: the whole right edge adds a column, the whole bottom
+   * edge adds a row — click anywhere along it, Obsidian style. The strip is
+   * invisible until the pointer is over it; the centred `+` is its only mark.
    */
   const edge = (axis: "col" | "row", label: string, onClick: () => void) => {
     const strip = button(`cm-inplace-tg-edge cm-inplace-tg-add${axis}`, label, onClick)
@@ -76,11 +75,6 @@ export function createTableGizmos(doc: Document, host: GizmoHost): TableGizmos {
     plus.className = "cm-inplace-tg-plus"
     plus.textContent = "+"
     strip.appendChild(plus)
-    strip.addEventListener("mousemove", (e) => {
-      const r = strip.getBoundingClientRect()
-      if (axis === "col") plus.style.top = `${e.clientY - r.top}px`
-      else plus.style.left = `${e.clientX - r.left}px`
-    })
     return strip
   }
 
