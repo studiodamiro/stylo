@@ -193,13 +193,17 @@ export const inPlaceTheme = EditorView.theme({
   },
   ".cm-inplace-tg-addcol": { width: "1.15em" },
   ".cm-inplace-tg-addrow": { height: "1.15em" },
-  // Sized so the glyph's ink sits well inside the strip (a `+` at 0.95em renders
-  // ~17px of extent and was overflowing the old 1em / 15px strip, reading as
-  // off-centre). `line-height: 1` + flex centring keeps it exact.
+  // A CSS-drawn cross, not a font glyph: a `+` character rides up toward the
+  // font's math axis, so flex centring leaves it visibly high no matter how the
+  // font size is tuned. Two `currentColor` bars positioned dead centre are exact
+  // and still follow the hover colour change below.
   ".cm-inplace-tg-plus": {
-    fontSize: "0.8em",
-    lineHeight: "1",
+    width: "0.7em",
+    height: "0.7em",
     color: "var(--stylo-text-muted)",
+    background:
+      "linear-gradient(currentColor, currentColor) center / 100% 2px no-repeat," +
+      "linear-gradient(currentColor, currentColor) center / 2px 100% no-repeat",
     pointerEvents: "none",
   },
   ".cm-inplace-tg-edge:hover .cm-inplace-tg-plus": { color: "var(--stylo-text)" },
