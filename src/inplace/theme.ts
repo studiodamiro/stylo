@@ -305,11 +305,13 @@ export const inPlaceTheme = EditorView.theme({
   ".cm-inplace-menu-parent::after": { content: '"\\203A"', marginLeft: "auto", paddingLeft: "1.5em" },
 
   // --- Selection bar (selection-bar.ts) ---
-  // `display` is gated on `[hidden]` so `bar.hidden = true` actually hides it —
-  // a bare `display: flex` would override the browser's `[hidden]` rule.
+  // `[hidden]` toggles visibility, not `display` — the bar stays laid out so
+  // `getBoundingClientRect` can size it during the measure phase. It is
+  // `position: fixed`, so an always-present hidden bar costs no document flow.
   ".cm-inplace-selbar": {
     position: "fixed",
     zIndex: "20",
+    display: "flex",
     gap: "0.1em",
     padding: "0.2em",
     background: "var(--stylo-bg, #fff)",
@@ -317,8 +319,7 @@ export const inPlaceTheme = EditorView.theme({
     borderRadius: "6px",
     boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
   },
-  ".cm-inplace-selbar:not([hidden])": { display: "flex" },
-  ".cm-inplace-selbar[hidden]": { display: "none" },
+  ".cm-inplace-selbar[hidden]": { visibility: "hidden", pointerEvents: "none" },
   ".cm-inplace-selbar-btn": {
     all: "unset",
     display: "flex",
