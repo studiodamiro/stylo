@@ -289,6 +289,74 @@ test("the link command wraps a cell selection as [text](url)", async () => {
   expect(view.state.doc.toString()).toContain("[1](url)")
 })
 
+function hoverGizmos(view: EditorView) {
+  view.contentDOM
+    .querySelector(".cm-inplace-table-wrap")!
+    .dispatchEvent(new MouseEvent("mouseenter", { bubbles: false }))
+}
+
+function menuItem(view: EditorView, label: string): HTMLButtonElement {
+  const it = [...view.contentDOM.querySelectorAll<HTMLButtonElement>(".cm-inplace-tm-item")].find(
+    (b) => b.textContent === label,
+  )
+  if (!it) throw new Error(`no menu item "${label}"`)
+  return it
+}
+
+test("the add-column gizmo appends a column", async () => {
+  const { view } = await mount(T, { table: "cells" })
+  await editCells(view)
+  view.contentDOM.querySelector<HTMLButtonElement>(".cm-inplace-tg-addcol")!.click()
+  expect(view.state.doc.toString()).toBe(
+    "| A   | B   |     |\n| --- | --- | --- |\n| 1   | 2   |     |",
+  )
+})
+
+test("the add-row gizmo appends a row", async () => {
+  const { view } = await mount(T, { table: "cells" })
+  await editCells(view)
+  view.contentDOM.querySelector<HTMLButtonElement>(".cm-inplace-tg-addrow")!.click()
+  expect(view.state.doc.toString()).toBe(
+    "| A   | B   |\n| --- | --- |\n| 1   | 2   |\n|     |     |",
+  )
+})
+
+test("a column handle menu deletes its column", async () => {
+  const { view } = await mount(T, { table: "cells" })
+  await editCells(view)
+  hoverGizmos(view)
+  view.contentDOM.querySelectorAll<HTMLButtonElement>(".cm-inplace-tg-handle-col")[1]!.click()
+  menuItem(view, "Delete column").click()
+  expect(view.state.doc.toString()).toBe("| A   |\n| --- |\n| 1   |")
+})
+
+test("a column handle menu writes alignment into the delimiter", async () => {
+  const { view } = await mount(T, { table: "cells" })
+  await editCells(view)
+  hoverGizmos(view)
+  view.contentDOM.querySelectorAll<HTMLButtonElement>(".cm-inplace-tg-handle-col")[0]!.click()
+  menuItem(view, "Align center").click()
+  expect(view.state.doc.toString().split("\n")[1]).toBe("| :-: | --- |")
+})
+
+test("a body row handle menu deletes its row; the header handle cannot", async () => {
+  const { view } = await mount("| A | B |\n| - | - |\n| 1 | 2 |\n| 3 | 4 |", { table: "cells" })
+  await editCells(view)
+  hoverGizmos(view)
+  const rowHandles = view.contentDOM.querySelectorAll<HTMLButtonElement>(
+    ".cm-inplace-tg-handle-row",
+  )
+
+  rowHandles[0]!.click() // header
+  expect(
+    [...view.contentDOM.querySelectorAll(".cm-inplace-tm-item")].map((b) => b.textContent),
+  ).toEqual(["Insert below"])
+
+  rowHandles[1]!.click() // first body row
+  menuItem(view, "Delete row").click()
+  expect(view.state.doc.toString()).toBe("| A   | B   |\n| --- | --- |\n| 3   | 4   |")
+})
+
 test("Enter in the last row appends a row", async () => {
   const { view } = await mount(T, { table: "cells" })
   const table = await editCells(view)
