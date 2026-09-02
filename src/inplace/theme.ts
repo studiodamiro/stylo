@@ -351,4 +351,22 @@ export const inPlaceTheme = EditorView.theme({
     color: "var(--stylo-text)",
   },
   ".cm-inplace-selbar-btn[data-active]": { color: "var(--stylo-text)", background: "color-mix(in srgb, var(--stylo-border) 55%, transparent)" },
+
+  // --- Link / wikilink hover bubble (link-hover.ts) ---
+  ".cm-tooltip.cm-tooltip-hover:has(.cm-inplace-href-tip)": {
+    border: "none",
+    background: "transparent",
+  },
+  ".cm-inplace-href-tip": {
+    maxWidth: "min(28em, 70vw)",
+    padding: "0.3em 0.55em",
+    borderRadius: "5px",
+    background: "var(--stylo-bg, #fff)",
+    border: "1px solid var(--stylo-border)",
+    boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
+    color: "var(--stylo-text-muted)",
+    fontSize: "0.82em",
+    lineHeight: "1.4",
+    wordBreak: "break-all",
+  },
 })

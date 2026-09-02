@@ -47,6 +47,24 @@ export function fencedCodeActive(state: EditorState): boolean {
   return enclosingFence(state, state.selection.main.head) !== null
 }
 
+/**
+ * The info-string (language) span on the opening fence of the block at the
+ * caret, plus its current text. `null` when the caret is not in a fence. The
+ * opening line may be hidden in the seamless canvas, but its text is still in
+ * the document, so this stays editable through the menu.
+ */
+export function fenceInfoAt(
+  state: EditorState,
+): { from: number; to: number; lang: string } | null {
+  const fence = enclosingFence(state, state.selection.main.head)
+  if (!fence) return null
+  const open = state.doc.lineAt(fence.from)
+  const m = /^(\s*(?:`{3,}|~{3,})[ \t]*)(.*?)[ \t]*$/.exec(open.text)
+  if (!m) return null
+  const from = open.from + m[1]!.length
+  return { from, to: from + m[2]!.length, lang: m[2]! }
+}
+
 /** A line that is exactly a `$$` math fence. */
 const MATH_FENCE = /^\s*\$\$\s*$/
 

@@ -29,11 +29,9 @@ test("bold wraps the selection and toggles back off", () => {
   expect(view.state.doc.toString()).toBe("hello world")
 })
 
-test("bold on a bare caret drops an empty pair with the caret between", () => {
-  const view = mkView("", 0)
-  BUILTIN_BY_ID.bold!.run(view)
-  expect(view.state.doc.toString()).toBe("****")
-  expect(view.state.selection.main.head).toBe(2)
+test("bold is disabled at a bare caret with no word to wrap", () => {
+  expect(BUILTIN_BY_ID.bold!.disabled!(mkView("", 0).state)).toBe(true)
+  expect(BUILTIN_BY_ID.bold!.disabled!(mkView("a word here", 4).state)).toBe(false) // on "word"
 })
 
 test("wrapActive reports the pressed state for bold", () => {
@@ -172,6 +170,19 @@ test("task prefixes a checkbox and isActive follows it", () => {
   expect(BUILTIN_BY_ID.task!.isActive!(view.state)).toBe(true)
   BUILTIN_BY_ID.task!.run(view)
   expect(view.state.doc.toString()).toBe("buy milk")
+})
+
+test("a list / task / quote starts on a lone blank line", () => {
+  for (const [id, out] of [
+    ["bulletList", "- "],
+    ["orderedList", "1. "],
+    ["task", "- [ ] "],
+    ["quote", "> "],
+  ] as const) {
+    const view = mkView("", 0)
+    BUILTIN_BY_ID[id]!.run(view)
+    expect(view.state.doc.toString(), id).toBe(out)
+  }
 })
 
 test("bulletList toggles across a multi-line selection", () => {
@@ -329,6 +340,7 @@ test("nothing is disabled in a plain paragraph", () => {
 test("a table cell disables the block commands, not the inline ones", () => {
   expect(disabledAt(TABLE_DOC, 29)).toEqual(
     [
+      "body",
       "bulletList",
       "frontmatter",
       "h1",

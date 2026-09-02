@@ -22,6 +22,8 @@ export interface MenuSubmenu {
   label: string
   icon?: string
   rows: MenuRow[]
+  /** Greyed, and its flyout never opens. */
+  disabled?: boolean
 }
 
 /** A row whose flyout is a single text input plus optional action buttons. */
@@ -121,11 +123,20 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
 
   // A row that opens a flyout panel — used by both submenus and field rows. The
   // flyout is sticky (opens on hover or click, no auto-close timer).
-  const flyoutRow = (text: string, icon: string | undefined, build: () => HTMLElement) => {
+  const flyoutRow = (
+    text: string,
+    icon: string | undefined,
+    build: () => HTMLElement,
+    disabled = false,
+  ) => {
     const b = doc.createElement("button")
     b.type = "button"
     b.className = `${className}-item ${className}-parent`
     label(b, text, icon)
+    if (disabled) {
+      b.disabled = true
+      return b
+    }
     holdFocus(b)
     const open = () => {
       if (flyout?.dataset.for === text) return
@@ -176,7 +187,7 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
         sep.className = `${className}-sep`
         panel.appendChild(sep)
       } else if (isSubmenu(r)) {
-        panel.appendChild(flyoutRow(r.label, r.icon, () => buildPanel(r.rows)))
+        panel.appendChild(flyoutRow(r.label, r.icon, () => buildPanel(r.rows), r.disabled))
       } else if (isField(r)) {
         panel.appendChild(flyoutRow(r.label, r.icon, () => fieldPanel(r)))
       } else {

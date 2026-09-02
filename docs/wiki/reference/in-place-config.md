@@ -22,8 +22,9 @@ Specified in [ADR-005](../../journal/2026-09/2026-09-01_adr-005-in-place-decorat
   inPlace={{
     decorations: { tables: false, frontmatter: false },
     table: "cells",
+    reveal: "caret",
     contextMenu: true,
-    selectionBar: true,
+    selectionUI: "menu",
   }}
 />
 ```
@@ -68,36 +69,68 @@ inline `` `code` `` / `$math$` there. Specified in
 
 ## `inPlace.contextMenu`
 
-Optional, defaults to `true`. A right-click inside the canvas opens a
-context-aware Stylo menu instead of the browser's:
+Optional, defaults to `true`. A right-click inside the canvas opens Stylo's own
+menu instead of the browser's. It has **one shape everywhere** (Obsidian's
+layout), so nothing jumps around:
 
-| Where you right-click                        | The menu offers                                              |
-| -------------------------------------------- | ----------------------------------------------------------- |
-| Over a selection                             | Inline marks (bold / italic / strike / code / math), a **Link** URL field, a wikilink toggle, + Cut / Copy / Paste |
-| In a `[text](url)` link (caret, no selection) | A prefilled **Link** URL field — edit the URL, **Open link** (fires `onLinkClick`), **Remove link** |
-| In a code block, quote, list, heading, divider, `$$` math, or frontmatter | That block's toggles + an **Insert** submenu + clipboard |
-| In a plain paragraph                         | **Insert** (table / divider / code block / block math / frontmatter) + clipboard |
-| In a table cell, caret only                  | Insert / delete row · column, column alignment              |
-| In a table cell, with text selected          | Inline marks + clipboard                                    |
-| Outside the text area                        | The browser's own menu                                      |
+| Row                  | Opens                                                                                          |
+| -------------------- | -------------------------------------------------------------------------------------------- |
+| **Add link**         | A `[[target]]` field. Prefilled + **Remove link** and labelled **Edit link** when the caret is in one. |
+| **Add external link** | A `[text](url)` field. Prefilled + **Open link** (fires `onLinkClick`) + **Remove link**, labelled **Edit external link**, when the caret is in one. |
+| **Format** ›         | Bold · Italic · Strikethrough · Inline code · Inline math                                     |
+| **Paragraph** ›      | Bulleted / Numbered / Task list · Heading 1–3 · **Body** (strip the heading) · Blockquote      |
+| **Insert** ›         | Table · Divider · Code block · Block math · Frontmatter — **greyed unless the line is empty** |
+| **Cut / Copy / Paste** | Clipboard                                                                                  |
 
-Set `false` to keep the browser's menu everywhere. The menu carries the same
-enabled / active state as the toolbar — an action that can't produce valid
-Markdown at that spot is shown greyed or left out.
+A right-click with no selection first **selects the word under the pointer**, so
+the menu acts on that word. Items that can't produce valid Markdown where the
+caret sits are shown greyed. On a **blank line** the whole **Format** group is
+disabled and **Insert** is the live one (they swap on a line with text); on a
+bare caret with no word, the marks are disabled too. Inside an inline
+`` `code` `` / `$math$` span every other mark is disabled. Under
+`selectionUI: "bar"` or `"none"` the link rows and **Format** are dropped from
+the menu (they live on the floating bar or the toolbar); **Paragraph** and
+**Insert** always stay.
 
-## `inPlace.selectionBar`
+Two contexts replace the whole menu: a right-click in an **editable table cell**
+offers **Format** + clipboard only, and a right-click **inside a fenced code
+block** offers a **Language** field (edits the ` ```lang ` info string) with
+**Remove code block**, plus clipboard. A right-click outside the text area gets
+the browser's own menu. Set `contextMenu: false` to keep the browser menu
+everywhere.
 
-Optional, defaults to `true`. A floating bar appears above a non-empty text
-selection (below it near the top of the editor) with the inline-mark buttons
-only — bold, italic, strikethrough, inline code, link, wikilink, inline math.
-Block and insert actions are on the right-click menu, not here. Set `false` to
-turn the bar off.
+## `inPlace.selectionUI`
+
+Optional, defaults to `"menu"`. Picks the affordance a non-empty text selection
+gets. Only one applies at a time, so the same buttons never appear twice.
+
+| Value    | A selection gets                                                                                     |
+| -------- | --------------------------------------------------------------------------------------------------- |
+| `"menu"` | The inline-mark group inside the right-click menu (bold / italic / strike / code, Link and Wikilink fields, inline math). No floating bar. |
+| `"bar"`  | A floating bar above the selection with those same inline-mark buttons; the right-click menu drops its inline group. |
+| `"none"` | Neither — the main toolbar is the only formatting surface.                                          |
+
+The main editor toolbar is independent of this setting: it is always present
+unless hidden through the `toolbar` prop, and it always acts on the current
+selection.
+
+The floating bar's link and wikilink buttons open the same URL / target field
+the right-click menu uses, rather than dropping a `[text](url)` / `[[target]]`
+placeholder.
 
 Both surfaces are styled through stable class names — `.cm-inplace-menu`,
 `.cm-inplace-menu-item`, `.cm-inplace-selbar`, `.cm-inplace-selbar-btn` — and
 inherit the `--stylo-*` tokens. Specified in the
 [right-click menu and selection bar note](../../journal/2026-09/2026-09-03_context-menu-and-selection-bar.md)
 and the [ADR-002 §Deferred amendment](../../journal/2026-09/2026-09-01_adr-002-editor-ux-and-customization.md).
+
+## Link & wikilink hover
+
+Hovering a link or `[[wikilink]]` in the canvas shows a small bubble with its
+destination — the raw `(url)` or the `[[target]]`. Under `reveal: "never"` that
+destination is otherwise never on screen, so this is the way to read it without
+turning the link into an edit. Gated by `decorations.links` /
+`decorations.wikilinks`; styled through `.cm-inplace-href-tip`.
 
 ## Applied at mount
 

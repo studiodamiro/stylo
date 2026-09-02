@@ -200,6 +200,39 @@ export function wikiLinkAtIn(
   return null
 }
 
+/**
+ * Like {@link wikiLinkAtIn} but also breaks out the target and its `[from, to)`
+ * span within `text`, for editing just the `[[…]]` target in place.
+ */
+export function wikiLinkPartsIn(
+  text: string,
+  head: number,
+): {
+  from: number
+  to: number
+  target: string
+  label: string
+  targetFrom: number
+  targetTo: number
+} | null {
+  for (const m of text.matchAll(WIKILINK_PATTERN)) {
+    const from = m.index ?? 0
+    const to = from + m[0].length
+    if (head < from || head > to) continue
+    const target = m[1] ?? ""
+    const targetFrom = from + 2 // past `[[`
+    return {
+      from,
+      to,
+      target,
+      label: m[2] ?? "",
+      targetFrom,
+      targetTo: targetFrom + target.length,
+    }
+  }
+  return null
+}
+
 /** Toggle `[[target]]` around `[from, to)` of `text` — wrap, or unwrap to the display text. */
 export function wikiLinkString(text: string, from: number, to: number): InlineStr {
   const hit = wikiLinkAtIn(text, from)

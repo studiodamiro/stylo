@@ -42,6 +42,7 @@ skipped.
 | --------------- | ------------------------------------ | ----------------------- |
 | `undo` / `redo` | History                              | `Mod-z` / `Mod-Shift-z` |
 | `h1` `h2` `h3`  | Set / swap / clear an ATX heading    | `Mod-Alt-1..3`          |
+| `body`          | Strip any heading prefix — back to a paragraph | —             |
 | `bold`          | Wrap in `**…**`                      | `Mod-b`                 |
 | `italic`        | Wrap in `*…*`                        | `Mod-i`                 |
 | `strike`        | Wrap in `~~…~~`                      | —                       |
@@ -101,8 +102,11 @@ the `](url)` wrapper is removed. `wikilink` behaves the same for `[[target]]` /
 `[[target|label]]` — the display text is kept, the brackets and any `|label` go.
 The `bold` / `italic` / `strike` marks **nest** rather than consume one another:
 `italic` on `**word**` gives `***word***`, and toggling one mark back off leaves
-the others intact. `codeBlock` and `mathBlock` unwrap when the caret is inside
-their fence pair. `hr` drops the divider on its own line,
+the others intact. `code` and `math` do **not** nest — inside an inline
+`` `…` `` or `$…$` span every other mark (including the other of the two) is
+disabled, since `` `**x**` `` / `` $`x`$ `` are not valid; the span's own
+button stays live to toggle it off. `codeBlock` and `mathBlock` unwrap when the
+caret is inside their fence pair. `hr` drops the divider on its own line,
 inserting a blank line first when the current line has text so CommonMark reads
 a thematic break rather than a setext H2; with the caret on an existing `---` it
 removes it.

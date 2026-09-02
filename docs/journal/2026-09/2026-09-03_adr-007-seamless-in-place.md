@@ -146,6 +146,90 @@ throughout.
   `[[target|label]]` is the immediate next step. Deferred within Stage 4: a
   click / hover affordance on a collapsed link (right-click is the only route
   for now), and paste-a-URL-onto-a-selection autoformat (Stage 5).
+- **2026-09-03 — Stage 4 finished (wikilinks) + Stage 2 first slice + Stage 5
+  hover.** Hands-on `"never"` dogfooding surfaced three problems, now fixed:
+  - _Backspace / Delete ate the marker._ Because hidden markers are atomic, the
+    stock delete skipped the whole range and removed the marker itself —
+    stranding its partner, and for a nested `***word***` stripping a level of
+    formatting per keypress. New `edit-boundaries.ts` — a `Prec.high`
+    Backspace / Delete keymap that **steps over the run of hidden markers and
+    removes the real character beyond them**: Backspace at the front of a bold
+    word deletes the space before it, the bold stays. Marker runs are crossed
+    using the live decoration set, so `***` counts as one step. The one
+    exception is deleting a wrapper's last inner character — the now-empty
+    markers go with it. Covers emphasis / strong / strike / inline code /
+    `[text](url)` / `[[wikilink]]`; only fires while those markers are hidden.
+    First slice of Stage 2; insertion association at a hidden edge and
+    line-prefix backspace still to come. Known edge: emptying a *nested*
+    wrapper can leave `****`.
+  - _Arrow keys stopped between adjacent hidden markers._ `EditorView.
+    atomicRanges` only skips a range the caret sits *strictly* inside, so the
+    `**` + `*` of a `***word***` prefix left a landable seam at their junction —
+    arrow keys rested there and typing split the marks (you got italic-only
+    text mid-run). `buildDecorations` now **coalesces touching replace ranges**
+    into one before handing them to `atomicRanges`, so a marker run is crossed
+    as a single unit. The rendered decoration set is untouched.
+  - _Arrow keys "crawled" — a press that didn't move the caret._ A coalesced
+    run still leaves *both* its edges as caret stops, and with the markers
+    hidden the two render at the same point, so one ArrowLeft/ArrowRight looked
+    like a no-op. `edit-boundaries.ts` now also handles Left/Right: when a step
+    only crossed hidden markers it takes one more, so every press moves the
+    caret visibly. (Left and Right settle on opposite edges of a run, which is
+    invisible.)
+  - _Wikilink had no target editor._ `wikiLinkRow` now mirrors `linkRow` — a
+    prefilled **Wikilink** field with **Remove link** when the caret is in a
+    `[[target|label]]`, an empty field that wraps a selection as
+    `[[target|sel]]` (or `[[sel]]`) otherwise. Reachable from the right-click
+    menu and the floating bar's wikilink button. `wikiLinkPartsIn` added
+    alongside `linkPartsIn`.
+  - _No way to see a collapsed link's destination._ `link-hover.ts` — a
+    `hoverTooltip` (no new dependency) showing the raw `(url)` / `[[target]]`
+    in a `.cm-inplace-href-tip` bubble. The hover half of Stage 5; click and
+    autoformat still pending.
+- **2026-09-03 — `inPlace.selectionBar` became `inPlace.selectionUI`.**
+  `"menu" | "bar" | "none"`, default `"menu"`. A selection now gets exactly one
+  affordance: the inline group in the right-click menu (`"menu"`), the floating
+  bar with the menu's inline group suppressed (`"bar"`), or neither with only
+  the toolbar (`"none"`). The old boolean always showed both the bar and the
+  menu's inline group, which read as redundant. The main toolbar is unchanged
+  and orthogonal — always on unless the `toolbar` prop hides it.
+- **2026-09-03 — Right-click menu made word-aware.** A right-click with no
+  selection now **selects the word under the pointer** (as a highlighted word
+  would), so the menu acts on that word instead of showing a list of block/
+  insert actions irrelevant to it.
+- **2026-09-03 — Right-click menu regrouped to Obsidian's layout.** One shape
+  everywhere: `Add link` / `Add external link` (the `[[…]]` and `[…](…)`
+  fields), a separator, then **Format** (bold / italic / strike / code / math),
+  **Paragraph** (list types / headings / quote) and **Insert** (table / divider
+  / code / math / frontmatter) as submenus, a separator, then Cut / Copy /
+  Paste. `classifyContext` and its `"selection" | "block" | "plain"` branching
+  are gone — every item carries its own `disabled`, so an action that can't
+  apply is greyed rather than the menu changing shape. **Format** groups the
+  three text marks, then inline code + inline math. The whole **Insert** submenu
+  is disabled (its flyout won't open) off an empty line, rather than every item
+  inside greyed. Under `selectionUI: "bar"` / `"none"` the link rows and
+  **Format** drop out (they live on the bar / toolbar); **Paragraph** and
+  **Insert** always stay. A table cell offers **Format** + clipboard only.
+- **2026-09-03 — Blank-line polish + a fenced-code Language field.** On a lone
+  blank line `toggleLinePrefix` now *starts* the list / quote (it used to skip
+  blank lines outright, so the bullet button did nothing on an empty line). The
+  `wrap()` commands (bold / italic / strike / code / math) report `disabled`
+  when the caret has no word under it — wrapping empty space just dropped a
+  literal `****`. In the right-click menu, **Format** is a disabled group on a
+  blank line and **Insert** is the enabled one; they swap on a line with text.
+  When the caret is inside a fenced code block the menu becomes a focused
+  **Language** field (edits the ` ```ts ` info string, which is otherwise hidden
+  in the seamless canvas) plus **Remove code block** and clipboard —
+  `fenceInfoAt` in `toolbar/fence.ts`, `codeBlockRow` in the menu.
+- **2026-09-03 — "Body" command + inline-literal mutual exclusion.** New `body`
+  toolbar command (`clearHeading`) strips any ATX heading prefix — the explicit
+  "back to a paragraph" that toggling the active heading level did obliquely.
+  It sits in **Paragraph** after the heading levels, active (checked) when the
+  line is already body. Separately, `wrap()` commands now report `disabled`
+  when the selection is inside an inline `` `code` `` or `$math$` span that is
+  not their own — applying code inside math (or vice versa, or a text mark
+  inside either) produced literal `` ` `` / `$` in the output. The span's own
+  mark stays live so it can still be toggled off.
 
 ## Consequences
 

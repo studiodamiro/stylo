@@ -21,6 +21,7 @@ export type ToolbarCommandId =
   | "h1"
   | "h2"
   | "h3"
+  | "body"
   | "bold"
   | "italic"
   | "strike"
@@ -94,6 +95,17 @@ export type TableEditing = "source" | "cells"
  */
 export type RevealMode = "caret" | "never"
 
+/**
+ * What appears when text is selected in the in-place canvas. `"menu"` (default)
+ * puts the inline-formatting group in the right-click menu and shows no floating
+ * bar; `"bar"` shows a floating bar above the selection and drops that group
+ * from the menu so nothing is doubled; `"none"` shows neither and leaves the
+ * main toolbar as the only formatting surface. The toolbar is independent of
+ * this setting — it is always available (unless hidden via `toolbar`) and always
+ * acts on the selection.
+ */
+export type SelectionUI = "menu" | "bar" | "none"
+
 export interface InPlaceConfig {
   /** Which decoration types the in-place canvas renders. Read once, at mount. */
   decorations?: InPlaceDecorationToggles
@@ -111,10 +123,10 @@ export interface InPlaceConfig {
    */
   contextMenu?: boolean
   /**
-   * Show a floating inline-formatting bar above a non-empty selection. `false`
-   * turns it off. Defaults to `true`. Read once, at mount.
+   * What a non-empty selection offers (see `SelectionUI`). Defaults to
+   * `"menu"`. Read once, at mount.
    */
-  selectionBar?: boolean
+  selectionUI?: SelectionUI
 }
 
 export interface StyloProps {

@@ -8,10 +8,12 @@ import {
   linkOpenFacet,
   resolveToggles,
   revealModeFacet,
-  selectionBarEnabled,
+  selectionUIFacet,
   tableEditingFacet,
 } from "./config"
+import { inPlaceEditBoundaries } from "./edit-boundaries"
 import { frontmatterField } from "./frontmatter"
+import { linkHoverTooltip } from "./link-hover"
 import { blockMathField } from "./math"
 import { contextMenuLayer } from "./menu-plugin"
 import { inPlaceDecorations } from "./plugin"
@@ -81,13 +83,15 @@ export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
     revealModeFacet.of(opts.inPlace?.reveal ?? "caret"),
     linkOpenFacet.of(opts.onLinkClick ?? null),
     contextMenuEnabled.of(opts.inPlace?.contextMenu ?? true),
-    selectionBarEnabled.of(opts.inPlace?.selectionBar ?? true),
+    selectionUIFacet.of(opts.inPlace?.selectionUI ?? "menu"),
     inPlaceDecorations(),
+    inPlaceEditBoundaries,
     blockMathField,
     frontmatterField,
     tableField,
     contextMenuLayer,
     selectionBar,
+    linkHoverTooltip,
     Prec.high(inPlaceTheme),
     EditorView.domEventHandlers({
       mousedown(event, view) {

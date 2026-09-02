@@ -11,6 +11,9 @@ import { scanWikilinks } from "./wikilinks"
 /** Shared empty set for `reveal: "never"` — no line ever counts as revealed. */
 const NO_LINES: Set<number> = new Set()
 
+/** Value carried by the coalesced atomic ranges — never rendered, only its span matters. */
+const ATOMIC = Decoration.replace({})
+
 export interface InPlaceDecorations {
   decorations: DecorationSet
   /** Every replacing decoration — the caret steps over these rather than into them. */
@@ -50,7 +53,22 @@ export function buildDecorations(view: EditorView): InPlaceDecorations {
 
   // Every replacing decoration (marker-hiding and widgets) is atomic, so the
   // caret steps over hidden syntax instead of into invisible positions.
-  const atomic = out.filter((r) => r.from < r.to && !r.value.spec.class)
+  // `EditorView.atomicRanges` only skips a range the caret sits *strictly*
+  // inside, so two touching ranges — a `***word***` prefix is `**` then `*` —
+  // leave a landable seam between them where arrow keys stop and typing splits
+  // the marks. Coalescing touching ranges into one closes that seam.
+  const replaces = out
+    .filter((r) => r.from < r.to && !r.value.spec.class)
+    .sort((a, b) => a.from - b.from || a.to - b.to)
+  const atomic: Range<Decoration>[] = []
+  for (const r of replaces) {
+    const last = atomic[atomic.length - 1]
+    if (last && r.from <= last.to) {
+      if (r.to > last.to) atomic[atomic.length - 1] = ATOMIC.range(last.from, r.to)
+    } else {
+      atomic.push(ATOMIC.range(r.from, r.to))
+    }
+  }
 
   return {
     decorations: Decoration.set(out, true),

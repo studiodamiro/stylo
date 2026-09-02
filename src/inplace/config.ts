@@ -3,6 +3,7 @@ import type {
   InPlaceConfig,
   InPlaceDecorationToggles,
   RevealMode,
+  SelectionUI,
   TableEditing,
 } from "../types"
 
@@ -67,9 +68,11 @@ export const contextMenuEnabled = Facet.define<boolean, boolean>({
 })
 
 /**
- * Whether the floating inline-formatting bar follows a selection. Seeded once by
- * `inPlaceExtension`; read by `selection-bar.ts`.
+ * What a non-empty selection offers (ADR-007). `"bar"` shows the floating
+ * formatting bar; `"menu"` (default) keeps the inline group in the right-click
+ * menu instead; `"none"` shows neither. Seeded once by `inPlaceExtension`; read
+ * by `selection-bar.ts` and `context-menu-actions.ts`.
  */
-export const selectionBarEnabled = Facet.define<boolean, boolean>({
-  combine: (values) => values[0] ?? true,
+export const selectionUIFacet = Facet.define<SelectionUI, SelectionUI>({
+  combine: (values) => values[0] ?? "menu",
 })

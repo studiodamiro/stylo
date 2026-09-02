@@ -36,12 +36,13 @@ test("right-click in the canvas opens the Stylo menu and suppresses the native o
   expect(document.querySelector(".cm-inplace-menu-panel")).not.toBeNull()
 })
 
-test("the menu reflects the caret context — a heading offers block actions", async () => {
-  const { view } = await mount("# Heading")
+test("right-clicking a word selects it and opens the grouped menu", async () => {
+  const { view } = await mount("Heading here")
   rightClick(view)
   const text = document.querySelector(".cm-inplace-menu-panel")?.textContent ?? ""
-  expect(text).toContain("Blockquote")
-  expect(text).toContain("Insert")
+  expect(text).toContain("Add link")
+  expect(text).toContain("Format")
+  expect(view.state.selection.main.empty, "the word under the pointer got selected").toBe(false)
 })
 
 test("inPlace.contextMenu = false leaves the browser menu alone", async () => {
@@ -66,7 +67,7 @@ test("the selection bar element is mounted for an in-place editor", async () => 
   expect(document.querySelector(".cm-inplace-selbar")).not.toBeNull()
 })
 
-test("selecting text and right-clicking yields a Link field flyout with an input", async () => {
+test("selecting text and right-clicking yields an 'Add external link' flyout with an input", async () => {
   const { view } = await mount("make this a link")
   view.dispatch({ selection: { anchor: 5, head: 9 } }) // "this"
 
@@ -82,19 +83,22 @@ test("selecting text and right-clicking yields a Link field flyout with an input
   expect(panel, "menu panel rendered").not.toBeNull()
 
   const items = [...panel!.querySelectorAll(".cm-inplace-menu-item")]
-  const linkRow = items.find((el) => el.textContent?.trim() === "Link") as HTMLElement | undefined
-  expect(linkRow, "a Link row exists").toBeDefined()
-  expect(linkRow!.classList.contains("cm-inplace-menu-parent"), "Link row is a flyout parent").toBe(
-    true,
-  )
+  const linkRow = items.find(
+    (el) => el.textContent?.trim() === "Add external link",
+  ) as HTMLElement | undefined
+  expect(linkRow, "an 'Add external link' row exists").toBeDefined()
+  expect(
+    linkRow!.classList.contains("cm-inplace-menu-parent"),
+    "the link row is a flyout parent",
+  ).toBe(true)
 
   linkRow!.dispatchEvent(new Event("pointerenter", { bubbles: true }))
   const input = document.querySelector(".cm-inplace-menu-input")
   expect(input, "a URL input appeared in the flyout").not.toBeNull()
 })
 
-test("the Insert submenu flyout opens on pointerenter", async () => {
-  const { view } = await mount("a plain paragraph")
+test("the Insert submenu flyout opens on pointerenter on an empty line", async () => {
+  const { view } = await mount("")
   view.contentDOM.dispatchEvent(
     new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }),
   )

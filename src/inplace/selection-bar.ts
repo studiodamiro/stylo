@@ -9,9 +9,9 @@ import { ViewPlugin, type EditorView, type PluginValue, type ViewUpdate } from "
 import type { ToolbarCommandId } from "../types"
 import { BUILTIN_BY_ID } from "../toolbar/commands"
 import { ICON_PATHS, iconSvg } from "../toolbar/icon-paths"
-import { selectionBarEnabled } from "./config"
+import { selectionUIFacet } from "./config"
 import { createContextMenu, type ContextMenu } from "./context-menu"
-import { linkRow } from "./context-menu-actions"
+import { linkRow, wikiLinkRow } from "./context-menu-actions"
 
 const IDS: ToolbarCommandId[] = ["bold", "italic", "strike", "code", "link", "wikilink", "math"]
 
@@ -44,9 +44,10 @@ class SelectionBar implements PluginValue {
       b.addEventListener("mousedown", (e) => e.preventDefault())
       b.addEventListener("click", (e) => {
         e.preventDefault()
-        // The link button opens the URL editor rather than dropping a
-        // `[text](url)` placeholder.
-        const field = id === "link" ? linkRow(view) : null
+        // The link / wikilink buttons open a URL/target editor rather than
+        // dropping a `[text](url)` / `[[target]]` placeholder.
+        const field =
+          id === "link" ? linkRow(view) : id === "wikilink" ? wikiLinkRow(view) : null
         if (field) {
           const r = b.getBoundingClientRect()
           this.linkMenu.showField(field, r.left, r.bottom + 6)
@@ -89,7 +90,7 @@ class SelectionBar implements PluginValue {
   private measure(): Placement {
     const { view } = this
     const sel = view.state.selection.main
-    if (!view.state.facet(selectionBarEnabled) || sel.empty || !view.hasFocus) return null
+    if (view.state.facet(selectionUIFacet) !== "bar" || sel.empty || !view.hasFocus) return null
     const from = view.coordsAtPos(sel.from)
     const to = view.coordsAtPos(sel.to)
     if (!from || !to) return null

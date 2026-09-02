@@ -3,6 +3,7 @@ import type { EditorState } from "@codemirror/state"
 import type { EditorView } from "@codemirror/view"
 import type { ToolbarCommandId } from "../types"
 import {
+  clearHeading,
   frontmatterActive,
   horizontalRuleActive,
   linePrefixActive,
@@ -41,6 +42,24 @@ const inFrontmatter = (s: EditorState): boolean => {
 /** Contexts where inline markup is literal or would break the syntax. */
 const inLiteral = (s: EditorState): boolean =>
   inFrontmatter(s) || fencedCodeActive(s) || mathBlockActive(s)
+
+/**
+ * Inside an inline `` `code` `` or `$math$` span, no *other* mark can be added —
+ * `` `**x**` `` / `$`x`$` are not valid. The span's own mark stays live so it
+ * can be toggled off.
+ */
+const inOtherInlineLiteral =
+  (mark: string) =>
+  (s: EditorState): boolean =>
+    (mark !== "`" && wrapActive(s, "`")) || (mark !== "$" && wrapActive(s, "$"))
+
+/**
+ * Nothing to wrap — a collapsed caret with no word at it (a blank line, a run
+ * of spaces, punctuation). Wrapping there just drops an empty `****` / `` `` ``
+ * pair, which shows as literal marks in the seamless canvas.
+ */
+const nothingToWrap = (s: EditorState): boolean =>
+  s.selection.main.empty && !s.wordAt(s.selection.main.head)
 
 /** A `disabled` predicate that fires when any of `checks` matches. */
 const disabledWhen =
@@ -106,7 +125,7 @@ function wrap(id: ToolbarCommandId, title: string, mark: string, keys?: string[]
     run: (view) =>
       runInlineInCell(view, (t, f, u) => wrapString(t, f, u, mark)) || toggleWrap(view, mark),
     isActive: (state) => wrapActive(state, mark),
-    disabled: inLiteral,
+    disabled: disabledWhen(inLiteral, inOtherInlineLiteral(mark), nothingToWrap),
     keys,
   }
 }
@@ -145,6 +164,19 @@ export const BUILTIN_COMMANDS: ToolbarCommand[] = [
   heading(1),
   heading(2),
   heading(3),
+  {
+    // The explicit "make this a paragraph again" — clearer than clicking the
+    // active heading level to toggle it off.
+    id: "body" as ToolbarCommandId,
+    title: "Body",
+    run: (view) => {
+      if (!clearHeading(view)) view.focus()
+      return true
+    },
+    isActive: (state) =>
+      !/^#{1,6} /.test(state.doc.lineAt(state.selection.main.head).text),
+    disabled: disabledWhen(tableActive, inLiteral),
+  },
   wrap("bold", "Bold", "**", ["Mod-b"]),
   wrap("italic", "Italic", "*", ["Mod-i"]),
   wrap("strike", "Strikethrough", "~~"),

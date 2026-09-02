@@ -48,10 +48,14 @@ class ContextMenuController implements PluginValue {
       if (this.stashed && view.state.selection.main.empty) {
         view.dispatch({ selection: this.stashed })
       } else if (!inEditableTable && view.state.selection.main.empty) {
-        // No prior selection: drop the caret where the pointer is so the menu
-        // reflects that block, not wherever the caret happened to rest.
+        // No prior selection: select the word under the pointer so the menu
+        // offers formatting for it, exactly as it would for a highlighted word.
+        // If the pointer is not on a word (empty line, whitespace, punctuation)
+        // just drop the caret there.
         const pos = view.posAtCoords({ x: e.clientX, y: e.clientY })
-        if (pos != null) view.dispatch({ selection: { anchor: pos } })
+        if (pos != null) {
+          view.dispatch({ selection: view.state.wordAt(pos) ?? { anchor: pos } })
+        }
       }
 
       // Every in-canvas target is handled: even a plain paragraph with no
