@@ -16,7 +16,7 @@ const IDS: ToolbarCommandId[] = ["bold", "italic", "strike", "code", "link", "wi
 class SelectionBar implements PluginValue {
   private bar: HTMLElement
   private buttons = new Map<ToolbarCommandId, HTMLButtonElement>()
-  private onScroll = () => this.render()
+  private onScroll = () => this.schedule()
 
   constructor(private view: EditorView) {
     const doc = view.dom.ownerDocument
@@ -37,7 +37,7 @@ class SelectionBar implements PluginValue {
         e.preventDefault()
         cmd.run(view)
         view.focus()
-        this.render()
+        this.schedule()
       })
       this.buttons.set(id, b)
       this.bar.appendChild(b)
@@ -49,40 +49,67 @@ class SelectionBar implements PluginValue {
   }
 
   update(u: ViewUpdate) {
-    if (u.selectionSet || u.docChanged || u.geometryChanged || u.focusChanged) this.render()
+    if (u.selectionSet || u.docChanged || u.geometryChanged || u.focusChanged) this.schedule()
   }
 
-  private render() {
+  /**
+   * Layout reads (`coordsAtPos`, `getBoundingClientRect`) are illegal inside an
+   * `update`, so the placement is computed in a measure phase and applied in the
+   * write phase. `key: this` collapses repeats within one cycle.
+   */
+  private schedule() {
+    this.view.requestMeasure({
+      key: this,
+      read: () => this.measure(),
+      write: (m) => this.apply(m),
+    })
+  }
+
+  private measure(): Placement {
     const { view } = this
     const sel = view.state.selection.main
-    if (!view.state.facet(selectionBarEnabled) || sel.empty || !view.hasFocus) {
-      this.bar.hidden = true
-      return
-    }
+    if (!view.state.facet(selectionBarEnabled) || sel.empty || !view.hasFocus) return null
     const from = view.coordsAtPos(sel.from)
     const to = view.coordsAtPos(sel.to)
-    if (!from || !to) {
+    if (!from || !to) return null
+
+    const rect = this.bar.getBoundingClientRect() // measurable — `[hidden]` only hides visibility
+    const vw = view.dom.ownerDocument.defaultView?.innerWidth ?? 0
+    const midX = (Math.min(from.left, to.left) + Math.max(from.right, to.right)) / 2
+    // Above the selection, unless that clears the top of the editor (landing on
+    // the toolbar) — then drop it below.
+    const editorTop = view.dom.getBoundingClientRect().top
+    const aboveTop = Math.min(from.top, to.top) - rect.height - 6
+    const belowTop = Math.max(from.bottom, to.bottom) + 6
+
+    const disabled: Record<string, boolean> = {}
+    const active: Record<string, boolean> = {}
+    for (const id of IDS) {
+      const cmd = BUILTIN_BY_ID[id]!
+      const off = Boolean(cmd.disabled?.(view.state))
+      disabled[id] = off
+      active[id] = !off && Boolean(cmd.isActive?.(view.state))
+    }
+    return {
+      left: Math.max(4, Math.min(midX - rect.width / 2, vw - rect.width - 4)),
+      top: aboveTop < editorTop + 2 ? belowTop : aboveTop,
+      disabled,
+      active,
+    }
+  }
+
+  private apply(m: Placement) {
+    if (!m) {
       this.bar.hidden = true
       return
     }
-    for (const [id, b] of this.buttons) {
-      const cmd = BUILTIN_BY_ID[id]!
-      const off = Boolean(cmd.disabled?.(view.state))
-      b.disabled = off
-      b.toggleAttribute("data-active", !off && Boolean(cmd.isActive?.(view.state)))
-    }
     this.bar.hidden = false
-    const win = view.dom.ownerDocument.defaultView
-    const vw = win?.innerWidth ?? 0
-    const rect = this.bar.getBoundingClientRect()
-    const midX = (Math.min(from.left, to.left) + Math.max(from.right, to.right)) / 2
-    // Above the selection, unless that would clear the top of the editor (and
-    // land on the toolbar) — then drop it below the selection instead.
-    const editorTop = view.dom.getBoundingClientRect().top
-    const above = Math.min(from.top, to.top) - rect.height - 6
-    const below = Math.max(from.bottom, to.bottom) + 6
-    this.bar.style.left = `${Math.max(4, Math.min(midX - rect.width / 2, vw - rect.width - 4))}px`
-    this.bar.style.top = `${above < editorTop + 2 ? below : above}px`
+    this.bar.style.left = `${m.left}px`
+    this.bar.style.top = `${m.top}px`
+    for (const [id, b] of this.buttons) {
+      b.disabled = m.disabled[id]!
+      b.toggleAttribute("data-active", m.active[id]!)
+    }
   }
 
   destroy() {
@@ -90,5 +117,14 @@ class SelectionBar implements PluginValue {
     this.bar.remove()
   }
 }
+
+type Placement =
+  | null
+  | {
+      left: number
+      top: number
+      disabled: Record<string, boolean>
+      active: Record<string, boolean>
+    }
 
 export const selectionBar = ViewPlugin.fromClass(SelectionBar)
