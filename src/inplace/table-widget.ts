@@ -1,5 +1,6 @@
 import { Annotation } from "@codemirror/state"
 import { EditorView, WidgetType } from "@codemirror/view"
+import { handleCellShortcut } from "../toolbar/cell-inline"
 import { type Align, serializeGrid } from "../toolbar/table-grid"
 import { renderInline } from "./inline-md"
 import {
@@ -145,20 +146,21 @@ export class EditableTableWidget extends WidgetType {
     this.editing = null
   }
 
-  /** The caret's spot as (row, col, char offset) within the editing cell. */
-  private readCaret(): { r: number; c: number; offset: number } | null {
+  /** The selection as (row, col, anchor offset, head offset) within the editing cell. */
+  private readCaret(): { r: number; c: number; offset: number; head: number } | null {
     if (!this.editing) return null
     const { r, c } = this.coords(this.editing)
     const sel = this.editing.ownerDocument.getSelection()
     const text = this.editing.firstChild
-    const offset =
-      sel?.anchorNode === text ? (sel?.anchorOffset ?? 0) : (this.editing.textContent ?? "").length
-    return { r, c, offset }
+    const end = (this.editing.textContent ?? "").length
+    const offset = sel?.anchorNode === text ? (sel?.anchorOffset ?? 0) : end
+    const head = sel?.focusNode === text ? (sel?.focusOffset ?? offset) : offset
+    return { r, c, offset, head }
   }
 
-  private writeCaret(caret: { r: number; c: number; offset: number }) {
+  private writeCaret(caret: { r: number; c: number; offset: number; head: number }) {
     const cell = this.cellAt(caret.r, caret.c)
-    if (cell) placeCaret(cell, caret.offset)
+    if (cell) placeCaret(cell, caret.offset, caret.head)
   }
 
   /** Serialize `rows` into the document. */
@@ -191,6 +193,12 @@ export class EditableTableWidget extends WidgetType {
   private onKey(event: KeyboardEvent, view: EditorView) {
     const cell = (event.target as HTMLElement).closest<HTMLTableCellElement>("td, th")
     if (!cell || !this.table) return
+    // Mod-b / Mod-i / Mod-k never reach CodeMirror's keymap from inside a
+    // widget (`ignoreEvent`), so the widget applies them to the cell itself.
+    if (handleCellShortcut(event, cell)) {
+      event.stopPropagation()
+      return
+    }
     const { r, c } = this.coords(cell)
     const lastRow = this.rows.length - 1
 

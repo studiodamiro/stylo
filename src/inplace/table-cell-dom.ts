@@ -28,6 +28,21 @@ export function renderedCaretOffset(cell: HTMLElement): number {
   return (sel?.anchorOffset ?? 0) > 0 ? (cell.textContent ?? "").length : 0
 }
 
+/** `[from, to]` char offsets of the DOM selection within `cell`'s text. */
+export function selectionOffsets(cell: HTMLElement): { from: number; to: number } {
+  const sel = cell.ownerDocument.getSelection()
+  const end = (cell.textContent ?? "").length
+  const at = (node: Node | null | undefined, off: number): number => {
+    if (!node || !cell.contains(node)) return end
+    if (node.nodeType === Node.TEXT_NODE) return textBefore(cell, node) + off
+    return off > 0 ? end : 0
+  }
+  if (!sel || sel.rangeCount === 0) return { from: end, to: end }
+  const a = at(sel.anchorNode, sel.anchorOffset)
+  const b = at(sel.focusNode, sel.focusOffset)
+  return { from: Math.min(a, b), to: Math.max(a, b) }
+}
+
 type PointDoc = Document & {
   caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null
 }
@@ -48,18 +63,23 @@ export function offsetFromPoint(cell: HTMLElement, x: number, y: number): number
   return textBefore(cell, node) + (node.nodeType === Node.TEXT_NODE ? nodeOffset : 0)
 }
 
-/** Put the caret at char `offset` of `cell`'s first text node (clamped). */
-export function placeCaret(cell: HTMLElement, offset: number) {
+/**
+ * Select `cell`'s first text node from char `offset` to char `head` (both
+ * clamped). With `head` omitted or equal, the caret is simply parked at `offset`.
+ */
+export function placeCaret(cell: HTMLElement, offset: number, head = offset) {
   cell.focus()
   const doc = cell.ownerDocument
   const range = doc.createRange()
   const text = cell.firstChild
   if (text && text.nodeType === Node.TEXT_NODE) {
-    range.setStart(text, Math.min(offset, text.textContent?.length ?? 0))
+    const len = text.textContent?.length ?? 0
+    range.setStart(text, Math.min(Math.min(offset, head), len))
+    range.setEnd(text, Math.min(Math.max(offset, head), len))
   } else {
     range.selectNodeContents(cell)
   }
-  range.collapse(true)
+  if (offset === head) range.collapse(true)
   const sel = doc.getSelection()
   sel?.removeAllRanges()
   sel?.addRange(range)
