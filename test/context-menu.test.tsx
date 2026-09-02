@@ -65,3 +65,30 @@ test("the selection bar element is mounted for an in-place editor", async () => 
   await mount("some text here")
   expect(document.querySelector(".cm-inplace-selbar")).not.toBeNull()
 })
+
+test("selecting text and right-clicking yields a Link field flyout with an input", async () => {
+  const { view } = await mount("make this a link")
+  view.dispatch({ selection: { anchor: 5, head: 9 } }) // "this"
+
+  const e = new MouseEvent("contextmenu", {
+    bubbles: true,
+    cancelable: true,
+    clientX: 20,
+    clientY: 20,
+  })
+  view.contentDOM.dispatchEvent(e)
+
+  const panel = document.querySelector(".cm-inplace-menu-panel")
+  expect(panel, "menu panel rendered").not.toBeNull()
+
+  const items = [...panel!.querySelectorAll(".cm-inplace-menu-item")]
+  const linkRow = items.find((el) => el.textContent?.trim() === "Link") as HTMLElement | undefined
+  expect(linkRow, "a Link row exists").toBeDefined()
+  expect(linkRow!.classList.contains("cm-inplace-menu-parent"), "Link row is a flyout parent").toBe(
+    true,
+  )
+
+  linkRow!.dispatchEvent(new Event("pointerenter", { bubbles: true }))
+  const input = document.querySelector(".cm-inplace-menu-input")
+  expect(input, "a URL input appeared in the flyout").not.toBeNull()
+})
