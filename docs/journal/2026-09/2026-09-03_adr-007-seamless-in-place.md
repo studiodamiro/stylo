@@ -129,6 +129,14 @@ throughout.
   the one exception and keeps caret reveal for now. No boundary rules yet —
   editing near a hidden marker is expected to misbehave; that is the Stage 2
   input. Playground has a `reveal` selector next to `table editing`.
+- **2026-09-03 — Stage 1 hands-on findings.** With `"never"` and no boundary
+  rules: bold / italic / strikethrough, headings (including combined with inline
+  marks), and bullet / numbered / task lists all already read and edit
+  seamlessly. Links render clean but there is **no way to edit the URL** yet
+  (Stage 4). Two selection-bar fixes fell out: it now dismisses on scroll rather
+  than chasing the selection, and it is suppressed where no inline action
+  applies (a fenced-code / `$$` / frontmatter selection). Playground now
+  defaults to `reveal: "never"` and `table: "cells"`.
 
 ## Consequences
 
