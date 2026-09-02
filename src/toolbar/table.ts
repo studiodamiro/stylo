@@ -82,7 +82,59 @@ function resolve(text: string, from: number, loc: CellLoc): number {
   return pos + b.contentStart + Math.min(loc.offset, b.contentEnd - b.contentStart)
 }
 
+/**
+ * Document position of the start of a table cell's content, for the pipe table
+ * that contains `tableFrom`. `row` is the content-row index (header = 0, first
+ * body row = 1, …); the delimiter row is not counted. Used to land the caret in
+ * the clicked cell when a rendered in-place table reveals its source.
+ */
+export function cellSourcePos(
+  doc: Text,
+  tableFrom: number,
+  row: number,
+  col: number,
+): number | null {
+  const region = findTable(doc, tableFrom)
+  if (!region) return null
+  return resolve(region.lines.join("\n"), region.from, { row, col, offset: 0, onDelimiter: false })
+}
+
 const SKELETON = "| Column 1 | Column 2 |\n| -------- | -------- |\n|          |          |"
+
+/**
+ * When the in-place canvas renders tables as editable cells
+ * (`inPlace.table: "cells"`), drop DOM focus into the first cell of the table
+ * just inserted near `pos`. A no-op on every other surface — nothing matches the
+ * selector — so no config check is needed.
+ */
+function focusInsertedCell(view: EditorView, pos: number): void {
+  requestAnimationFrame(() => {
+    const tables = view.dom.querySelectorAll<HTMLElement>(".cm-inplace-table-edit")
+    if (tables.length === 0) return
+    let target = tables[0]!
+    let best = Number.POSITIVE_INFINITY
+    for (const t of tables) {
+      let d = Number.POSITIVE_INFINITY
+      try {
+        d = Math.abs(view.posAtDOM(t) - pos)
+      } catch {
+        // still mid-render — leave it to the fallback
+      }
+      if (d < best) {
+        best = d
+        target = t
+      }
+    }
+    const cell = target.querySelector<HTMLElement>("th, td")
+    if (!cell) return
+    const range = document.createRange()
+    range.selectNodeContents(cell)
+    const sel = cell.ownerDocument.getSelection()
+    sel?.removeAllRanges()
+    sel?.addRange(range)
+    cell.focus()
+  })
+}
 
 /** Insert a starter table at the cursor and select the first header cell. */
 export function insertTable(view: EditorView): boolean {
@@ -96,6 +148,7 @@ export function insertTable(view: EditorView): boolean {
     scrollIntoView: true,
   })
   view.focus()
+  focusInsertedCell(view, cellAt)
   return true
 }
 

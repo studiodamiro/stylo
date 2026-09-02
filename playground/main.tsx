@@ -5,6 +5,7 @@ import {
   Stylo,
   type InPlaceDecorationToggles,
   type StyloMode,
+  type TableEditing,
   type ToolbarConfig,
 } from "../src/index"
 import "katex/dist/katex.min.css"
@@ -86,6 +87,7 @@ function App() {
   const [mode, setMode] = useState<StyloMode>("in-place")
   const [toolbar, setToolbar] = useState<keyof typeof TOOLBARS>("default")
   const [frontmatter, setFrontmatter] = useState<"hidden" | "code">("hidden")
+  const [tableEdit, setTableEdit] = useState<TableEditing>("source")
   const [lastLink, setLastLink] = useState<string | null>(null)
   // ADR-005: inPlace config is read once at mount, so a changed toggle remounts
   // the canvas via `key` below — a deliberate demo of that construction-time rule.
@@ -177,6 +179,29 @@ function App() {
       )}
 
       {mode === "in-place" && (
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            margin: "0 0 1rem",
+            fontSize: "0.85rem",
+            color: "#71717a",
+          }}
+        >
+          table editing
+          <select
+            value={tableEdit}
+            onChange={(e) => setTableEdit(e.target.value as TableEditing)}
+            style={{ padding: "0.2rem 0.4rem", borderRadius: 6, border: "1px solid #d4d4d8" }}
+          >
+            <option value="source">source</option>
+            <option value="cells">cells</option>
+          </select>
+        </label>
+      )}
+
+      {mode === "in-place" && (
         <details style={{ margin: "0 0 1rem", fontSize: "0.85rem" }}>
           <summary style={{ cursor: "pointer", color: "#71717a" }}>
             Customize in-place decorations (ADR-005)
@@ -204,12 +229,12 @@ function App() {
       )}
 
       <Stylo
-        key={mode === "in-place" ? JSON.stringify(decorations) : "static"}
+        key={mode === "in-place" ? `${JSON.stringify(decorations)}:${tableEdit}` : "static"}
         value={doc}
         onChange={setDoc}
         mode={mode}
         onWikiLinkClick={setLastLink}
-        inPlace={{ decorations }}
+        inPlace={{ decorations, table: tableEdit }}
         toolbar={TOOLBARS[toolbar]}
         frontmatter={frontmatter}
         codeLanguages={languages}

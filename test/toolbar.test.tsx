@@ -5,7 +5,7 @@ import { EditorSelection, EditorState } from "@codemirror/state"
 import { EditorView } from "@codemirror/view"
 import { markdownLanguage } from "@codemirror/lang-markdown"
 import { Stylo } from "../src/Stylo"
-import { BUILTIN_BY_ID } from "../src/toolbar/commands"
+import { BUILTIN_BY_ID, BUILTIN_COMMANDS } from "../src/toolbar/commands"
 import { DEFAULT_TOOLBAR_ITEMS, resolveToolbarItems } from "../src/toolbar/config"
 
 afterEach(cleanup)
@@ -41,6 +41,118 @@ test("wrapActive reports the pressed state for bold", () => {
   expect(BUILTIN_BY_ID.bold!.isActive!(view.state)).toBe(true)
   view.dispatch({ selection: EditorSelection.single(0) })
   expect(BUILTIN_BY_ID.bold!.isActive!(view.state)).toBe(false)
+})
+
+/** Move the selection back onto the "word" run, whatever marks now flank it. */
+function reSelectWord(view: EditorView) {
+  const i = view.state.doc.toString().indexOf("word")
+  view.dispatch({ selection: EditorSelection.range(i, i + 4) })
+}
+
+/** Run a sequence of built-in commands over the word in "x word y". */
+function seq(...ids: (keyof typeof BUILTIN_BY_ID)[]) {
+  const view = mkView("x word y", 2, 6)
+  for (const id of ids) {
+    BUILTIN_BY_ID[id]!.run(view)
+    reSelectWord(view)
+  }
+  return view.state.doc.toString()
+}
+
+test("bold then italic nests to ***word*** — it does not eat a marker", () => {
+  expect(seq("bold", "italic")).toBe("x ***word*** y")
+})
+
+test("italic then bold also nests to ***word***", () => {
+  expect(seq("italic", "bold")).toBe("x ***word*** y")
+})
+
+test("bold+italic, then bold off leaves italic; then italic off leaves plain", () => {
+  const view = mkView("x word y", 2, 6)
+  BUILTIN_BY_ID.bold!.run(view)
+  BUILTIN_BY_ID.italic!.run(view)
+  expect(view.state.doc.toString()).toBe("x ***word*** y")
+
+  reSelectWord(view)
+  BUILTIN_BY_ID.bold!.run(view)
+  expect(view.state.doc.toString()).toBe("x *word* y")
+
+  reSelectWord(view)
+  BUILTIN_BY_ID.italic!.run(view)
+  expect(view.state.doc.toString()).toBe("x word y")
+})
+
+test("bold+italic, then italic off leaves bold", () => {
+  const view = mkView("x word y", 2, 6)
+  BUILTIN_BY_ID.bold!.run(view)
+  BUILTIN_BY_ID.italic!.run(view)
+  reSelectWord(view)
+  BUILTIN_BY_ID.italic!.run(view)
+  expect(view.state.doc.toString()).toBe("x **word** y")
+})
+
+test("bold, italic, strike all on then all off round-trips cleanly", () => {
+  const view = mkView("x word y", 2, 6)
+  for (const id of ["bold", "italic", "strike"] as const) {
+    BUILTIN_BY_ID[id]!.run(view)
+    reSelectWord(view)
+  }
+  expect(view.state.doc.toString()).toBe("x ***~~word~~*** y")
+
+  for (const id of ["strike", "italic", "bold"] as const) {
+    BUILTIN_BY_ID[id]!.run(view)
+    reSelectWord(view)
+  }
+  expect(view.state.doc.toString()).toBe("x word y")
+})
+
+test("a mark strips out of the middle of a stack, leaving the others", () => {
+  const view = mkView("x word y", 2, 6)
+  for (const id of ["bold", "italic", "strike"] as const) {
+    BUILTIN_BY_ID[id]!.run(view)
+    reSelectWord(view)
+  }
+  expect(view.state.doc.toString()).toBe("x ***~~word~~*** y")
+
+  // italic sits between the outer *** and the inner ~~ — toggling it off must
+  // leave `**~~word~~**`, not stack another pair or eat a `*`.
+  BUILTIN_BY_ID.italic!.run(view)
+  expect(view.state.doc.toString()).toBe("x **~~word~~** y")
+
+  reSelectWord(view)
+  BUILTIN_BY_ID.strike!.run(view)
+  expect(view.state.doc.toString()).toBe("x **word** y")
+})
+
+test("B I S I S I S I S settles to plain bold, never stacks (the reported case)", () => {
+  const view = mkView("x word y", 2, 6)
+  BUILTIN_BY_ID.bold!.run(view)
+  for (const id of [
+    "italic",
+    "strike",
+    "italic",
+    "strike",
+    "italic",
+    "strike",
+    "italic",
+    "strike",
+  ] as const) {
+    reSelectWord(view)
+    BUILTIN_BY_ID[id]!.run(view)
+  }
+  // italic and strike each toggled an even number of times → both off, bold left.
+  expect(view.state.doc.toString()).toBe("x **word** y")
+})
+
+test("strike toggles independently of bold", () => {
+  const view = mkView("x word y", 2, 6)
+  BUILTIN_BY_ID.bold!.run(view)
+  reSelectWord(view)
+  BUILTIN_BY_ID.strike!.run(view)
+  expect(view.state.doc.toString()).toBe("x **~~word~~** y")
+  reSelectWord(view)
+  BUILTIN_BY_ID.strike!.run(view)
+  expect(view.state.doc.toString()).toBe("x **word** y")
 })
 
 test("h2 sets a heading, swaps from another level, then clears", () => {
@@ -177,6 +289,131 @@ test("link toggles off by unlinking — the label stays, the url goes", () => {
   expect(BUILTIN_BY_ID.link!.isActive!(view.state)).toBe(true)
   BUILTIN_BY_ID.link!.run(view)
   expect(view.state.doc.toString()).toBe("see the docs now")
+})
+
+test("wikilink wraps the selection as [[…]] with the target selected", () => {
+  const view = mkView("Home Page", 0, 9)
+  BUILTIN_BY_ID.wikilink!.run(view)
+  expect(view.state.doc.toString()).toBe("[[Home Page]]")
+  const { from, to } = view.state.selection.main
+  expect(view.state.sliceDoc(from, to)).toBe("Home Page")
+})
+
+test("wikilink toggles off to the label, dropping the target and pipe", () => {
+  const view = mkView("see [[api/ref|the API]] now", 12) // caret inside the wikilink
+  expect(BUILTIN_BY_ID.wikilink!.isActive!(view.state)).toBe(true)
+  BUILTIN_BY_ID.wikilink!.run(view)
+  expect(view.state.doc.toString()).toBe("see the API now")
+})
+
+test("wikilink toggling a plain [[target]] off leaves the bare target", () => {
+  const view = mkView("go [[Notes]] here", 6)
+  BUILTIN_BY_ID.wikilink!.run(view)
+  expect(view.state.doc.toString()).toBe("go Notes here")
+})
+
+const TABLE_DOC = "intro\n\n| A | B |\n| - | - |\n| c | d |\n\ntail"
+
+/** The sorted ids whose `disabled` fires for the caret at `pos` in `doc`. */
+function disabledAt(doc: string, pos: number): string[] {
+  const { state } = mkView(doc, pos)
+  return BUILTIN_COMMANDS.filter((c) => c.disabled?.(state))
+    .map((c) => c.id)
+    .sort()
+}
+
+test("nothing is disabled in a plain paragraph", () => {
+  expect(disabledAt("just a line of text", 6)).toEqual([])
+})
+
+test("a table cell disables the block commands, not the inline ones", () => {
+  expect(disabledAt(TABLE_DOC, 29)).toEqual(
+    [
+      "bulletList",
+      "frontmatter",
+      "h1",
+      "h2",
+      "h3",
+      "hr",
+      "orderedList",
+      "quote",
+      "table",
+      "task",
+    ].sort(),
+  )
+})
+
+test("a heading line disables lists, hr's peers, and block inserts — quote and headings stay", () => {
+  expect(disabledAt("## A Heading", 5)).toEqual(
+    ["bulletList", "codeBlock", "frontmatter", "mathBlock", "orderedList", "table", "task"].sort(),
+  )
+})
+
+test("the frontmatter block disables every formatting command but frontmatter itself", () => {
+  const dis = disabledAt("---\ntitle: x\n---\n\n# Body", 8)
+  expect(dis).not.toContain("frontmatter")
+  for (const id of [
+    "bold",
+    "italic",
+    "h1",
+    "quote",
+    "bulletList",
+    "hr",
+    "table",
+    "codeBlock",
+    "mathBlock",
+    "link",
+    "math",
+  ]) {
+    expect(dis, id).toContain(id)
+  }
+})
+
+test("a fenced code block keeps codeBlock live (to unwrap) and disables the rest", () => {
+  const dis = disabledAt("t\n\n```\ncode\n```\n\nx", 8) // inside "code"
+  expect(dis).not.toContain("codeBlock")
+  expect(dis).toEqual(expect.arrayContaining(["bold", "h1", "quote", "hr", "mathBlock", "table"]))
+})
+
+test("a $$ math block keeps mathBlock live and disables the rest", () => {
+  const dis = disabledAt("t\n\n$$\nx^2\n$$\n\ny", 7) // inside "x^2"
+  expect(dis).not.toContain("mathBlock")
+  expect(dis).toEqual(expect.arrayContaining(["bold", "h1", "codeBlock", "hr", "table"]))
+})
+
+test("codeBlock and mathBlock degrade to inline inside a table cell", () => {
+  const view = mkView(TABLE_DOC, 29, 30) // "c"
+  BUILTIN_BY_ID.codeBlock!.run(view)
+  expect(view.state.doc.toString()).toContain("| `c` | d |")
+  expect(BUILTIN_BY_ID.codeBlock!.isActive!(view.state)).toBe(true)
+
+  const v2 = mkView(TABLE_DOC, 29, 30)
+  BUILTIN_BY_ID.mathBlock!.run(v2)
+  expect(v2.state.doc.toString()).toContain("| $c$ | d |")
+})
+
+test("codeBlock still fences whole lines outside a table", () => {
+  const view = mkView("a = 1\nb = 2", 0, 11)
+  BUILTIN_BY_ID.codeBlock!.run(view)
+  expect(view.state.doc.toString()).toBe("```\na = 1\nb = 2\n```")
+})
+
+test("the h2 button renders disabled when the caret is in a table row", async () => {
+  function Host() {
+    const [v, setV] = useState(TABLE_DOC)
+    return <Stylo value={v} onChange={setV} mode="source" />
+  }
+  const { container } = render(<Host />)
+  const view = EditorView.findFromDOM(container.querySelector(".cm-editor")!)!
+  const h2 = container.querySelector<HTMLButtonElement>('button[aria-label="Heading 2"]')!
+
+  view.dispatch({ selection: EditorSelection.single(29) }) // into "| c | d |"
+  container.querySelector(".cm-content")!.dispatchEvent(new Event("keyup"))
+  await vi.waitFor(() => expect(h2.disabled).toBe(true))
+
+  view.dispatch({ selection: EditorSelection.single(2) }) // back to plain text
+  container.querySelector(".cm-content")!.dispatchEvent(new Event("keyup"))
+  await vi.waitFor(() => expect(h2.disabled).toBe(false))
 })
 
 test("resolveToolbarItems: default, explicit true, hidden, custom", () => {

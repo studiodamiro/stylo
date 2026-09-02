@@ -1,7 +1,8 @@
 import { Prec, type Extension } from "@codemirror/state"
 import { EditorView } from "@codemirror/view"
+import { cellSourcePos } from "../toolbar/table"
 import type { InPlaceConfig } from "../types"
-import { inPlaceConfigFacet, resolveToggles } from "./config"
+import { inPlaceConfigFacet, resolveToggles, tableEditingFacet } from "./config"
 import { frontmatterField } from "./frontmatter"
 import { blockMathField } from "./math"
 import { inPlaceDecorations } from "./plugin"
@@ -24,6 +25,35 @@ export interface InPlaceOptions {
 const REVEAL_WIDGET = ".cm-inplace-math, .cm-inplace-hr, .cm-inplace-table"
 
 /**
+ * Character offset of a screen point within a rendered table cell's text,
+ * clamped to that text. Lets a click land mid-word instead of at the cell's
+ * start when the source is revealed. Returns 0 where the browser can't resolve
+ * a caret (jsdom, or a click on the cell's padding beyond the text).
+ */
+function caretOffsetInCell(cell: HTMLElement, x: number, y: number): number {
+  const text = cell.firstChild
+  const len = cell.textContent?.length ?? 0
+  if (!text || text.nodeType !== Node.TEXT_NODE || len === 0) return 0
+
+  const doc = cell.ownerDocument as Document & {
+    caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null
+  }
+  let node: Node | null = null
+  let offset = 0
+  if (doc.caretPositionFromPoint) {
+    const p = doc.caretPositionFromPoint(x, y)
+    if (p) [node, offset] = [p.offsetNode, p.offset]
+  } else if (doc.caretRangeFromPoint) {
+    const r = doc.caretRangeFromPoint(x, y)
+    if (r) [node, offset] = [r.startContainer, r.startOffset]
+  }
+
+  if (node === text) return Math.min(offset, len)
+  if (node === cell) return offset > 0 ? len : 0 // clicked the cell padding
+  return 0
+}
+
+/**
  * The complete in-place canvas layer: decoration plugin, display theme, a
  * reveal-on-click fallback for rendered widgets, and a delegated click handler
  * for wikilinks.
@@ -35,6 +65,7 @@ const REVEAL_WIDGET = ".cm-inplace-math, .cm-inplace-hr, .cm-inplace-table"
 export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
   return [
     inPlaceConfigFacet.of(resolveToggles(opts.inPlace)),
+    tableEditingFacet.of(opts.inPlace?.table ?? "source"),
     inPlaceDecorations(),
     blockMathField,
     frontmatterField,
@@ -42,10 +73,26 @@ export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
     Prec.high(inPlaceTheme),
     EditorView.domEventHandlers({
       mousedown(event, view) {
-        const widget = (event.target as HTMLElement | null)?.closest<HTMLElement>(REVEAL_WIDGET)
+        const target = event.target as HTMLElement | null
+        // An editable table (`inPlace.table: "cells"`) owns its own clicks —
+        // the mousedown places the caret in a contentEditable cell.
+        if (target?.closest(".cm-inplace-table-edit")) return false
+        const widget = target?.closest<HTMLElement>(REVEAL_WIDGET)
         if (!widget) return false // text or padding — CodeMirror places the caret
-        const pos = view.posAtDOM(widget)
+        let pos = view.posAtDOM(widget)
         if (pos < 0) return false
+        // A rendered table: reveal the source at the cell that was clicked, not
+        // at the table's first cell (`posAtDOM` gives the widget's start).
+        const cell = target?.closest<HTMLElement>("[data-stylo-row]")
+        if (cell && widget.contains(cell)) {
+          const at = cellSourcePos(
+            view.state.doc,
+            pos,
+            Number(cell.dataset.styloRow),
+            Number(cell.dataset.styloCol),
+          )
+          if (at != null) pos = at + caretOffsetInCell(cell, event.clientX, event.clientY)
+        }
         view.focus()
         view.dispatch({ selection: { anchor: pos } })
         return true
