@@ -60,7 +60,11 @@ export class EditableTableWidget extends WidgetType {
   }
 
   override eq(other: EditableTableWidget) {
-    return JSON.stringify(this.current) === JSON.stringify(trimGrid(gridOf(other.data)))
+    // `current` reflects the last-synced grid — for a freshly parsed widget it is
+    // the constructor's `trimGrid(gridOf(data))`, for this instance after a
+    // structural edit it is `trimGrid(rows)`. Comparing `current` to `current`
+    // stays correct after add / remove column or row (where `data` goes stale).
+    return JSON.stringify(this.current) === JSON.stringify(other.current)
   }
 
   override ignoreEvent() {
@@ -71,19 +75,22 @@ export class EditableTableWidget extends WidgetType {
     return this.data.aligns.length
   }
 
-  /** The table's current `[from, to]` in the document, derived from the DOM. */
+  /**
+   * The table's current `[from, to]` in the document, derived from the DOM.
+   * `posAtDOM` may land on any line of the widget, so the scan grows the span in
+   * both directions across contiguous non-blank pipe lines.
+   */
   private bounds(view: EditorView): { from: number; to: number } {
     const doc = view.state.doc
-    let line = doc.lineAt(view.posAtDOM(this.table!))
-    const from = line.from
-    let to = line.to
-    while (line.number < doc.lines) {
-      const next = doc.line(line.number + 1)
-      if (!next.text.trim() || !next.text.includes("|")) break
-      line = next
-      to = line.to
+    const pipe = (n: number) => {
+      const t = doc.line(n).text
+      return t.trim() !== "" && t.includes("|")
     }
-    return { from, to }
+    let first = doc.lineAt(view.posAtDOM(this.table!)).number
+    let last = first
+    while (first > 1 && pipe(first - 1)) first--
+    while (last < doc.lines && pipe(last + 1)) last++
+    return { from: doc.line(first).from, to: doc.line(last).to }
   }
 
   private cellAt(r: number, c: number): HTMLTableCellElement | null {
@@ -152,7 +159,10 @@ export class EditableTableWidget extends WidgetType {
     else if (op.kind === "deleteRow") deleteRow(g, op.at)
     else setAlign(g, op.at, g.aligns[op.at] === op.value ? "" : op.value)
 
+    // Reserialise first so the document is canonical, then rebuild our own DOM
+    // from the settled model — no window where the two disagree.
     this.editing = null
+    this.sync(view)
     this.renderCells()
     this.gizmos?.layout(this.table!)
     if (op.kind !== "align") {
@@ -160,7 +170,6 @@ export class EditableTableWidget extends WidgetType {
       const c = Math.max(0, Math.min(op.focus[1], this.cols() - 1))
       this.cellAt(r, c)?.focus()
     }
-    this.sync(view)
   }
 
   /** Commit `cell`'s edited text into `rows` and, unless it keeps focus, re-render it. */
