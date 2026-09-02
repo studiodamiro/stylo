@@ -142,4 +142,13 @@ export const inPlaceTheme = EditorView.theme({
     padding: "0.35em 0.6em",
     border: "1px solid var(--stylo-border)",
   },
+
+  ".cm-inplace-table-edit .cm-inplace-tcell": {
+    minWidth: "3em",
+    cursor: "text",
+    outline: "none",
+  },
+  ".cm-inplace-table-edit .cm-inplace-tcell:focus": {
+    boxShadow: "inset 0 0 0 2px var(--stylo-ring)",
+  },
 })

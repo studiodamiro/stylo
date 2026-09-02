@@ -1,11 +1,11 @@
 import { afterEach, expect, test } from "vitest"
 import { cleanup, render } from "@testing-library/react"
-import { EditorSelection, EditorState } from "@codemirror/state"
+import { EditorSelection, EditorState, Text } from "@codemirror/state"
 import { EditorView } from "@codemirror/view"
 import { markdownLanguage } from "@codemirror/lang-markdown"
 import { Stylo } from "../src/Stylo"
 import { BUILTIN_BY_ID } from "../src/toolbar/commands"
-import { tableKeymap, tableRealign } from "../src/toolbar/table"
+import { cellSourcePos, tableKeymap, tableRealign } from "../src/toolbar/table"
 import { parseGrid, serializeGrid } from "../src/toolbar/table-grid"
 
 afterEach(cleanup)
@@ -38,6 +38,21 @@ test("serializeGrid pads columns and rebuilds the delimiter with alignment", () 
 test("serializeGrid is idempotent", () => {
   const once = serializeGrid(parseGrid(["| a | b |", "| - | - |", "| c | d |"])!)
   expect(serializeGrid(parseGrid(once.split("\n"))!)).toBe(once)
+})
+
+test("cellSourcePos points at the content start of the clicked cell", () => {
+  const doc = Text.of(["x", "", "| A  | B  |", "| -- | -- |", "|    | hi |", "| yo |    |"])
+  const from = doc.line(3).from // table starts on line 3
+  // header row 0 col 1 -> the "B"
+  expect(
+    doc.sliceString(cellSourcePos(doc, from, 0, 1)!, cellSourcePos(doc, from, 0, 1)! + 1),
+  ).toBe("B")
+  // body row 1 col 1 -> the "hi" (its blank col-0 sibling must not shift it)
+  const p = cellSourcePos(doc, from, 1, 1)!
+  expect(doc.sliceString(p, p + 2)).toBe("hi")
+  // body row 2 col 0 -> the "yo"
+  const q = cellSourcePos(doc, from, 2, 0)!
+  expect(doc.sliceString(q, q + 2)).toBe("yo")
 })
 
 // ---- insert ----

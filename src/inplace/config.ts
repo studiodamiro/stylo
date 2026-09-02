@@ -1,5 +1,5 @@
 import { Facet } from "@codemirror/state"
-import type { InPlaceConfig, InPlaceDecorationToggles } from "../types"
+import type { InPlaceConfig, InPlaceDecorationToggles, TableEditing } from "../types"
 
 /** `InPlaceDecorationToggles` with every key resolved to a concrete boolean. */
 export type ResolvedToggles = Required<InPlaceDecorationToggles>
@@ -30,4 +30,9 @@ export function resolveToggles(config?: InPlaceConfig): ResolvedToggles {
  */
 export const inPlaceConfigFacet = Facet.define<ResolvedToggles, ResolvedToggles>({
   combine: (values) => values[0] ?? DEFAULT_TOGGLES,
+})
+
+/** Table editing mode, seeded once by `inPlaceExtension`; read by `tables.ts`. */
+export const tableEditingFacet = Facet.define<TableEditing, TableEditing>({
+  combine: (values) => values[0] ?? "source",
 })
