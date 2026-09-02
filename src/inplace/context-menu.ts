@@ -43,6 +43,8 @@ export interface ContextMenu {
   readonly isOpen: boolean
   /** Render `rows` and show the menu at a viewport point, clamped on-screen. */
   show: (rows: MenuRow[], x: number, y: number) => void
+  /** Show a single field panel directly, with no wrapping menu row. */
+  showField: (field: MenuField, x: number, y: number) => void
   hide: () => void
   /** Remove the element and drop document listeners. */
   destroy: () => void
@@ -60,21 +62,14 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
   root.hidden = true
 
   let flyout: HTMLElement | null = null
-  let flyoutTimer: number | undefined
   let unbind: (() => void) | null = null
 
+  // A flyout is sticky: once open it stays until a different flyout row opens,
+  // a plain row is hovered, or the whole menu is dismissed. No hover-out timer
+  // — that made the panel close mid-approach on a real mouse path.
   const clearFlyout = () => {
     flyout?.remove()
     flyout = null
-    win?.clearTimeout(flyoutTimer)
-  }
-  // Hover intent: the submenu stays open while the pointer is over its parent
-  // row or the panel itself, and only closes after a grace period once it has
-  // left both — so a diagonal move from the parent to the panel is forgiving.
-  const cancelClose = () => win?.clearTimeout(flyoutTimer)
-  const armClose = () => {
-    win?.clearTimeout(flyoutTimer)
-    flyoutTimer = win?.setTimeout(clearFlyout, 450)
   }
 
   const hide = () => {
@@ -110,6 +105,11 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
       b.disabled = true
     } else {
       holdFocus(b)
+      // Hovering a plain row dismisses any open flyout (but not one it belongs
+      // to — a flyout's own rows call this too and must be ignored).
+      b.addEventListener("pointerenter", () => {
+        if (!b.closest(`.${className}-panel[data-for]`)) clearFlyout()
+      })
       b.addEventListener("click", (e) => {
         e.stopPropagation()
         hide()
@@ -119,7 +119,8 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
     return b
   }
 
-  // A row that opens a flyout panel — used by both submenus and field rows.
+  // A row that opens a flyout panel — used by both submenus and field rows. The
+  // flyout is sticky (opens on hover or click, no auto-close timer).
   const flyoutRow = (text: string, icon: string | undefined, build: () => HTMLElement) => {
     const b = doc.createElement("button")
     b.type = "button"
@@ -127,23 +128,18 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
     label(b, text, icon)
     holdFocus(b)
     const open = () => {
-      cancelClose()
       if (flyout?.dataset.for === text) return
       clearFlyout()
       const panel = build()
       panel.dataset.for = text
-      panel.addEventListener("pointerenter", cancelClose)
-      panel.addEventListener("pointerleave", armClose)
       root.appendChild(panel)
-      const host = b.getBoundingClientRect()
-      placeFlyout(panel, host)
+      placeFlyout(panel, b.getBoundingClientRect())
       flyout = panel
       // `preventScroll` — a focus-induced scroll would trip the menu's own
       // dismiss-on-scroll handler and close it the instant the field opens.
       ;(panel.querySelector("input") as HTMLInputElement | null)?.focus({ preventScroll: true })
     }
     b.addEventListener("pointerenter", open)
-    b.addEventListener("pointerleave", armClose)
     b.addEventListener("click", (e) => {
       e.stopPropagation()
       open()
@@ -216,27 +212,48 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
     panel.style.top = `${Math.max(4, Math.min(host.top - 4, vh - height - 4))}px`
   }
 
+  const armDismiss = () => {
+    const outside = (e: Event) => !root.contains(e.target as Node)
+    const onDown = (e: Event) => {
+      if (outside(e)) hide()
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") hide()
+    }
+    // Ignore scrolls that come from inside the menu — e.g. the URL input
+    // scrolling its own text as you type past its width.
+    const onScroll = (e: Event) => {
+      if (outside(e)) hide()
+    }
+    doc.addEventListener("mousedown", onDown, true)
+    doc.addEventListener("keydown", onKey, true)
+    doc.addEventListener("scroll", onScroll, true)
+    unbind = () => {
+      doc.removeEventListener("mousedown", onDown, true)
+      doc.removeEventListener("keydown", onKey, true)
+      doc.removeEventListener("scroll", onScroll, true)
+    }
+  }
+
   const show = (rows: MenuRow[], x: number, y: number) => {
     hide()
     const main = buildPanel(rows)
     root.appendChild(main)
     root.hidden = false
     place(main, x, y)
+    armDismiss()
+  }
 
-    const onDown = (e: Event) => {
-      if (!root.contains(e.target as Node)) hide()
-    }
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") hide()
-    }
-    doc.addEventListener("mousedown", onDown, true)
-    doc.addEventListener("keydown", onKey, true)
-    doc.addEventListener("scroll", hide, true)
-    unbind = () => {
-      doc.removeEventListener("mousedown", onDown, true)
-      doc.removeEventListener("keydown", onKey, true)
-      doc.removeEventListener("scroll", hide, true)
-    }
+  // Show one field panel directly (no wrapping menu) — the selection bar's link
+  // button opens the URL editor this way.
+  const showField = (f: MenuField, x: number, y: number) => {
+    hide()
+    const panel = fieldPanel(f)
+    root.appendChild(panel)
+    root.hidden = false
+    place(panel, x, y)
+    ;(panel.querySelector("input") as HTMLInputElement | null)?.focus({ preventScroll: true })
+    armDismiss()
   }
 
   return {
@@ -245,6 +262,7 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
       return !root.hidden
     },
     show,
+    showField,
     hide,
     destroy: () => {
       hide()
