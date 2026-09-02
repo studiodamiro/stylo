@@ -43,6 +43,7 @@ under `docs/journal/YYYY-MM/`. The master ADR index is
 
 | ADR     | Title                                                                 | Status   |
 | ------- | --------------------------------------------------------------------- | -------- |
+| ADR-007 | Seamless in-place: Markdown markers never shown                       | Accepted |
 | ADR-006 | Interactive rendered-table editing                                    | Accepted |
 | ADR-005 | In-place decoration toggles                                           | Accepted |
 | ADR-004 | In-place decoration canvas                                            | Accepted |

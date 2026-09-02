@@ -74,6 +74,14 @@ Approach **A** is the only one that does not fork the source of truth.
    `#`, and moving away re-collapses it. Line-span (not exact-range) intersection
    keeps the behaviour predictable while editing.
 
+   > **Amended 2026-09-03 (ADR-007):** cursor reveal becomes one of two modes.
+   > [ADR-007](./2026-09-03_adr-007-seamless-in-place.md) adds
+   > `inPlace.reveal: "caret" | "never"`; `"never"` keeps every inline marker
+   > hidden on every line, with boundary-editing rules and autoformat-on-type
+   > taking the place of editing the raw markers. `"caret"` — this rule as
+   > written — stays the default until ADR-007's stages land, then the default
+   > flips.
+
 4. **Replaced blocks are atomic.** The plugin also provides
    `EditorView.atomicRanges` for its widget replacements, so arrow keys step
    over a rendered math block instead of into hidden characters. A click on a
