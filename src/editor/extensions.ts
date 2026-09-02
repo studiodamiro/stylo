@@ -1,7 +1,9 @@
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands"
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown"
-import { EditorState, type Extension } from "@codemirror/state"
+import { EditorState, type Extension, Prec } from "@codemirror/state"
 import { EditorView, keymap, placeholder as placeholderExt } from "@codemirror/view"
+import { markdownKeymap } from "../toolbar/keymap"
+import { tableKeymap, tableRealign } from "../toolbar/table"
 import type { CodeLanguages } from "../types"
 import { styloTheme } from "./theme"
 
@@ -19,6 +21,9 @@ export function baseExtensions(codeLanguages?: CodeLanguages): Extension {
   return [
     history(),
     keymap.of([...defaultKeymap, ...historyKeymap]),
+    Prec.high(tableKeymap),
+    markdownKeymap,
+    tableRealign,
     markdown({ base: markdownLanguage, codeLanguages }),
     EditorView.lineWrapping,
     styloTheme,
