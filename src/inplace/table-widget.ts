@@ -11,6 +11,15 @@ import {
   trimGrid,
   unescapePipe,
 } from "./table-cell-dom"
+import { createTableGizmos, type StructOp, type TableGizmos } from "./table-gizmos"
+import {
+  deleteColumn,
+  deleteRow,
+  type GridModel,
+  insertColumn,
+  insertRow,
+  setAlign,
+} from "./table-structure"
 
 /** Marks a transaction that came from an editable table widget's own DOM. */
 export const fromTableWidget = Annotation.define<boolean>()
@@ -42,6 +51,7 @@ export class EditableTableWidget extends WidgetType {
   /** Rendered-text offset from the mousedown that is bringing a cell into edit. */
   private pendingOffset: number | null = null
   private current: string[][]
+  private gizmos: TableGizmos | null = null
 
   constructor(readonly data: ParsedTable) {
     super()
@@ -50,7 +60,13 @@ export class EditableTableWidget extends WidgetType {
   }
 
   override eq(other: EditableTableWidget) {
-    return JSON.stringify(this.current) === JSON.stringify(trimGrid(gridOf(other.data)))
+    // While this instance owns mounted DOM, force CodeMirror to run the new
+    // instance's `toDOM` on a rebuild rather than swapping the instance behind
+    // the live DOM (which leaves the new one un-initialised — `table` null).
+    // Widget-originated edits use the `fromTableWidget` annotation path, which
+    // never calls `eq`, so this only bites on a genuine external reload.
+    if (this.table) return false
+    return JSON.stringify(this.current) === JSON.stringify(other.current)
   }
 
   override ignoreEvent() {
@@ -61,19 +77,22 @@ export class EditableTableWidget extends WidgetType {
     return this.data.aligns.length
   }
 
-  /** The table's current `[from, to]` in the document, derived from the DOM. */
+  /**
+   * The table's current `[from, to]` in the document, derived from the DOM.
+   * `posAtDOM` may land on any line of the widget, so the scan grows the span in
+   * both directions across contiguous non-blank pipe lines.
+   */
   private bounds(view: EditorView): { from: number; to: number } {
     const doc = view.state.doc
-    let line = doc.lineAt(view.posAtDOM(this.table!))
-    const from = line.from
-    let to = line.to
-    while (line.number < doc.lines) {
-      const next = doc.line(line.number + 1)
-      if (!next.text.trim() || !next.text.includes("|")) break
-      line = next
-      to = line.to
+    const pipe = (n: number) => {
+      const t = doc.line(n).text
+      return t.trim() !== "" && t.includes("|")
     }
-    return { from, to }
+    let first = doc.lineAt(view.posAtDOM(this.table!)).number
+    let last = first
+    while (first > 1 && pipe(first - 1)) first--
+    while (last < doc.lines && pipe(last + 1)) last++
+    return { from: doc.line(first).from, to: doc.line(last).to }
   }
 
   private cellAt(r: number, c: number): HTMLTableCellElement | null {
@@ -110,12 +129,50 @@ export class EditableTableWidget extends WidgetType {
     return el
   }
 
-  private appendRow(): HTMLTableRowElement {
-    this.rows.push(new Array(this.cols()).fill(""))
-    const r = this.rows.length - 1
-    const tr = this.table!.tBodies[0]!.insertRow()
-    for (let c = 0; c < this.cols(); c++) tr.appendChild(this.mkCell(r, c, false))
-    return tr
+  /** Rebuild `<thead>` / `<tbody>` from the current grid model. */
+  private renderCells() {
+    const table = this.table!
+    table.replaceChildren()
+    const hr = table.createTHead().insertRow()
+    for (let c = 0; c < this.cols(); c++) hr.appendChild(this.mkCell(0, c, true))
+    const tbody = table.createTBody()
+    for (let r = 1; r < this.rows.length; r++) {
+      const tr = tbody.insertRow()
+      for (let c = 0; c < this.cols(); c++) tr.appendChild(this.mkCell(r, c, false))
+    }
+  }
+
+  private appendRow() {
+    insertRow(this.model(), this.rows.length)
+    this.renderCells()
+    this.gizmos?.layout(this.table!)
+  }
+
+  private model(): GridModel {
+    return { rows: this.rows, aligns: this.data.aligns }
+  }
+
+  /** Apply a structural edit from a gizmo, rebuild, restore focus, reserialize. */
+  private runOp(view: EditorView, op: StructOp) {
+    if (!this.table) return // a destroyed instance whose menu is still on screen
+    const g = this.model()
+    if (op.kind === "insertColumn") insertColumn(g, op.at)
+    else if (op.kind === "deleteColumn") deleteColumn(g, op.at)
+    else if (op.kind === "insertRow") insertRow(g, op.at)
+    else if (op.kind === "deleteRow") deleteRow(g, op.at)
+    else setAlign(g, op.at, g.aligns[op.at] === op.value ? "" : op.value)
+
+    // Reserialise first so the document is canonical, then rebuild our own DOM
+    // from the settled model — no window where the two disagree.
+    this.editing = null
+    this.sync(view)
+    this.renderCells()
+    this.gizmos?.layout(this.table!)
+    if (op.kind !== "align") {
+      const r = Math.max(0, Math.min(op.focus[0], this.rows.length - 1))
+      const c = Math.max(0, Math.min(op.focus[1], this.cols() - 1))
+      this.cellAt(r, c)?.focus()
+    }
   }
 
   /** Commit `cell`'s edited text into `rows` and, unless it keeps focus, re-render it. */
@@ -243,18 +300,13 @@ export class EditableTableWidget extends WidgetType {
   }
 
   toDOM(view: EditorView) {
+    const wrap = document.createElement("div")
+    wrap.className = "cm-inplace-table-wrap"
     const table = document.createElement("table")
     this.table = table
     this.editing = null
     table.className = "cm-inplace-table cm-inplace-table-edit"
-
-    const hr = table.createTHead().insertRow()
-    for (let c = 0; c < this.cols(); c++) hr.appendChild(this.mkCell(0, c, true))
-    const tbody = table.createTBody()
-    for (let r = 1; r < this.rows.length; r++) {
-      const tr = tbody.insertRow()
-      for (let c = 0; c < this.cols(); c++) tr.appendChild(this.mkCell(r, c, false))
-    }
+    this.renderCells()
 
     // Keep the pointer event away from CodeMirror's delegated handler: it would
     // snap the click to the atomic widget boundary and pull focus back to
@@ -288,10 +340,33 @@ export class EditableTableWidget extends WidgetType {
       const text = (e.clipboardData?.getData("text/plain") ?? "").replace(/\r?\n/g, " ")
       document.execCommand("insertText", false, text)
     })
-    return table
+    // Right-click (and long-press on touch) opens the structural menu for the
+    // cell under the pointer.
+    table.addEventListener("contextmenu", (e) => {
+      const cell = (e.target as HTMLElement).closest<HTMLTableCellElement>("td, th")
+      if (!cell) return
+      e.preventDefault()
+      e.stopPropagation()
+      this.gizmos?.openFor(cell, e.clientX, e.clientY)
+    })
+
+    this.gizmos = createTableGizmos(document, {
+      dims: () => ({
+        cols: this.cols(),
+        rows: this.rows.length,
+        alignAt: (c) => this.data.aligns[c] ?? "",
+      }),
+      run: (op) => this.runOp(view, op),
+    })
+    wrap.append(table, this.gizmos.el)
+    wrap.addEventListener("mouseenter", () => this.gizmos?.layout(table))
+    requestAnimationFrame(() => this.gizmos?.layout(table))
+    return wrap
   }
 
   override destroy() {
+    this.gizmos?.destroy()
+    this.gizmos = null
     this.table = null
     this.editing = null
   }
