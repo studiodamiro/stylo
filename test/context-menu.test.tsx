@@ -92,3 +92,16 @@ test("selecting text and right-clicking yields a Link field flyout with an input
   const input = document.querySelector(".cm-inplace-menu-input")
   expect(input, "a URL input appeared in the flyout").not.toBeNull()
 })
+
+test("the Insert submenu flyout opens on pointerenter", async () => {
+  const { view } = await mount("a plain paragraph")
+  view.contentDOM.dispatchEvent(
+    new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }),
+  )
+  const items = [...document.querySelectorAll(".cm-inplace-menu-item")]
+  const insert = items.find((el) => el.textContent?.trim() === "Insert") as HTMLElement | undefined
+  expect(insert, "Insert row exists").toBeDefined()
+  insert!.dispatchEvent(new Event("pointerenter", { bubbles: true }))
+  const panels = document.querySelectorAll(".cm-inplace-menu-panel")
+  expect(panels.length, "a flyout panel opened alongside the main panel").toBeGreaterThan(1)
+})
