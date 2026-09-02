@@ -138,7 +138,9 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
       const host = b.getBoundingClientRect()
       place(panel, host.right - 4, host.top - 4)
       flyout = panel
-      ;(panel.querySelector("input") as HTMLInputElement | null)?.focus()
+      // `preventScroll` — a focus-induced scroll would trip the menu's own
+      // dismiss-on-scroll handler and close it the instant the field opens.
+      ;(panel.querySelector("input") as HTMLInputElement | null)?.focus({ preventScroll: true })
     }
     b.addEventListener("pointerenter", open)
     b.addEventListener("pointerleave", armClose)
