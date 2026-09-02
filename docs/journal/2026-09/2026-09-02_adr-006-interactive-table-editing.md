@@ -10,13 +10,15 @@ tags:
 
 # ADR-006 — Interactive rendered-table editing
 
-- **Status:** Accepted — implemented 2026-09-02 as `inPlace.table: "cells"`
+- **Status:** Accepted — fully implemented 2026-09-02 as `inPlace.table: "cells"`
   (default `"source"`). See the
   [implementation note](./2026-09-02_interactive-table-cells.md); the per-cell
-  Markdown reveal is a [follow-up](./2026-09-02_table-cell-reveal.md), and the
-  toolbar's inline commands now
-  [format a cell's selection](./2026-09-02_table-cell-inline-commands.md).
-  Structural controls (add/remove column, remove row, alignment) remain deferred.
+  Markdown reveal is a [follow-up](./2026-09-02_table-cell-reveal.md), the
+  toolbar's inline commands
+  [format a cell's selection](./2026-09-02_table-cell-inline-commands.md), and
+  [structural controls](./2026-09-02_table-structural-controls.md) (add/remove
+  column, insert/remove row, column alignment) land as hover affordances on the
+  widget.
 - **Date:** 2026-09-02
 - **Deciders:** damiro, Grace
 

@@ -151,4 +151,70 @@ export const inPlaceTheme = EditorView.theme({
   ".cm-inplace-table-edit .cm-inplace-tcell:focus": {
     boxShadow: "inset 0 0 0 2px var(--stylo-ring)",
   },
+
+  // --- structural handles on the editable table (hover to reveal) ---
+  ".cm-inplace-table-wrap": {
+    position: "relative",
+    display: "inline-block",
+    maxWidth: "100%",
+  },
+  ".cm-inplace-table-gizmos": {
+    position: "absolute",
+    inset: "1em 0 1.4em", // matches .cm-inplace-table padding
+    pointerEvents: "none",
+  },
+  ".cm-inplace-tg-add, .cm-inplace-tg-handle": {
+    position: "absolute",
+    pointerEvents: "auto",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "0",
+    font: "inherit",
+    lineHeight: "1",
+    color: "var(--stylo-text-muted)",
+    background: "var(--stylo-bg, #fff)",
+    border: "1px solid var(--stylo-border)",
+    borderRadius: "4px",
+    cursor: "pointer",
+    opacity: "0",
+    transition: "opacity 0.12s ease",
+  },
+  ".cm-inplace-table-wrap:hover .cm-inplace-tg-add, .cm-inplace-table-wrap:hover .cm-inplace-tg-handle":
+    { opacity: "1" },
+  ".cm-inplace-tg-add:hover, .cm-inplace-tg-handle:hover": {
+    color: "var(--stylo-text)",
+    borderColor: "var(--stylo-ring)",
+  },
+  ".cm-inplace-tg-add": { width: "1.3em", height: "1.3em", fontSize: "0.9em" },
+  ".cm-inplace-tg-addcol": { right: "-1.8em", top: "50%", transform: "translateY(-50%)" },
+  ".cm-inplace-tg-addrow": { bottom: "-1.8em", left: "50%", transform: "translateX(-50%)" },
+  ".cm-inplace-tg-handle": { width: "1.6em", height: "1em", fontSize: "0.8em" },
+  ".cm-inplace-tg-handle-col": { transform: "translate(-50%, -115%)" },
+  ".cm-inplace-tg-handle-row": { transform: "translate(-115%, -50%)" },
+  ".cm-inplace-table-menu": {
+    position: "absolute",
+    zIndex: "5",
+    minWidth: "9em",
+    padding: "0.25em",
+    display: "flex",
+    flexDirection: "column",
+    pointerEvents: "auto",
+    background: "var(--stylo-bg, #fff)",
+    border: "1px solid var(--stylo-border)",
+    borderRadius: "6px",
+    boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
+  },
+  ".cm-inplace-tm-item": {
+    all: "unset",
+    padding: "0.35em 0.6em",
+    borderRadius: "4px",
+    fontSize: "0.9em",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+  },
+  ".cm-inplace-tm-item:hover": {
+    background: "color-mix(in srgb, var(--stylo-border) 40%, transparent)",
+  },
+  ".cm-inplace-tm-item[data-active]": { color: "var(--stylo-ring)", fontWeight: "600" },
 })
