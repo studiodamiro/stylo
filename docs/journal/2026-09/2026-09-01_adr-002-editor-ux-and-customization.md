@@ -79,6 +79,21 @@ untouched, and must not gate v1.
   ```
 - Granular heading lists constrain hierarchy without exposing unused H4–H6.
 
+  > **Amended 2026-09-02 (v1 shape):** the shipped v1 prop is
+  > `toolbar={ items: (ToolbarCommandId | "|")[] }` — a **single ordered list**
+  > with `"|"` separators, plus `toolbar={false}` to hide the bar and
+  > `toolbar` omitted for the full default set. The `left` / `right` docks, the
+  > `overflow` mode, the `headings` sub-config, and a `saveStatus` / `save`
+  > pair are **deferred**: they are additive and none gates the release. Heading
+  > levels ship as discrete `h1` / `h2` / `h3` command ids, so every toolbar
+  > entry is uniformly "a command id or a separator". The built-in ids are
+  > `undo`, `redo`, `h1`–`h3`, `bold`, `italic`, `strike`, `link`, `bulletList`,
+  > `orderedList`, `task`, `quote`, `hr`, `frontmatter`, `table`, `code`,
+  > `codeBlock`, `math`, `mathBlock`. Shipped in the
+  > [toolbar milestone](./2026-09-02_toolbar.md); `table` also brings a
+  > cell-navigation keymap and live pipe alignment
+  > ([note](./2026-09-02_table-editing.md)).
+
 #### 3. Styling: CSS Modules + a small custom-property token set
 
 - Internal UI (toolbar, menus, drawer) is styled with **CSS Modules**, compiled
@@ -96,6 +111,25 @@ untouched, and must not gate v1.
   rhythm, `0.5rem` radius, 1px hairline borders, a visible focus ring, zinc/slate
   greys — as a **visual reference only**. No shadcn or Tailwind code is vendored.
 - `peerDependencies`: React `>= 18.0.0` (React 19 included).
+
+  > **Amended 2026-09-02:** an eighth token, **`--stylo-link`** (default
+  > `#2563eb`), was added. `--stylo-accent` defaults to near-black (`#18181b`),
+  > one shade off body text, so it cannot also carry links once they are styled
+  > by colour rather than underline. `--stylo-link` colours links and
+  > `[[wikilinks]]` in both `preview` and the in-place canvas, with no
+  > underline; `--stylo-accent` now means active / pressed states only. The
+  > "held to seven" line below is superseded — the set is eight, and the bar
+  > against growth still stands (one token per real role, no shadcn-style
+  > sprawl).
+  >
+  > **Amended 2026-09-02 (typography):** the rendered-content vertical rhythm
+  > (`.preview` and the in-place theme) takes **Tailwind's `prose`
+  > (`@tailwindcss/typography`) as a second visual reference** alongside
+  > shadcn — its `em`-based `line-height` / margin scale only, no plugin
+  > bundled, same terms as the shadcn reference. Divergences (tighter `hr`, no
+  > `max-width`, no `code` backticks, colour-only links, non-italic
+  > blockquotes) and the full scale are in the
+  > [typography note](./2026-09-02_typography-rhythm.md).
 
 #### 4. Icons: inline SVG, no icon dependency
 

@@ -73,6 +73,16 @@ Adopt approach **3**. Specifically:
 - **Frontmatter:** `remark-frontmatter` on the render side to keep the leading
   `---` block out of the body; `gray-matter` on the parse side to expose it as
   structured data.
+
+  > **Amended 2026-09-02:** `preview` gained a `frontmatter` prop —
+  > `"hidden"` (default, unchanged) or `"code"`, which renders the raw `---`
+  > block as `<div class="stylo-frontmatter">` for the consumer to style. This
+  > needs **no** parser: `splitFrontmatter` (in `src/frontmatter.ts`) slices the
+  > block off the string by regex. `gray-matter` / an `onFrontmatter` prop
+  > exposing parsed data, and a rendered key/value "Properties" panel, stay
+  > deferred to their own decision. See the
+  > [preview-frontmatter note](./2026-09-02_preview-frontmatter.md).
+
 - **No ProseMirror / Lexical / TipTap / Milkdown dependency.**
 - First release ships `source`, `preview`, and `split` view modes. Obsidian-style
   inline live preview (rendered Markdown inside the CodeMirror surface via view

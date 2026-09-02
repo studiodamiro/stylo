@@ -1,7 +1,12 @@
 import { StrictMode, useState } from "react"
 import { createRoot } from "react-dom/client"
 import { languages } from "@codemirror/language-data"
-import { Stylo, type InPlaceDecorationToggles, type StyloMode } from "../src/index"
+import {
+  Stylo,
+  type InPlaceDecorationToggles,
+  type StyloMode,
+  type ToolbarConfig,
+} from "../src/index"
 import "katex/dist/katex.min.css"
 import "./styles.css"
 
@@ -55,6 +60,12 @@ def greet(name: str) -> str:
 
 const MODES: StyloMode[] = ["in-place", "source", "preview", "split"]
 
+const TOOLBARS: Record<string, boolean | ToolbarConfig> = {
+  default: true,
+  compact: { items: ["bold", "italic", "code", "|", "h2", "link", "bulletList", "task"] },
+  hidden: false,
+}
+
 const DECORATION_KEYS: (keyof InPlaceDecorationToggles)[] = [
   "headings",
   "emphasis",
@@ -73,6 +84,8 @@ const DECORATION_KEYS: (keyof InPlaceDecorationToggles)[] = [
 function App() {
   const [doc, setDoc] = useState(DEMO)
   const [mode, setMode] = useState<StyloMode>("in-place")
+  const [toolbar, setToolbar] = useState<keyof typeof TOOLBARS>("default")
+  const [frontmatter, setFrontmatter] = useState<"hidden" | "code">("hidden")
   const [lastLink, setLastLink] = useState<string | null>(null)
   // ADR-005: inPlace config is read once at mount, so a changed toggle remounts
   // the canvas via `key` below — a deliberate demo of that construction-time rule.
@@ -114,6 +127,55 @@ function App() {
         ))}
       </div>
 
+      {mode !== "preview" && (
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            margin: "0 0 1rem",
+            fontSize: "0.85rem",
+            color: "#71717a",
+          }}
+        >
+          toolbar
+          <select
+            value={toolbar}
+            onChange={(e) => setToolbar(e.target.value as keyof typeof TOOLBARS)}
+            style={{ padding: "0.2rem 0.4rem", borderRadius: 6, border: "1px solid #d4d4d8" }}
+          >
+            {Object.keys(TOOLBARS).map((k) => (
+              <option key={k} value={k}>
+                {k}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
+      {(mode === "preview" || mode === "split") && (
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            margin: "0 0 1rem",
+            fontSize: "0.85rem",
+            color: "#71717a",
+          }}
+        >
+          frontmatter
+          <select
+            value={frontmatter}
+            onChange={(e) => setFrontmatter(e.target.value as "hidden" | "code")}
+            style={{ padding: "0.2rem 0.4rem", borderRadius: 6, border: "1px solid #d4d4d8" }}
+          >
+            <option value="hidden">hidden</option>
+            <option value="code">code</option>
+          </select>
+        </label>
+      )}
+
       {mode === "in-place" && (
         <details style={{ margin: "0 0 1rem", fontSize: "0.85rem" }}>
           <summary style={{ cursor: "pointer", color: "#71717a" }}>
@@ -148,6 +210,8 @@ function App() {
         mode={mode}
         onWikiLinkClick={setLastLink}
         inPlace={{ decorations }}
+        toolbar={TOOLBARS[toolbar]}
+        frontmatter={frontmatter}
         codeLanguages={languages}
         className={mode === "split" ? "playground-editor is-split" : "playground-editor"}
       />

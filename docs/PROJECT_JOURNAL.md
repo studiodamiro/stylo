@@ -15,18 +15,23 @@ milestones and Architectural Decision Records, newest first.
 
 ## Architectural Decision Records
 
-| ADR                                                                            | Title                                                                 | Status   | Date       |
-| ------------------------------------------------------------------------------ | --------------------------------------------------------------------- | -------- | ---------- |
-| [ADR-005](./journal/2026-09/2026-09-01_adr-005-in-place-decoration-toggles.md) | In-place decoration toggles                                           | Accepted | 2026-09-01 |
-| [ADR-004](./journal/2026-09/2026-09-01_adr-004-in-place-decoration-canvas.md)  | In-place decoration canvas                                            | Accepted | 2026-09-01 |
-| [ADR-003](./journal/2026-09/2026-09-01_adr-003-katex-math-rendering.md)        | Math rendering engine and KaTeX asset delivery                        | Accepted | 2026-09-01 |
-| [ADR-002](./journal/2026-09/2026-09-01_adr-002-editor-ux-and-customization.md) | Editor UX, Customization API, and Design System                       | Accepted | 2026-09-01 |
-| [ADR-001](./journal/2026-09/2026-09-01_adr-001-editor-architecture.md)         | Editor architecture: compose from primitives, plain text is canonical | Accepted | 2026-09-01 |
+| ADR                                                                            | Title                                                                 | Status             | Date       |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------- | ------------------ | ---------- |
+| [ADR-006](./journal/2026-09/2026-09-02_adr-006-interactive-table-editing.md)   | Interactive rendered-table editing                                    | Accepted (post-v1) | 2026-09-02 |
+| [ADR-005](./journal/2026-09/2026-09-01_adr-005-in-place-decoration-toggles.md) | In-place decoration toggles                                           | Accepted           | 2026-09-01 |
+| [ADR-004](./journal/2026-09/2026-09-01_adr-004-in-place-decoration-canvas.md)  | In-place decoration canvas                                            | Accepted           | 2026-09-01 |
+| [ADR-003](./journal/2026-09/2026-09-01_adr-003-katex-math-rendering.md)        | Math rendering engine and KaTeX asset delivery                        | Accepted           | 2026-09-01 |
+| [ADR-002](./journal/2026-09/2026-09-01_adr-002-editor-ux-and-customization.md) | Editor UX, Customization API, and Design System                       | Accepted           | 2026-09-01 |
+| [ADR-001](./journal/2026-09/2026-09-01_adr-001-editor-architecture.md)         | Editor architecture: compose from primitives, plain text is canonical | Accepted           | 2026-09-01 |
 
 ## Milestones
 
 | Date       | Entry                                                                                                                                     |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-02 | [Table editing — insert, cell navigation, live pipe alignment](./journal/2026-09/2026-09-02_table-editing.md)                             |
+| 2026-09-02 | [Typography rhythm — Tailwind `prose` as the reference](./journal/2026-09/2026-09-02_typography-rhythm.md)                                |
+| 2026-09-02 | [Preview frontmatter display — the `frontmatter` prop](./journal/2026-09/2026-09-02_preview-frontmatter.md)                               |
+| 2026-09-02 | [Declarative formatting toolbar](./journal/2026-09/2026-09-02_toolbar.md)                                                                 |
 | 2026-09-02 | [`codeLanguages` prop — fenced-code sub-highlighting, opt-in](./journal/2026-09/2026-09-02_code-languages-prop.md)                        |
 | 2026-09-02 | [In-place canvas — click-to-position accuracy](./journal/2026-09/2026-09-02_in-place-click-mapping.md)                                    |
 | 2026-09-01 | [Customization API — in-place decoration toggles](./journal/2026-09/2026-09-01_customization-in-place-toggles.md)                         |

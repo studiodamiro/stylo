@@ -1,19 +1,9 @@
-import { type EditorState, StateField, type Text } from "@codemirror/state"
+import { type EditorState, StateField } from "@codemirror/state"
 import { Decoration, type DecorationSet, EditorView } from "@codemirror/view"
+import { frontmatterRange } from "../frontmatter"
 import { inPlaceConfigFacet } from "./config"
 
-/**
- * The leading `---` … `---` YAML block, if present. The CodeMirror grammar has
- * no frontmatter node — it parses the fences as two horizontal rules — so the
- * region is found by hand and `decorate.ts` skips anything inside it.
- */
-export function frontmatterRange(doc: Text): { from: number; to: number } | null {
-  if (doc.lines < 2 || doc.line(1).text.trim() !== "---") return null
-  for (let n = 2; n <= doc.lines; n++) {
-    if (doc.line(n).text.trim() === "---") return { from: 0, to: doc.line(n).to }
-  }
-  return null
-}
+export { frontmatterRange }
 
 function build(state: EditorState): DecorationSet {
   if (!state.facet(inPlaceConfigFacet).frontmatter) return Decoration.none
@@ -41,8 +31,8 @@ function build(state: EditorState): DecorationSet {
 }
 
 /**
- * Recesses the leading YAML block — muted, monospace, with a "Properties" label
- * on the first line — without collapsing it. Line decorations only: the rows
+ * Recesses the leading YAML block — muted, monospace, with a "Frontmatter"
+ * label on the first line — without collapsing it. Line decorations only: the rows
  * keep their height, so click-to-position stays accurate (an earlier `block`
  * widget that folded the block to a one-line chip desynced it). A state field,
  * not the plugin, only because the region has no grammar node to hang off.

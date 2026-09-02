@@ -94,14 +94,18 @@ and the [split-mode note](../../journal/2026-09/2026-09-01_split-mode.md).
 
 1. **Adaptive canvas** — responsive writing surface themed through a small set of
    CSS custom properties: `--stylo-bg`, `--stylo-text`, `--stylo-text-muted`,
-   `--stylo-border`, `--stylo-accent`, `--stylo-ring`, `--stylo-radius`. Defaults
-   follow shadcn/ui's neutral conventions as a visual reference; no Tailwind or
-   shadcn code is bundled.
-2. **Declarative toolbar** — `left` / `right` slots, constrained heading sets
-   (`headings: ["h1", "h2", "h3"]`), and `overflow: "wrap" | "collapse"`.
+   `--stylo-border`, `--stylo-accent`, `--stylo-link`, `--stylo-ring`,
+   `--stylo-radius`. Defaults follow shadcn/ui's neutral conventions as a visual
+   reference; no Tailwind or shadcn code is bundled.
+2. **Declarative toolbar** — a single ordered `items` list of command ids with
+   `"|"` separators, `toolbar={false}` to hide it, and a per-id `icons`
+   override (inline-SVG built-ins, no icon dependency). Shipped 2026-09-02; see
+   [[reference/toolbar|the toolbar reference]] and the ADR-002 §2 amendment.
 
-**Deferred (post-v1, additive — see ADR-002):** context-aware selection tooltip,
-and the `<StyloToolbarSettings />` drag-and-drop customizer with magnetic docks.
+**Deferred (post-v1, additive — see ADR-002):** the `left` / `right` docks, the
+`overflow` mode, a `headings` dropdown sub-config, the context-aware selection
+tooltip, and the `<StyloToolbarSettings />` drag-and-drop customizer with
+magnetic docks.
 
 Internal UI is styled with CSS Modules compiled to a single `dist/styles.css`;
 consumers import it once and need no build-time CSS tooling.
