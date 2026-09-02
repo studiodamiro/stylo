@@ -67,15 +67,27 @@ structure (`quote` `hr` `frontmatter` `table`) · code and math.
 CodeMirror surface whether or not the visible bar is mounted; `toolbar={false}`
 does not remove them.
 
-### Inside a table
+### Context-aware buttons
 
-A cell is a single line between pipes, so the block commands — `h1`–`h3`,
-`quote`, `bulletList`, `orderedList`, `task`, `hr`, `frontmatter`, `table` —
-have no valid Markdown there. With the caret in a table their buttons render
-**disabled** and their shortcuts are inert. `codeBlock` and `mathBlock` instead
-**degrade**: in a cell they wrap the selection in inline `` `code` `` / `$math$`
-rather than a fenced block. The inline commands (`bold`, `italic`, `strike`,
-`code`, `math`, `link`, `wikilink`) work normally.
+A button renders **disabled** (and its shortcut is inert) when the command can't
+produce valid Markdown at the caret. What's disabled depends on the line the
+caret is on:
+
+| Caret in…                   | Disabled                                                                              | Notes                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| plain paragraph             | nothing                                                                               | —                                                                       |
+| **table** cell              | `h1`–`h3`, `quote`, `bulletList`, `orderedList`, `task`, `hr`, `frontmatter`, `table` | inline commands work; `codeBlock` / `mathBlock` **degrade** (see below) |
+| **heading** line            | `bulletList`, `orderedList`, `task`, `codeBlock`, `mathBlock`, `frontmatter`, `table` | `h1`–`h3` (the toggle), `quote`, `hr`, and inline stay live             |
+| **frontmatter** `---` block | everything except `frontmatter` itself                                                | `frontmatter` stays live so you can toggle the block off                |
+| **fenced code** block       | everything except `codeBlock`                                                         | `codeBlock` stays live to unwrap the fence                              |
+| **`$$` math** block         | everything except `mathBlock`                                                         | `mathBlock` stays live to unwrap                                        |
+
+**Degrade in a table:** `codeBlock` and `mathBlock` aren't disabled in a cell —
+they wrap the selection in inline `` `code` `` / `$math$` instead of a fenced
+block. Outside a table they still fence whole lines.
+
+The context check is a line scan plus a syntax-tree lookup, run whenever the
+selection, keys, or pointer move.
 
 Every command toggles. The line-prefix commands operate on whole lines: they add
 the prefix to the lines in the selection that lack it, and strip it when every

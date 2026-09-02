@@ -52,31 +52,45 @@ in-place collapse, `remark-wikilink`). Added `wikilink`:
 - `wikiLinkAt` scans the caret's line with the shared `WIKILINK_PATTERN` from
   `src/wikilink.ts`, so it never drifts from the render and in-place scanners.
 
-## Block commands inside a table
+## Context-aware buttons
 
-A table cell holds one line between pipes — a `## ` prefix, a `- ` marker, or a
-`---` line just corrupts the row. `ToolbarCommand` gains an optional
-`disabled?(state)`. `tableActive` (the same line scan `insertTable` uses) fills
-it for the block commands: `h1`–`h3`, `quote`, `bulletList`, `orderedList`,
-`task`, `hr`, `frontmatter`, `table`. In a table the button renders `disabled`
-and the shortcut (`Mod-Alt-1..3`) is a no-op; the wrapper in `keymap.ts` checks
-`disabled` before running.
+`ToolbarCommand` gains an optional `disabled?(state)`. A button renders
+`disabled` and its shortcut is a no-op (the `keymap.ts` wrapper checks it first)
+when the command can't produce valid Markdown at the caret. Four small context
+predicates in `commands.ts` drive it: `tableActive` (the `insertTable` line
+scan), `inFrontmatter` (`frontmatterRange`), `fencedCodeActive` / `mathBlockActive`
+(existing syntax-tree checks), and `inHeading` (an ATX-line regex). `inLiteral`
+combines the middle three — contexts where markup is literal or means something
+else.
 
-`codeBlock` and `mathBlock` are **not** disabled — they degrade: their `run` and
-`isActive` call `toggleWrap` / `wrapActive` with `` ` `` or `$` when
-`tableActive`, so the button wraps the cell selection in inline code / inline
-math instead of a fenced block. Inline commands (`bold`, `italic`, `strike`,
-`code`, `math`, `link`, `wikilink`) are untouched — `[text](url)` and
-`[[target]]` carry no `|`, so they are safe in a cell.
+The map, by caret line:
+
+- **table cell** — block commands off (`h1`–`h3`, `quote`, lists, `hr`,
+  `frontmatter`, `table`); inline commands stay; `codeBlock` / `mathBlock`
+  **degrade** — their `run`/`isActive` call `toggleWrap`/`wrapActive` with
+  `` ` `` / `$` when `tableActive`, wrapping the cell selection inline instead of
+  fencing.
+- **heading line** — `bulletList`, `orderedList`, `task`, `codeBlock`,
+  `mathBlock`, `frontmatter`, `table` off. `h1`–`h3` (the toggle), `quote`
+  (`> # x` is valid), `hr`, and inline stay.
+- **frontmatter block** — everything off except `frontmatter` (so it can toggle
+  the block off).
+- **fenced code** — everything off except `codeBlock` (the unwrap toggle).
+- **`$$` math** — everything off except `mathBlock`.
+
+`link` and `wikilink` count as inline (`[text](url)` / `[[target]]` carry no
+`|`, so they are cell-safe) and are only disabled in the literal contexts.
 
 ## Verification
 
-`typecheck`, 127 Vitest tests (13 new in `test/toolbar.test.tsx` — bold/italic
+`typecheck`, 132 Vitest tests (18 new in `test/toolbar.test.tsx` — bold/italic
 nesting in both orders, bold+italic+strike on then off, toggling one mark off
-mid-stack, the three wikilink cases, block commands reporting `disabled` in a
-table while inline ones do not, `codeBlock`/`mathBlock` degrading to inline in a
-cell but still fencing outside, and the `h2` button toggling its `disabled`
-attribute as the caret enters and leaves a table row), `build`, `format:check`.
-Confirmed in a real Chromium: `Bold` then `Italic` yields `***word***`, the
-wikilink button wraps and unwraps, and with the caret in a cell the block
-buttons grey out while `Code block` produces ``| `c` | d |``.
+mid-stack, the three wikilink cases, a `disabledAt(doc, pos)` matrix asserting
+the exact disabled set for a plain paragraph, a table cell, a heading line, a
+frontmatter block, a fenced code block and a `$$` block, `codeBlock`/`mathBlock`
+degrading to inline in a cell but still fencing outside, and the `h2` button
+toggling its `disabled` attribute as the caret enters and leaves a table row),
+`build`, `format:check`. Confirmed in a real Chromium: `Bold` then `Italic`
+yields `***word***`, the wikilink button wraps and unwraps, and the disabled set
+changes correctly as the caret moves between a paragraph, a heading, a `---`
+block, a fence and a `$$` block.

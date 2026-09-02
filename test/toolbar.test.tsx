@@ -5,7 +5,7 @@ import { EditorSelection, EditorState } from "@codemirror/state"
 import { EditorView } from "@codemirror/view"
 import { markdownLanguage } from "@codemirror/lang-markdown"
 import { Stylo } from "../src/Stylo"
-import { BUILTIN_BY_ID } from "../src/toolbar/commands"
+import { BUILTIN_BY_ID, BUILTIN_COMMANDS } from "../src/toolbar/commands"
 import { DEFAULT_TOOLBAR_ITEMS, resolveToolbarItems } from "../src/toolbar/config"
 
 afterEach(cleanup)
@@ -314,38 +314,71 @@ test("wikilink toggling a plain [[target]] off leaves the bare target", () => {
 
 const TABLE_DOC = "intro\n\n| A | B |\n| - | - |\n| c | d |\n\ntail"
 
-test("block commands are disabled inside a table; inline ones are not", () => {
-  const inCell = mkView(TABLE_DOC, 29, 30) // caret in body cell "c"
-  const outside = mkView(TABLE_DOC, 2)
+/** The sorted ids whose `disabled` fires for the caret at `pos` in `doc`. */
+function disabledAt(doc: string, pos: number): string[] {
+  const { state } = mkView(doc, pos)
+  return BUILTIN_COMMANDS.filter((c) => c.disabled?.(state))
+    .map((c) => c.id)
+    .sort()
+}
 
-  for (const id of [
-    "h1",
-    "h2",
-    "h3",
-    "quote",
-    "bulletList",
-    "orderedList",
-    "task",
-    "hr",
-    "frontmatter",
-    "table",
-  ] as const) {
-    expect(BUILTIN_BY_ID[id]!.disabled?.(inCell.state), `${id} in cell`).toBe(true)
-    expect(BUILTIN_BY_ID[id]!.disabled?.(outside.state), `${id} outside`).toBeFalsy()
-  }
+test("nothing is disabled in a plain paragraph", () => {
+  expect(disabledAt("just a line of text", 6)).toEqual([])
+})
+
+test("a table cell disables the block commands, not the inline ones", () => {
+  expect(disabledAt(TABLE_DOC, 29)).toEqual(
+    [
+      "bulletList",
+      "frontmatter",
+      "h1",
+      "h2",
+      "h3",
+      "hr",
+      "orderedList",
+      "quote",
+      "table",
+      "task",
+    ].sort(),
+  )
+})
+
+test("a heading line disables lists, hr's peers, and block inserts — quote and headings stay", () => {
+  expect(disabledAt("## A Heading", 5)).toEqual(
+    ["bulletList", "codeBlock", "frontmatter", "mathBlock", "orderedList", "table", "task"].sort(),
+  )
+})
+
+test("the frontmatter block disables every formatting command but frontmatter itself", () => {
+  const dis = disabledAt("---\ntitle: x\n---\n\n# Body", 8)
+  expect(dis).not.toContain("frontmatter")
   for (const id of [
     "bold",
     "italic",
-    "strike",
-    "code",
-    "math",
-    "link",
-    "wikilink",
+    "h1",
+    "quote",
+    "bulletList",
+    "hr",
+    "table",
     "codeBlock",
     "mathBlock",
-  ] as const) {
-    expect(BUILTIN_BY_ID[id]!.disabled?.(inCell.state), `${id} in cell`).toBeFalsy()
+    "link",
+    "math",
+  ]) {
+    expect(dis, id).toContain(id)
   }
+})
+
+test("a fenced code block keeps codeBlock live (to unwrap) and disables the rest", () => {
+  const dis = disabledAt("t\n\n```\ncode\n```\n\nx", 8) // inside "code"
+  expect(dis).not.toContain("codeBlock")
+  expect(dis).toEqual(expect.arrayContaining(["bold", "h1", "quote", "hr", "mathBlock", "table"]))
+})
+
+test("a $$ math block keeps mathBlock live and disables the rest", () => {
+  const dis = disabledAt("t\n\n$$\nx^2\n$$\n\ny", 7) // inside "x^2"
+  expect(dis).not.toContain("mathBlock")
+  expect(dis).toEqual(expect.arrayContaining(["bold", "h1", "codeBlock", "hr", "table"]))
 })
 
 test("codeBlock and mathBlock degrade to inline inside a table cell", () => {
