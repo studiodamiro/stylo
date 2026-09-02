@@ -12,4 +12,19 @@
   --stylo-link: #2563eb;
   --stylo-ring: #a1a1aa;
   --stylo-radius: 0.5rem;
+
+  /* Fenced-code / embedded-language token colours (see src/editor/highlight.ts).
+     Only applied where a real language grammar runs; Markdown structure is
+     styled separately. Light defaults — the host overrides for dark. */
+  --stylo-syntax-keyword: #7c3aed;
+  --stylo-syntax-string: #0a7c2f;
+  --stylo-syntax-escape: #b45309;
+  --stylo-syntax-comment: #8a8f98;
+  --stylo-syntax-number: #b45309;
+  --stylo-syntax-constant: #b45309;
+  --stylo-syntax-function: #2563eb;
+  --stylo-syntax-type: #a16207;
+  --stylo-syntax-property: #0f766e;
+  --stylo-syntax-tag: #cf222e;
+  --stylo-syntax-invalid: #dc2626;
 }
