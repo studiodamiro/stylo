@@ -205,6 +205,90 @@ test('the "table" toolbar command does not throw on the plain source surface', (
   expect(view.state.doc.toString()).toContain("| Column 1 | Column 2 |")
 })
 
+async function focusCell(
+  view: EditorView,
+  selector: "thead th" | "tbody td",
+  nth = 0,
+): Promise<HTMLTableCellElement> {
+  const table = await editCells(view)
+  const cell = table.querySelectorAll<HTMLTableCellElement>(selector)[nth]!
+  cell.focus()
+  cell.dispatchEvent(new FocusEvent("focusin", { bubbles: true }))
+  if (view.dom.ownerDocument.activeElement !== cell) throw new Error("cell did not take focus")
+  return cell
+}
+
+/** Select `cell`'s lone text node from `from` to `to` (default: the whole cell). */
+function selectText(cell: HTMLTableCellElement, from = 0, to = cell.textContent?.length ?? 0) {
+  const node = cell.firstChild!
+  const range = cell.ownerDocument.createRange()
+  range.setStart(node, from)
+  range.setEnd(node, to)
+  const sel = cell.ownerDocument.getSelection()!
+  sel.removeAllRanges()
+  sel.addRange(range)
+}
+
+test("a toolbar inline command wraps the focused cell's selection, in DOM and document", async () => {
+  const { view, doc } = await mount(T, { table: "cells" })
+  const cell = await focusCell(view, "tbody td", 0)
+  expect(cell.textContent).toBe("1") // raw source revealed on focus
+
+  selectText(cell)
+  BUILTIN_BY_ID.bold!.run(view)
+
+  expect(cell.textContent).toBe("**1**")
+  expect(view.state.doc.toString()).toContain("**1**")
+  expect(doc()).toBe(view.state.doc.toString())
+})
+
+test("a second inline toggle removes the mark from the cell", async () => {
+  const { view } = await mount(T, { table: "cells" })
+  const cell = await focusCell(view, "tbody td", 0)
+
+  selectText(cell)
+  BUILTIN_BY_ID.bold!.run(view)
+  expect(cell.textContent).toBe("**1**")
+
+  BUILTIN_BY_ID.bold!.run(view) // selection was restored across the sync
+  expect(cell.textContent).toBe("1")
+  expect(view.state.doc.toString()).toContain("| 1   |")
+})
+
+test("inline marks nest inside a cell (bold then italic)", async () => {
+  const { view } = await mount(T, { table: "cells" })
+  const cell = await focusCell(view, "tbody td", 0)
+
+  selectText(cell)
+  BUILTIN_BY_ID.bold!.run(view)
+  BUILTIN_BY_ID.italic!.run(view)
+
+  expect(cell.textContent).toBe("***1***")
+  expect(view.state.doc.toString()).toContain("***1***")
+})
+
+test("Mod-b typed inside a cell bolds the selection (widget shortcut path)", async () => {
+  const { view } = await mount(T, { table: "cells" })
+  const cell = await focusCell(view, "tbody td", 0)
+
+  selectText(cell)
+  cell.dispatchEvent(new KeyboardEvent("keydown", { key: "b", metaKey: true, bubbles: true }))
+
+  expect(cell.textContent).toBe("**1**")
+  expect(view.state.doc.toString()).toContain("**1**")
+})
+
+test("the link command wraps a cell selection as [text](url)", async () => {
+  const { view } = await mount(T, { table: "cells" })
+  const cell = await focusCell(view, "tbody td", 0)
+
+  selectText(cell)
+  BUILTIN_BY_ID.link!.run(view)
+
+  expect(cell.textContent).toBe("[1](url)")
+  expect(view.state.doc.toString()).toContain("[1](url)")
+})
+
 test("Enter in the last row appends a row", async () => {
   const { view } = await mount(T, { table: "cells" })
   const table = await editCells(view)

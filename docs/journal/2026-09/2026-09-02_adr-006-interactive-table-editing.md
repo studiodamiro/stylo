@@ -12,9 +12,11 @@ tags:
 
 - **Status:** Accepted — implemented 2026-09-02 as `inPlace.table: "cells"`
   (default `"source"`). See the
-  [implementation note](./2026-09-02_interactive-table-cells.md). Structural
-  controls (add/remove column, remove row, alignment) and inline formatting
-  inside cells remain deferred.
+  [implementation note](./2026-09-02_interactive-table-cells.md); the per-cell
+  Markdown reveal is a [follow-up](./2026-09-02_table-cell-reveal.md), and the
+  toolbar's inline commands now
+  [format a cell's selection](./2026-09-02_table-cell-inline-commands.md).
+  Structural controls (add/remove column, remove row, alignment) remain deferred.
 - **Date:** 2026-09-02
 - **Deciders:** damiro, Grace
 

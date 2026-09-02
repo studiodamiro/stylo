@@ -13,6 +13,7 @@ import {
   type LinePrefixSpec,
 } from "./block"
 import { frontmatterRange } from "../frontmatter"
+import { runInlineInCell } from "./cell-inline"
 import { fencedCodeActive, mathBlockActive, toggleFencedCode, toggleMathBlock } from "./fence"
 import {
   linkActive,
@@ -22,6 +23,7 @@ import {
   wikiLinkActive,
   wrapActive,
 } from "./inline"
+import { linkString, wikiLinkString, wrapString } from "./inline-ops"
 import { insertTable, tableActive } from "./table"
 
 // --- context predicates: where a command can't sensibly apply ---
@@ -101,7 +103,8 @@ function wrap(id: ToolbarCommandId, title: string, mark: string, keys?: string[]
   return {
     id,
     title,
-    run: (view) => toggleWrap(view, mark),
+    run: (view) =>
+      runInlineInCell(view, (t, f, u) => wrapString(t, f, u, mark)) || toggleWrap(view, mark),
     isActive: (state) => wrapActive(state, mark),
     disabled: inLiteral,
     keys,
@@ -152,14 +155,16 @@ export const BUILTIN_COMMANDS: ToolbarCommand[] = [
     // `$$` block; inside a fence it is the unwrap toggle, so stays live.
     id: "codeBlock",
     title: "Code block",
-    run: (view) => (tableActive(view.state) ? toggleWrap(view, "`") : toggleFencedCode(view)),
+    run: (view) =>
+      runInlineInCell(view, (t, f, u) => wrapString(t, f, u, "`")) ||
+      (tableActive(view.state) ? toggleWrap(view, "`") : toggleFencedCode(view)),
     isActive: (state) => (tableActive(state) ? wrapActive(state, "`") : fencedCodeActive(state)),
     disabled: disabledWhen(inFrontmatter, mathBlockActive, inHeading),
   },
   {
     id: "link",
     title: "Link",
-    run: toggleLink,
+    run: (view) => runInlineInCell(view, linkString) || toggleLink(view),
     isActive: linkActive,
     disabled: inLiteral,
     keys: ["Mod-k"],
@@ -167,7 +172,7 @@ export const BUILTIN_COMMANDS: ToolbarCommand[] = [
   {
     id: "wikilink",
     title: "Wikilink",
-    run: toggleWikiLink,
+    run: (view) => runInlineInCell(view, wikiLinkString) || toggleWikiLink(view),
     isActive: wikiLinkActive,
     disabled: inLiteral,
     keys: ["Mod-Shift-k"],
@@ -211,7 +216,9 @@ export const BUILTIN_COMMANDS: ToolbarCommand[] = [
     // toggle, so stays live.
     id: "mathBlock",
     title: "Block math",
-    run: (view) => (tableActive(view.state) ? toggleWrap(view, "$") : toggleMathBlock(view)),
+    run: (view) =>
+      runInlineInCell(view, (t, f, u) => wrapString(t, f, u, "$")) ||
+      (tableActive(view.state) ? toggleWrap(view, "$") : toggleMathBlock(view)),
     isActive: (state) => (tableActive(state) ? wrapActive(state, "$") : mathBlockActive(state)),
     disabled: disabledWhen(inFrontmatter, fencedCodeActive, inHeading),
   },

@@ -58,7 +58,10 @@ Either way a rendered cell shows inline formatting — `**bold**`, `*em*`,
 `~~strike~~`, `` `code` ``, `[links]`, `[[wikilinks]]`, `$math$`. In `"source"`
 mode the whole table reveals its pipe source when the caret lands on it; in
 `"cells"` mode each cell swaps to its raw Markdown **while it has focus** and
-re-renders on blur, so you edit the source in place. Specified in
+re-renders on blur, so you edit the source in place. With a cell focused the
+toolbar's inline buttons and their shortcuts (`Mod-b`, `Mod-i`, `Mod-k`,
+`Mod-Shift-k`) wrap the cell's selection; `codeBlock` / `mathBlock` degrade to
+inline `` `code` `` / `$math$` there. Specified in
 [ADR-006](../../journal/2026-09/2026-09-02_adr-006-interactive-table-editing.md).
 
 ## Applied at mount
