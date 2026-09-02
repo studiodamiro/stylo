@@ -160,7 +160,7 @@ export const inPlaceTheme = EditorView.theme({
   },
   ".cm-inplace-table-gizmos": {
     position: "absolute",
-    inset: "1em 0 1.4em", // matches .cm-inplace-table padding
+    inset: "0",
     pointerEvents: "none",
   },
   ".cm-inplace-tg-add, .cm-inplace-tg-handle": {
@@ -187,17 +187,16 @@ export const inPlaceTheme = EditorView.theme({
     borderColor: "var(--stylo-ring)",
   },
   ".cm-inplace-tg-add": { width: "1.3em", height: "1.3em", fontSize: "0.9em" },
-  ".cm-inplace-tg-addcol": { right: "-1.8em", top: "50%", transform: "translateY(-50%)" },
-  ".cm-inplace-tg-addrow": { bottom: "-1.8em", left: "50%", transform: "translateX(-50%)" },
-  ".cm-inplace-tg-handle": { width: "1.6em", height: "1em", fontSize: "0.8em" },
-  ".cm-inplace-tg-handle-col": { transform: "translate(-50%, -115%)" },
-  ".cm-inplace-tg-handle-row": { transform: "translate(-115%, -50%)" },
+  ".cm-inplace-tg-addcol": { transform: "translate(4px, -50%)" },
+  ".cm-inplace-tg-addrow": { transform: "translate(-50%, 4px)" },
+  ".cm-inplace-tg-handle": { width: "1.7em", height: "0.95em", fontSize: "0.8em" },
+  ".cm-inplace-tg-handle-col": { transform: "translate(-50%, calc(-100% - 3px))" },
+  ".cm-inplace-tg-handle-row": { transform: "translate(calc(-100% - 3px), -50%)" },
   ".cm-inplace-table-menu": {
     position: "absolute",
     zIndex: "5",
     minWidth: "9em",
     padding: "0.25em",
-    display: "flex",
     flexDirection: "column",
     pointerEvents: "auto",
     background: "var(--stylo-bg, #fff)",
@@ -205,6 +204,8 @@ export const inPlaceTheme = EditorView.theme({
     borderRadius: "6px",
     boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
   },
+  ".cm-inplace-table-menu:not([hidden])": { display: "flex" },
+  ".cm-inplace-table-menu[hidden]": { display: "none" },
   ".cm-inplace-tm-item": {
     all: "unset",
     padding: "0.35em 0.6em",

@@ -65,13 +65,29 @@ same path.
   re-laid-out on a structural edit or hover.
 - No drag-to-reorder rows / columns, and no multi-cell selection. Separate, later.
 
+## Fixes after the first hands-on pass
+
+- The `.cm-inplace-table-menu` rule set `display: flex`, which outranks the UA
+  `[hidden]` rule — so an empty menu box was always painted at the overlay's
+  top-left, over the header row. It swallowed the first click on anything beneath
+  it, which is why "add row / column" and the inline-code / math buttons seemed
+  to need a second click, and why the menu "wouldn't leave". Now gated on
+  `:not([hidden])` / `[hidden]`.
+- Handles were positioned against the table's border box, which carries the
+  `1em / 1.4em` vertical padding, so they floated off the grid. `layout()` now
+  measures the first / last `<tr>` and the header cells and places the `+`
+  buttons too; the gizmo layer is `inset: 0`. Handles sit on the outer edge,
+  centred on their column / row.
+
 ## Verification
 
-`typecheck`, 150 Vitest tests (7 new in `test/table-structure.test.ts` for the
-pure ops, 5 new in `test/table-interactive.test.tsx` — the edge `+` buttons
+`typecheck`, 151 Vitest tests (7 new in `test/table-structure.test.ts` for the
+pure ops, 6 new in `test/table-interactive.test.tsx` — the edge `+` buttons
 appending, a column menu deleting and writing `:-:` into the delimiter, a body
-row menu deleting while the header handle offers only _insert below_), `build`,
+row menu deleting while the header handle offers only _insert below_, and the
+menu staying hidden until opened then closing on an outside click), `build`,
 `format:check`. Confirmed in a real Chrome against the playground: the handles
-appear on hover, `+` appends, the column menu re-aligns and deletes, the row menu
-deletes, and every change round-trips through `serializeGrid` with alignment
-preserved.
+sit on the grid edges, `+` appends on a single click, the column menu re-aligns
+and deletes, the row menu deletes, the menu closes on an outside click, inline
+code / math wrap a cell selection first try, and every change round-trips through
+`serializeGrid` with alignment preserved.
