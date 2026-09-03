@@ -17,13 +17,20 @@ function markRun(s: string, pos: number, dir: -1 | 1): { text: string; from: num
   return { text: s.slice(from, dir < 0 ? pos : to), from }
 }
 
-/** Offset and length of the first group of `ch` inside a mark run. */
-function charGroup(run: string, ch: string): { start: number; len: number } | null {
-  const start = run.indexOf(ch)
-  if (start < 0) return null
-  let len = 0
-  while (run[start + len] === ch) len++
-  return { start, len }
+/** Every run of `ch` inside a mark run, in index order. */
+function charGroups(run: string, ch: string): { start: number; len: number }[] {
+  const out: { start: number; len: number }[] = []
+  for (let i = 0; i < run.length; ) {
+    if (run[i] !== ch) {
+      i++
+      continue
+    }
+    let len = 0
+    while (run[i + len] === ch) len++
+    out.push({ start: i, len })
+    i += len
+  }
+  return out
 }
 
 /**
@@ -84,13 +91,19 @@ export function wrapOp(text: string, from: number, to: number, mark: string): In
   }
 
   // `mark` is somewhere in the stack of marks flanking the range — possibly with
-  // other marks (`~~`, `*`) between it and the text, as in `***~~word~~***`.
-  // Strip `m` from the inner edge of its char-group on each side.
+  // other marks (`~~`, `*`) between it and the text, as in `***~~word~~***` or,
+  // when marks were applied in an interleaving order, `**~~*word*~~**`. Line the
+  // `ch`-groups up outermost-first on both sides (the left run reads outer→inner
+  // already; the right run reads inner→outer, so reverse it) and strip the
+  // outermost pair whose widths match `mark`.
   const left = markRun(text, from, -1)
   const right = markRun(text, to, 1)
-  const lg = charGroup(left.text, ch)
-  const rg = charGroup(right.text, ch)
-  if (lg && rg && surroundsExactly(lg.len, rg.len, m)) {
+  const lgs = charGroups(left.text, ch)
+  const rgs = charGroups(right.text, ch).reverse()
+  for (let k = 0; k < Math.min(lgs.length, rgs.length); k++) {
+    const lg = lgs[k]!
+    const rg = rgs[k]!
+    if (!surroundsExactly(lg.len, rg.len, m)) continue
     const lInner = left.from + lg.start + lg.len // group's edge nearest the text
     const rInner = to + rg.start
     return {

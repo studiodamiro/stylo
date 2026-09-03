@@ -361,15 +361,17 @@ test("right-click on a cell selection shows structural rows AND an enabled Forma
   expect(bold.disabled).toBe(false) // not greyed by the collapsed state.selection
 })
 
-test("right-click on a collapsed cell caret shows only the structural menu", async () => {
+test("right-click on a word in a cell with no selection auto-selects it and adds Format", async () => {
   const { view } = await mount(T, { table: "cells" })
-  const cell = await focusCell(view, "tbody td", 0)
+  const cell = await focusCell(view, "tbody td", 0) // raw source "1"
+  expect(cell.ownerDocument.getSelection()?.toString()).not.toBe("1") // nothing selected yet
   cell.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, clientX: 10, clientY: 10 }))
+  expect(cell.ownerDocument.getSelection()?.toString()).toBe("1") // the word got selected
   const labels = [...view.contentDOM.querySelectorAll(".cm-inplace-menu-item")].map(
     (b) => b.textContent ?? "",
   )
   expect(labels).toContain("Insert row above")
-  expect(labels).not.toContain("Format")
+  expect(labels).toContain("Format")
 })
 
 test("the add-column gizmo appends a column", async () => {

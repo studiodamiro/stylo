@@ -104,6 +104,39 @@ test("bold, italic, strike all on then all off round-trips cleanly", () => {
   expect(view.state.doc.toString()).toBe("x word y")
 })
 
+test("interleaved marks (b,s,i order) still strip cleanly in any removal order", () => {
+  // Applying bold, then strike, then italic nests them interleaved:
+  // the *word*'s italic is innermost, strike around it, bold outermost.
+  expect(seq("bold", "strike", "italic")).toBe("x **~~*word*~~** y")
+
+  const view = mkView("x word y", 2, 6)
+  for (const id of ["bold", "strike", "italic"] as const) {
+    BUILTIN_BY_ID[id]!.run(view)
+    reSelectWord(view)
+  }
+  // Remove in a different order than applied — bold (outer), italic (inner), strike.
+  for (const id of ["bold", "italic", "strike"] as const) {
+    BUILTIN_BY_ID[id]!.run(view)
+    reSelectWord(view)
+  }
+  expect(view.state.doc.toString()).toBe("x word y")
+})
+
+test("interleaved marks (i,s,b order) strip cleanly too", () => {
+  expect(seq("italic", "strike", "bold")).toBe("x *~~**word**~~* y")
+
+  const view = mkView("x word y", 2, 6)
+  for (const id of ["italic", "strike", "bold"] as const) {
+    BUILTIN_BY_ID[id]!.run(view)
+    reSelectWord(view)
+  }
+  for (const id of ["bold", "italic", "strike"] as const) {
+    BUILTIN_BY_ID[id]!.run(view)
+    reSelectWord(view)
+  }
+  expect(view.state.doc.toString()).toBe("x word y")
+})
+
 test("a mark strips out of the middle of a stack, leaving the others", () => {
   const view = mkView("x word y", 2, 6)
   for (const id of ["bold", "italic", "strike"] as const) {

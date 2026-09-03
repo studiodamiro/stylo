@@ -63,6 +63,26 @@ export function offsetFromPoint(cell: HTMLElement, x: number, y: number): number
   return textBefore(cell, node) + (node.nodeType === Node.TEXT_NODE ? nodeOffset : 0)
 }
 
+const WORD_CHAR = /[\p{L}\p{N}_]/u
+
+/**
+ * Select the word at a screen point in `cell`'s raw text — the cell equivalent
+ * of the canvas's "right-click selects the word under the pointer". Returns
+ * `false` (leaving any caret / selection untouched) when the point is on
+ * whitespace or punctuation, so a menu opened there still has a target.
+ */
+export function selectWordAtPoint(cell: HTMLElement, x: number, y: number): boolean {
+  const text = cell.textContent ?? ""
+  const at = offsetFromPoint(cell, x, y)
+  let from = at
+  let to = at
+  while (from > 0 && WORD_CHAR.test(text[from - 1]!)) from--
+  while (to < text.length && WORD_CHAR.test(text[to]!)) to++
+  if (to <= from) return false
+  placeCaret(cell, from, to)
+  return true
+}
+
 /**
  * Select `cell`'s first text node from char `offset` to char `head` (both
  * clamped). With `head` omitted or equal, the caret is simply parked at `offset`.

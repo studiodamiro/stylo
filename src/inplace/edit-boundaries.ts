@@ -76,10 +76,20 @@ function skipHiddenMarkers(view: EditorView, pos: number, dir: -1 | 1): number {
  * `emphasisOnly`, only the paired-mark constructs whose *both* delimiters are
  * hidden count (strong / emphasis / strike / inline code) — links and wikilinks
  * keep a directly editable label, so their edges are not boundary-escaped.
+ *
+ * By default the construct's markers must be hidden right now (boundary editing
+ * only applies then); `ignoreReveal` drops that check for callers that just want
+ * the span — the right-click menu selecting the whole phrase, which should work
+ * whether or not the caret has revealed the line.
  */
-export function wrapAt(state: EditorState, pos: number, emphasisOnly = false): Wrap | null {
+export function wrapAt(
+  state: EditorState,
+  pos: number,
+  emphasisOnly = false,
+  ignoreReveal = false,
+): Wrap | null {
   const line = state.doc.lineAt(pos)
-  if (!markersHidden(state, line.number)) return null
+  if (!ignoreReveal && !markersHidden(state, line.number)) return null
   const toggles = state.facet(inPlaceConfigFacet)
   const tree = syntaxTree(state)
 

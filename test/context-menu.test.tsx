@@ -63,6 +63,14 @@ test("right-clicking a plain word still selects just that word", async () => {
   expect(view.state.sliceDoc(sel.from, sel.to)).toBe("plain")
 })
 
+test("phrase-wide right-click works even with the line's markers revealed", async () => {
+  const { view } = await mount("**two words** trailing", { reveal: "caret" })
+  view.dispatch({ selection: { anchor: 4 } }) // caret on the line → markers shown
+  rightClick(view)
+  const sel = view.state.selection.main
+  expect(view.state.sliceDoc(sel.from, sel.to)).toBe("two words")
+})
+
 test("inPlace.contextMenu = false leaves the browser menu alone", async () => {
   const { view } = await mount("a plain paragraph", { contextMenu: false })
   const e = rightClick(view)

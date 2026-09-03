@@ -314,6 +314,27 @@ throughout.
     `cellSelectionRows(view)` (Format ▸ + clipboard) under its structural rows,
     so one menu covers the table and the selected text. The canvas menu no
     longer has a table fall-through path.
+- **2026-09-04 — Follow-ups on the same three, from a second pass of use.**
+  - _Phrase select works with the line revealed too._ `wrapAt` returns `null`
+    when a line's markers are shown (boundary editing does not apply then), so
+    under `reveal: "caret"` a right-click on a bold phrase whose line the caret
+    had already revealed fell back to one word. `wrapAt` gained an
+    `ignoreReveal` flag; the right-click menu passes it, since selecting a span
+    is not an edit and should not care whether the markers are visible.
+  - _Interleaved marks now strip in any order._ Applying bold, strike, italic
+    (in that order) nests them interleaved — `**~~*word*~~**` — and removing a
+    mark then failed: `wrapOp` paired the left run's *outermost* `*` group with
+    the right run's *innermost* one (both were "the first group"), so the widths
+    disagreed and it wrapped again instead of unwrapping, sometimes stacking
+    `****` that the parser then showed literally. It now lists the mark-char
+    groups outermost-first on both sides (the right run is reversed) and strips
+    the outermost pair whose widths match. A 36-case apply-order × remove-order
+    sweep round-trips to plain text.
+  - _Right-click auto-selects the word in a table cell._ Matching the canvas: a
+    right-click in the cell being edited, with nothing selected, now selects the
+    word under the pointer (`selectWordAtPoint` in `table-cell-dom.ts`, using the
+    existing `offsetFromPoint`), so the Format group appears without a manual
+    drag. On whitespace or punctuation it leaves the caret where it is.
 
 ## Consequences
 

@@ -9,6 +9,7 @@ import {
   offsetFromPoint,
   placeCaret,
   renderedCaretOffset,
+  selectWordAtPoint,
   trimGrid,
   unescapePipe,
 } from "./table-cell-dom"
@@ -342,14 +343,19 @@ export class EditableTableWidget extends WidgetType {
       document.execCommand("insertText", false, text)
     })
     // Right-click (and long-press on touch) opens the structural menu for the
-    // cell under the pointer. With a text selection in the cell the Format group
-    // (and clipboard) is appended below the row / column / align actions, so one
-    // menu covers both the table and the selected characters.
+    // cell under the pointer. In the cell being edited, a right-click with no
+    // selection first selects the word under the pointer — the same affordance
+    // the canvas menu gives — so the Format group (and clipboard) can be
+    // appended below the row / column / align actions and one menu covers both
+    // the table and the word.
     table.addEventListener("contextmenu", (e) => {
       const cell = (e.target as HTMLElement).closest<HTMLTableCellElement>("td, th")
       if (!cell) return
       e.preventDefault()
       e.stopPropagation()
+      if (this.editing === cell && !cellHasSelection(view)) {
+        selectWordAtPoint(cell, e.clientX, e.clientY)
+      }
       const extra = cellHasSelection(view) ? cellSelectionRows(view) : undefined
       this.gizmos?.openFor(cell, e.clientX, e.clientY, extra)
     })

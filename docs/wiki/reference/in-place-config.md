@@ -93,9 +93,10 @@ the menu (they live on the floating bar or the toolbar); **Paragraph** and
 **Insert** always stay.
 
 A right-click in an **editable table cell** opens the table's own structural
-menu (insert / delete row and column, align); with a text selection in the cell
-it also carries a **Format** group and clipboard, so one menu covers the table
-and the selected characters. A right-click **inside a fenced code block**
+menu (insert / delete row and column, align); on a word — or over an existing
+selection — it also carries a **Format** group and clipboard, so one menu covers
+the table and the text. Like the canvas, a right-click on a word with nothing
+selected selects that word first. A right-click **inside a fenced code block**
 replaces the menu with a **Language** field (edits the ` ```lang ` info string)
 and **Remove code block**, plus clipboard. A right-click outside the text area
 gets the browser's own menu. Set `contextMenu: false` to keep the browser menu

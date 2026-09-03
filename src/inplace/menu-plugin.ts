@@ -56,7 +56,7 @@ class ContextMenuController implements PluginValue {
         // whitespace, punctuation) just drop the caret.
         const pos = view.posAtCoords({ x: e.clientX, y: e.clientY })
         if (pos != null) {
-          const wrap = wrapAt(view.state, pos, true)
+          const wrap = wrapAt(view.state, pos, true, true)
           const span =
             wrap && wrap.contentTo > wrap.contentFrom
               ? { anchor: wrap.contentFrom, head: wrap.contentTo }
