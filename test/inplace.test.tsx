@@ -276,6 +276,35 @@ test("a horizontal rule becomes a widget off-line, source on-line", async () => 
   expect(countWidgets(view, HrWidget)).toBe(0)
 })
 
+test("reveal: 'never' still shows the rule's source when the caret is on it", async () => {
+  const { view } = await mount("above\n\n---\n\nbelow", { reveal: "never" })
+
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+  expect(countWidgets(view, HrWidget)).toBe(1) // widget off-caret
+
+  view.dispatch({ selection: { anchor: view.state.doc.line(3).from } }) // onto the `---`
+  expect(countWidgets(view, HrWidget)).toBe(0) // raw `---` back, a visible caret to sit on
+})
+
+test("a Setext heading (text then `---`) styles the text and hides the underline", async () => {
+  const { view } = await mount("My Title\n---\n\nbody", { reveal: "never" })
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+
+  expect(hasClass(view, "cm-inplace-h2")).toBe(true) // "My Title" styled as H2
+  expect(hasClass(view, "cm-inplace-setext-rule")).toBe(true) // underline row collapsed
+  expect(hidesAMarker(view)).toBe(true) // the `---` is hidden, not literal
+
+  view.dispatch({ selection: { anchor: view.state.doc.line(2).from } }) // onto the `---`
+  expect(hidesAMarker(view)).toBe(false) // underline shown again for editing
+  expect(hasClass(view, "cm-inplace-h2")).toBe(true) // heading size kept
+})
+
+test("a Setext H1 (`===`) is styled too", async () => {
+  const { view } = await mount("Big Title\n===\n\nbody", { reveal: "never" })
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+  expect(hasClass(view, "cm-inplace-h1")).toBe(true)
+})
+
 test("blockquote lines get the quote class and > hides off-caret, reveals on-caret", async () => {
   const { view } = await mount("> quoted\n\ntail")
   view.dispatch({ selection: { anchor: view.state.doc.length } })

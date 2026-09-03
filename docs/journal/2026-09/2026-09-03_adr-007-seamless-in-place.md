@@ -360,6 +360,18 @@ throughout.
   - `nodes.ts` no longer returns `false` from the `Link` branch, so emphasis /
     code inside a label (`[**text**](url)`, however it got there) also has its
     markers hidden and its text styled.
+- **2026-09-04 — Setext headings, and a visible caret on a rule line.** Typing
+  `---` directly under a line (no blank between) makes that line a Setext H2 in
+  Markdown — the grammar stops seeing a `HorizontalRule` — so the canvas, which
+  only knew ATX headings, showed a literal `---` and left the text unstyled.
+  `nodes.ts` now decorates `SetextHeading1` / `SetextHeading2`: the text line
+  gets the heading size, the `===` / `---` underline is hidden and its row
+  collapsed (`.cm-inplace-setext-rule`). Both that underline and a real
+  `HorizontalRule` now gate on `caretRevealed` rather than `revealed`, so the
+  raw `---` comes back whenever the caret is on the line even under
+  `reveal: "never"` — which also fixes the missing caret on a rule line (a
+  zero-height replaced widget had nowhere to draw one). The `---` is one atomic
+  step, so a single arrow crosses it.
 
 ## Consequences
 

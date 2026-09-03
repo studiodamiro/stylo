@@ -6,6 +6,7 @@ import type { ResolvedToggles } from "./config"
 import { BulletWidget, CheckboxWidget, HrWidget } from "./widgets"
 
 const HEADING = /^ATXHeading([1-6])$/
+const SETEXT = /^SetextHeading([12])$/
 const BULLET = /^[-*+]$/
 
 /** Inline spans: style the text between the markers, hide the markers off-caret. */
@@ -53,6 +54,31 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
     return // descend: emphasis / links inside the heading still get decorated
   }
 
+  // A Setext heading is text with `===` / `---` on the next line (what you get
+  // by typing `---` directly under a line, no blank between). Style the text
+  // line like an ATX heading; hide the underline and collapse its row so it
+  // reads as one heading, not "text then a rule". `caretRevealed`, not
+  // `revealed`: the underline shows again whenever the caret is on either line,
+  // even under `reveal: "never"`, so it stays editable and the caret is visible.
+  const setext = SETEXT.exec(node.name)
+  if (setext) {
+    if (toggles.headings) {
+      const textLine = doc.lineAt(node.from)
+      out.push(
+        Decoration.line({ class: `cm-inplace-heading cm-inplace-h${setext[1]}` }).range(textLine.from),
+      )
+      const hm = node.node.getChild("HeaderMark")
+      if (hm) {
+        const underline = doc.lineAt(hm.from)
+        if (!caretRevealed.has(textLine.number) && !caretRevealed.has(underline.number)) {
+          out.push(Decoration.line({ class: "cm-inplace-setext-rule" }).range(underline.from))
+          out.push(Decoration.replace({}).range(hm.from, hm.to))
+        }
+      }
+    }
+    return // descend: inline emphasis inside the heading text
+  }
+
   const rule = INLINE[node.name]
   if (rule) {
     if (!toggles[rule.toggle]) return
@@ -96,7 +122,11 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
   if (node.name === "HorizontalRule") {
     if (!toggles.horizontalRule) return false
     const line = doc.lineAt(node.from)
-    if (!revealed.has(line.number)) {
+    // `caretRevealed`, not `revealed`: with the caret on the rule line the raw
+    // `---` shows again (even under `reveal: "never"`), so there is a visible
+    // caret to sit on and the marker is editable — the same exception fenced
+    // code and `$$` math make.
+    if (!caretRevealed.has(line.number)) {
       // Zero the line's own text-row strut; the widget alone sets the height.
       out.push(Decoration.line({ class: "cm-inplace-hr-line" }).range(line.from))
       out.push(Decoration.replace({ widget: new HrWidget() }).range(line.from, line.to))

@@ -99,6 +99,9 @@ export const inPlaceTheme = EditorView.theme({
   // fence rows) so it does not stack under the widget's height — that stacking
   // was the extra space above and below the rule.
   ".cm-inplace-hr-line": { fontSize: "0", lineHeight: "0" },
+  // A Setext heading's `===` / `---` underline row, collapsed to nothing off
+  // the caret so the heading reads as one line (the `---` text is also hidden).
+  ".cm-inplace-setext-rule": { fontSize: "0", lineHeight: "0" },
   ".cm-inplace-hr": {
     display: "block",
     // ~one text row, so the rule renders in the `---`'s own footprint with no
