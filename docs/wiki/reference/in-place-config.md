@@ -103,9 +103,10 @@ gets the browser's own menu. Set `contextMenu: false` to keep the browser menu
 everywhere.
 
 A right-click with no selection first checks whether the pointer is inside a
-hidden-marker span (`**bold**`, `*italic*`, `~~strike~~`, `` `code` ``): if so it
-selects the whole span, so a toggle covers the entire phrase, not just the word
-under the pointer.
+marked run — `**bold**`, `*italic*`, `~~strike~~`, `` `code` ``, a
+`[label](url)` link or a `[[Page|label]]` wikilink. If so it selects the whole
+run's text, so a toggle (or **Edit link**) covers the entire phrase, not just
+the word under the pointer. The same applies inside an editable table cell.
 
 ### Picking and ordering the groups
 

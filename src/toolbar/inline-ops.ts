@@ -145,6 +145,41 @@ export function wrapString(text: string, from: number, to: number, mark: string)
   return { text: applyChanges(text, op.changes), from: op.from, to: op.to }
 }
 
+/**
+ * The content span (text between the delimiters) of the innermost inline mark
+ * run of `text` covering `pos` — `**bold phrase**`, `*em*`, `~~strike~~`,
+ * `` `code` ``, `[label](url)`, `[[target|label]]` — or `null`. Widens a
+ * right-click in a table cell from the bare word to the whole run, so a Format
+ * toggle covers all of it (the canvas does the same through `wrapAt`).
+ */
+export function markedContentAt(text: string, pos: number): { from: number; to: number } | null {
+  const link = linkAtIn(text, pos)
+  if (link) {
+    const from = link.from + 1 // past `[`
+    const to = from + link.label.length
+    if (pos >= from && pos <= to) return { from, to }
+  }
+  const wiki = wikiLinkPartsIn(text, pos)
+  if (wiki) {
+    const from = wiki.label ? wiki.to - 2 - wiki.label.length : wiki.targetFrom
+    const to = wiki.label ? wiki.to - 2 : wiki.targetTo
+    if (pos >= from && pos <= to) return { from, to }
+  }
+  let best: { from: number; to: number } | null = null
+  for (const mark of ["**", "~~", "*", "`"]) {
+    const re = new RegExp(esc(mark) + "(?!\\s)(?:[^]*?\\S)??" + esc(mark), "g")
+    for (let m: RegExpExecArray | null; (m = re.exec(text)); ) {
+      if (m[0].length <= 2 * mark.length) continue
+      const from = m.index + mark.length
+      const to = m.index + m[0].length - mark.length
+      if (pos >= from && pos <= to && (!best || to - from < best.to - best.from)) {
+        best = { from, to }
+      }
+    }
+  }
+  return best
+}
+
 /** The `[text](url)` span of `text` covering `head`, or `null`. */
 export function linkAtIn(
   text: string,

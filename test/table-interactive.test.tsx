@@ -374,6 +374,25 @@ test("right-click on a word in a cell with no selection auto-selects it and adds
   expect(labels).toContain("Format")
 })
 
+test("right-click on a marked word in a cell selects the whole run, not one word", async () => {
+  const { view } = await mount(T, { table: "cells" })
+  const cell = await focusCell(view, "tbody td", 0)
+  // Give the cell some marked source, then blur/refocus so it holds raw text.
+  cell.textContent = "**bold phrase**"
+  cell.dispatchEvent(new Event("input", { bubbles: true }))
+  const text = cell.firstChild as Text
+  // jsdom has no caretPositionFromPoint — stub it to land inside "phrase".
+  const doc = cell.ownerDocument as Document & { caretPositionFromPoint?: unknown }
+  doc.caretPositionFromPoint = () => ({
+    offsetNode: text,
+    offset: 9,
+    getClientRect: () => new DOMRect(),
+  })
+
+  cell.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, clientX: 10, clientY: 10 }))
+  expect(cell.ownerDocument.getSelection()?.toString()).toBe("bold phrase") // not "bold"
+})
+
 test("the add-column gizmo appends a column", async () => {
   const { view } = await mount(T, { table: "cells" })
   await editCells(view)

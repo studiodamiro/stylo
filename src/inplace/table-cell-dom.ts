@@ -1,3 +1,4 @@
+import { markedContentAt } from "../toolbar/inline-ops"
 import type { ParsedTable } from "./table-widget"
 
 /** `[head, ...body]` as raw cell strings — the editable widget's source of truth. */
@@ -67,13 +68,20 @@ const WORD_CHAR = /[\p{L}\p{N}_]/u
 
 /**
  * Select the word at a screen point in `cell`'s raw text — the cell equivalent
- * of the canvas's "right-click selects the word under the pointer". Returns
- * `false` (leaving any caret / selection untouched) when the point is on
- * whitespace or punctuation, so a menu opened there still has a target.
+ * of the canvas's "right-click selects the word under the pointer". A point
+ * inside a marked run (`**bold phrase**`, `[a link](url)`, …) selects the whole
+ * run's text instead, so a Format toggle covers all of it. Returns `false`
+ * (leaving any caret / selection untouched) when the point is on whitespace or
+ * punctuation, so a menu opened there still has a target.
  */
 export function selectWordAtPoint(cell: HTMLElement, x: number, y: number): boolean {
   const text = cell.textContent ?? ""
   const at = offsetFromPoint(cell, x, y)
+  const run = markedContentAt(text, at)
+  if (run) {
+    placeCaret(cell, run.from, run.to)
+    return true
+  }
   let from = at
   let to = at
   while (from > 0 && WORD_CHAR.test(text[from - 1]!)) from--

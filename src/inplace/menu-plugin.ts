@@ -50,13 +50,14 @@ class ContextMenuController implements PluginValue {
         view.dispatch({ selection: this.stashed })
       } else if (view.state.selection.main.empty) {
         // No prior selection: select what the pointer is on so the menu offers
-        // formatting for it. Inside a hidden-marker construct (`**two words**`,
-        // `*a phrase*`, `~~struck~~`) take the whole marked run, so a toggle
-        // hits all of it; otherwise the single word; failing that (blank line,
-        // whitespace, punctuation) just drop the caret.
+        // formatting for it. Inside a marked run — `**two words**`, `*a phrase*`,
+        // `~~struck~~`, a `[multi word](url)` link or `[[Page|labelled link]]` —
+        // take the whole run's text, so an Edit link / Bold hits all of it;
+        // otherwise the single word; failing that (blank line, whitespace,
+        // punctuation) just drop the caret.
         const pos = view.posAtCoords({ x: e.clientX, y: e.clientY })
         if (pos != null) {
-          const wrap = wrapAt(view.state, pos, true, true)
+          const wrap = wrapAt(view.state, pos, false, true)
           const span =
             wrap && wrap.contentTo > wrap.contentFrom
               ? { anchor: wrap.contentFrom, head: wrap.contentTo }

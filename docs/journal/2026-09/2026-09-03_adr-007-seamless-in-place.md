@@ -335,6 +335,19 @@ throughout.
     word under the pointer (`selectWordAtPoint` in `table-cell-dom.ts`, using the
     existing `offsetFromPoint`), so the Format group appears without a manual
     drag. On whitespace or punctuation it leaves the caret where it is.
+- **2026-09-04 — Phrase select widened to links, and to marked runs in a cell.**
+  - _Links and wikilinks._ The right-click's `wrapAt` probe was `emphasisOnly`,
+    so a click in `[two words](url)` or `[[Page|a label]]` fell back to one
+    word. It now includes the link constructs; the selection is the label / the
+    target, which is also what "Edit link" then operates on.
+  - _Marked runs inside a table cell._ `selectWordAtPoint` widens the same way
+    via a new `markedContentAt` string scan (`inline-ops.ts`): a right-click on
+    `**bold phrase**` in a cell selects `bold phrase`, so a Format toggle covers
+    the run rather than one word. The delimiters do briefly show while the cell
+    holds focus for the menu — an editable cell always shows its raw Markdown
+    while focused, that is how it is edited — and re-hide when focus leaves.
+    Removing that flash would need a formatting path that works on the rendered
+    cell through its model string; deferred until it is asked for.
 
 ## Consequences
 

@@ -43,8 +43,9 @@ Takes over from the browser's menu when it has something to offer:
 | Target under the pointer                | Menu contents                                                  |
 | --------------------------------------- | ------------------------------------------------------------- |
 | A non-empty selection                   | Inline actions + Cut / Copy / Paste                          |
+| No selection, on a marked run            | The whole run's text — `**phrase**`, `[label](url)`, `[[Page\|label]]` — is selected, then as the row above |
 | A structural block — code, quote, list, heading, divider, `$$` math, frontmatter | That block's toggles + **Insert ▸** + clipboard             |
-| A table cell, on a word                  | The word is auto-selected, then as the row below              |
+| A table cell, on a word or marked run    | Auto-selected (whole run for a marked one), then as the row below |
 | A table cell, on whitespace              | The structural menu shipped with the table controls          |
 | A table cell with a text selection      | The structural menu + a **Format ▸** group (routed through `runInlineInCell`) + clipboard |
 | A plain paragraph, no selection         | **Insert ▸** + clipboard                                     |
