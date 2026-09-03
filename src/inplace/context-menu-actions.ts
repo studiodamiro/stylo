@@ -8,13 +8,13 @@
 
 import type { EditorState } from "@codemirror/state"
 import type { EditorView } from "@codemirror/view"
-import type { ToolbarCommandId } from "../types"
+import type { MenuGroupId, ToolbarCommandId } from "../types"
 import { activeTableCell } from "../toolbar/cell-inline"
 import { BUILTIN_BY_ID } from "../toolbar/commands"
 import { fenceInfoAt, fencedCodeActive } from "../toolbar/fence"
 import { ICON_PATHS } from "../toolbar/icon-paths"
 import { linkPartsIn, wikiLinkAtIn, wikiLinkPartsIn } from "../toolbar/inline-ops"
-import { linkOpenFacet, selectionUIFacet } from "./config"
+import { linkOpenFacet, menuGroupsFacet, selectionUIFacet } from "./config"
 import type { MenuAction, MenuField, MenuRow, MenuSubmenu } from "./context-menu"
 import { selectionOffsets } from "./table-cell-dom"
 
@@ -58,11 +58,7 @@ const toAction = (view: EditorView, id: ToolbarCommandId): MenuAction | null => 
   }
 }
 
-const actions = (
-  view: EditorView,
-  ids: ToolbarCommandId[],
-  dropDisabled = false,
-): MenuAction[] => {
+const actions = (view: EditorView, ids: ToolbarCommandId[], dropDisabled = false): MenuAction[] => {
   const out: MenuAction[] = []
   for (const id of ids) {
     const a = toAction(view, id)
@@ -346,25 +342,41 @@ const insertGroup = (view: EditorView): MenuRow[] => [
   ...actions(view, INSERT_BLOCK_IDS),
 ]
 
+/** Append `add` as its own separator-delimited group. */
+function pushGroup(rows: MenuRow[], add: MenuRow[]): void {
+  if (!add.length) return
+  if (rows.length) rows.push("separator")
+  rows.push(...add)
+}
+
 /**
- * The right-click menu — one shape everywhere: internal / external link rows,
- * then Format / Paragraph / Insert submenus, then clipboard. `selectionUI`
- * decides whether the mark surfaces (the link rows and Format) live here or on
- * the floating bar; Paragraph and Insert are block-level and always shown.
+ * The right-click menu. `menuGroupsFacet` picks and orders the top-level groups
+ * (`link` / `format` / `paragraph` / `insert` / `clipboard`); `selectionUI`
+ * independently decides whether `link` and `format` live here or on the floating
+ * bar. A table-cell selection and a fenced-code caret are focused contexts that
+ * ignore the ordering and offer only what applies.
  */
 export function menuRows(view: EditorView): MenuRow[] {
+  const { state } = view
+  const groups = state.facet(menuGroupsFacet)
+  const has = (g: MenuGroupId) => groups.includes(g)
+
   // A table cell only supports inline formatting — no block or insert there.
   if (cellHasSelection(view)) {
-    return [submenu("Format", ICON_PATHS.format, formatGroup(view)), "separator", ...clipboardRows(view)]
+    const rows: MenuRow[] = []
+    if (has("format")) pushGroup(rows, [submenu("Format", ICON_PATHS.format, formatGroup(view))])
+    if (has("clipboard")) pushGroup(rows, clipboardRows(view))
+    return rows
   }
 
   // A fenced code block is a literal context — offer only its language and an
   // unwrap, plus clipboard.
-  if (fencedCodeActive(view.state)) {
-    return [codeBlockRow(view), "separator", ...clipboardRows(view)]
+  if (fencedCodeActive(state)) {
+    const rows: MenuRow[] = [codeBlockRow(view)]
+    if (has("clipboard")) pushGroup(rows, clipboardRows(view))
+    return rows
   }
 
-  const { state } = view
   const sel = state.selection.main
   const line = state.doc.lineAt(sel.head)
   // Insert drops a brand-new block — the whole submenu is disabled off an empty
@@ -374,15 +386,19 @@ export function menuRows(view: EditorView): MenuRow[] {
   // an empty `****`, which shows as literal marks. The right-click menu selects
   // the word first, so this only bites on a blank line or in whitespace.
   const formatOk = !sel.empty || Boolean(state.wordAt(sel.head))
-
+  // `link` / `format` are on the floating bar / toolbar unless the menu owns them.
   const marksHere = state.facet(selectionUIFacet) === "menu"
+
   const rows: MenuRow[] = []
-  if (marksHere) {
-    rows.push(wikiLinkRow(view), linkRow(view), "separator")
-    rows.push(submenu("Format", ICON_PATHS.format, formatGroup(view), !formatOk))
+  for (const g of groups) {
+    if (g === "link" && marksHere) pushGroup(rows, [wikiLinkRow(view), linkRow(view)])
+    else if (g === "format" && marksHere)
+      pushGroup(rows, [submenu("Format", ICON_PATHS.format, formatGroup(view), !formatOk)])
+    else if (g === "paragraph")
+      pushGroup(rows, [submenu("Paragraph", ICON_PATHS.paragraph, paragraphGroup(view))])
+    else if (g === "insert")
+      pushGroup(rows, [submenu("Insert", ICON_PATHS.insert, insertGroup(view), !insertOk)])
+    else if (g === "clipboard") pushGroup(rows, clipboardRows(view))
   }
-  rows.push(submenu("Paragraph", ICON_PATHS.paragraph, paragraphGroup(view)))
-  rows.push(submenu("Insert", ICON_PATHS.insert, insertGroup(view), !insertOk))
-  rows.push("separator", ...clipboardRows(view))
   return rows
 }

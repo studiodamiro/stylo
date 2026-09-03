@@ -42,7 +42,7 @@ Every key is optional and defaults to `true`.
 | `math`           | `$…$` and `$$…$$` KaTeX widgets                                      |
 | `lists`          | `-` / `*` / `+` bullet-glyph substitution                            |
 | `tasks`          | interactive `[ ]` / `[x]` checkboxes                                 |
-| `blockquote`     | left-border / muted framing, and `>` hiding off-caret                |
+| `blockquote`     | left-border / muted framing, `>` hiding off-caret, and callouts      |
 | `horizontalRule` | the rendered `<hr>`                                                  |
 | `code`           | inline `` `code` `` styling and the fenced / indented code container |
 | `frontmatter`    | the recessed in-place styling of the leading YAML block              |
@@ -99,6 +99,22 @@ block** offers a **Language** field (edits the ` ```lang ` info string) with
 the browser's own menu. Set `contextMenu: false` to keep the browser menu
 everywhere.
 
+### Picking and ordering the groups
+
+`contextMenu` also takes an object to choose which top-level groups appear and
+in what order:
+
+```tsx
+inPlace={{ contextMenu: { groups: ["paragraph", "insert", "clipboard"] } }}
+```
+
+`groups` is any subset of `"link" | "format" | "paragraph" | "insert" |
+"clipboard"`, in the order you want them (separated in the rendered menu). Omit
+it for all five in the default order. `link` and `format` still yield to
+`selectionUI` — listing them has no effect when the marks live on the bar or the
+toolbar. The table-cell and fenced-code contexts honour `format` / `clipboard`
+from the list but are otherwise fixed.
+
 ## `inPlace.selectionUI`
 
 Optional, defaults to `"menu"`. Picks the affordance a non-empty text selection
@@ -118,11 +134,43 @@ The floating bar's link and wikilink buttons open the same URL / target field
 the right-click menu uses, rather than dropping a `[text](url)` / `[[target]]`
 placeholder.
 
+The bar also follows a text selection **inside an editable table cell**
+(`table: "cells"`), where the mark buttons apply to the cell; the link and
+wikilink buttons there fall back to the plain toggle, since the field editor
+works on the document selection.
+
+### `inPlace.selectionBarItems`
+
+Optional. An ordered subset of `bold` / `italic` / `strike` / `code` / `link` /
+`wikilink` / `math` — the bar shows exactly these, in this order. Omit for all
+seven. Unknown ids are ignored; an empty or all-invalid list falls back to the
+default.
+
+```tsx
+inPlace={{ selectionUI: "bar", selectionBarItems: ["bold", "italic", "link"] }}
+```
+
 Both surfaces are styled through stable class names — `.cm-inplace-menu`,
 `.cm-inplace-menu-item`, `.cm-inplace-selbar`, `.cm-inplace-selbar-btn` — and
 inherit the `--stylo-*` tokens. Specified in the
 [right-click menu and selection bar note](../../journal/2026-09/2026-09-03_context-menu-and-selection-bar.md)
 and the [ADR-002 §Deferred amendment](../../journal/2026-09/2026-09-01_adr-002-editor-ux-and-customization.md).
+
+## Callouts
+
+A blockquote whose first line is `> [!type]` (optionally `> [!type] Title`, or a
+`-` / `+` fold marker that Stylo parses but ignores) renders as a tinted box on
+both the in-place canvas and the preview surface. The many Obsidian type names
+collapse to five colour buckets — `note`, `tip`, `warn`, `danger`, `example` —
+and the raw type is kept on a `data-callout` attribute that a `::before` label
+reads. Off-caret the `[!type]` token is hidden and the rest of the line is the
+title. Gated by `decorations.blockquote`.
+
+Style hooks: `.cm-inplace-callout` / `.cm-inplace-callout-<bucket>` /
+`.cm-inplace-callout-head` on the canvas, `.stylo-callout` /
+`.stylo-callout-<bucket>` in preview. Each bucket sets `--stylo-callout-accent`
+from `--stylo-callout-<bucket>` (`#3b82f6` / `#22c55e` / `#f59e0b` / `#ef4444` /
+`#a855f7` by default) — override either level to reskin.
 
 ## Link & wikilink hover
 

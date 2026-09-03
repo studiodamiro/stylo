@@ -44,6 +44,22 @@ test("typesets inline math with KaTeX", () => {
   expect(container.querySelector(".katex")).not.toBeNull()
 })
 
+test("an Obsidian callout renders as a classed box with the token stripped", () => {
+  const { container } = render(<Preview value={"> [!warning] Careful\n> mind the gap"} />)
+  const box = container.querySelector("blockquote.stylo-callout")
+  expect(box).not.toBeNull()
+  expect(box!.classList.contains("stylo-callout-warn")).toBe(true)
+  expect(box!.getAttribute("data-callout")).toBe("warning")
+  expect(box!.textContent).toContain("Careful")
+  expect(box!.textContent).not.toContain("[!warning]")
+})
+
+test("a plain blockquote is left untouched", () => {
+  const { container } = render(<Preview value="> just a quote" />)
+  expect(container.querySelector("blockquote.stylo-callout")).toBeNull()
+  expect(container.querySelector("blockquote")).not.toBeNull()
+})
+
 test("renders [[wikilink]] as a link and calls the handler on click", () => {
   const onWikiLinkClick = vi.fn()
   const { container } = render(<Preview value="see [[Note]]" onWikiLinkClick={onWikiLinkClick} />)

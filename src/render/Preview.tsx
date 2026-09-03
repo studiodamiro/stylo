@@ -6,9 +6,10 @@ import remarkMath from "remark-math"
 import { splitFrontmatter } from "../frontmatter"
 import styles from "../styles/stylo.module.css"
 import type { FrontmatterDisplay } from "../types"
+import { remarkCallout } from "./remark-callout"
 import { remarkWikilink } from "./remark-wikilink"
 
-const REMARK_PLUGINS = [remarkFrontmatter, remarkGfm, remarkMath, remarkWikilink]
+const REMARK_PLUGINS = [remarkFrontmatter, remarkGfm, remarkMath, remarkWikilink, remarkCallout]
 const REHYPE_PLUGINS = [rehypeKatex]
 
 export interface PreviewProps {

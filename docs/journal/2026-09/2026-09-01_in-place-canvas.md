@@ -191,10 +191,11 @@ onChange />` with no `mode` now lazy-loads the in-place chunk (and the shared
 - **In-place customization API** — per-type on/off toggles landed as
   [ADR-005](./2026-09-01_adr-005-in-place-decoration-toggles.md) (the `inPlace`
   prop). Still open: cursor-reveal granularity, a frontmatter display mode,
-  callout blockquotes (`> [!note]`), image previews, and any hook for
-  consumer-supplied decorators — each its own future decision. _Nested-list
-  indent guides landed 2026-09-03_
-  ([note](./2026-09-03_table-menu-shell-and-list-guides.md)).
+  image previews, and any hook for consumer-supplied decorators — each its own
+  future decision. _Nested-list indent guides landed 2026-09-03_
+  ([note](./2026-09-03_table-menu-shell-and-list-guides.md)); _callout
+  blockquotes (`> [!note]`) landed 2026-09-03_
+  ([note](./2026-09-03_menu-groups-cell-bar-callouts.md)).
 - **Table rendering options** — v1 renders one fixed table style and shows cell
   text verbatim. _Table **editing** landed 2026-09-02_ — a `table` toolbar
   command, Tab/Shift-Tab/Enter cell navigation, and live pipe alignment on the

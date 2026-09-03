@@ -151,6 +151,19 @@ test("emphasis inside a heading is still decorated", async () => {
   expect(hasClass(view, "cm-inplace-strong")).toBe(true)
 })
 
+test("a `> [!type]` blockquote becomes a callout; a plain one stays a quote", async () => {
+  const callout = await mount("> [!tip] Handy\n> body\n\nx")
+  expect(hasClass(callout.view, "cm-inplace-callout-tip")).toBe(true)
+  expect(hasClass(callout.view, "cm-inplace-callout-head")).toBe(true)
+
+  const warn = await mount("> [!warning] Careful\n\nx")
+  expect(hasClass(warn.view, "cm-inplace-callout-warn")).toBe(true)
+
+  const plain = await mount("> just a quote\n\nx")
+  expect(hasClass(plain.view, "cm-inplace-quote")).toBe(true)
+  expect(hasClass(plain.view, "cm-inplace-callout")).toBe(false)
+})
+
 test("a standard link is styled and its syntax hides off-line, reveals on-line", async () => {
   const { view } = await mount("see [the docs](https://x.dev) now\n\nsecond line")
 

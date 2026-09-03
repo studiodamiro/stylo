@@ -2,28 +2,37 @@ import { markdownLanguage } from "@codemirror/lang-markdown"
 import { EditorSelection, EditorState } from "@codemirror/state"
 import { EditorView } from "@codemirror/view"
 import { expect, test } from "vitest"
-import {
-  codeBlockRow,
-  linkRow,
-  menuRows,
-  wikiLinkRow,
-} from "../src/inplace/context-menu-actions"
+import { codeBlockRow, linkRow, menuRows, wikiLinkRow } from "../src/inplace/context-menu-actions"
 import type { MenuAction, MenuRow, MenuSubmenu } from "../src/inplace/context-menu"
-import { selectionUIFacet } from "../src/inplace/config"
-import type { SelectionUI } from "../src/types"
+import {
+  menuGroupsFacet,
+  resolveContextMenu,
+  resolveSelectionBarItems,
+  selectionUIFacet,
+} from "../src/inplace/config"
+import type { MenuGroupId, SelectionUI } from "../src/types"
 import { linkPartsIn, wikiLinkPartsIn } from "../src/toolbar/inline-ops"
 
-function mkView(
-  doc: string,
-  anchor = doc.length,
-  head = anchor,
-  ui?: SelectionUI,
-): EditorView {
+function mkView(doc: string, anchor = doc.length, head = anchor, ui?: SelectionUI): EditorView {
   return new EditorView({
     state: EditorState.create({
       doc,
       extensions: ui ? [markdownLanguage, selectionUIFacet.of(ui)] : [markdownLanguage],
       selection: EditorSelection.single(anchor, head),
+    }),
+  })
+}
+
+function mkGroupsView(doc: string, groups: MenuGroupId[], ui?: SelectionUI): EditorView {
+  return new EditorView({
+    state: EditorState.create({
+      doc,
+      extensions: [
+        markdownLanguage,
+        menuGroupsFacet.of(groups),
+        ...(ui ? [selectionUIFacet.of(ui)] : []),
+      ],
+      selection: EditorSelection.single(0, 5),
     }),
   })
 }
@@ -230,7 +239,9 @@ test("the Language row edits the fence info string and can remove the block", ()
   row.onSubmit("python")
   expect(view.state.doc.toString()).toBe("```python\ncode here\n```")
 
-  codeBlockRow(view).actions!.find((a) => a.label === "Remove code block")!.onSelect()
+  codeBlockRow(view)
+    .actions!.find((a) => a.label === "Remove code block")!
+    .onSelect()
   expect(view.state.doc.toString()).toBe("code here")
 })
 
@@ -265,11 +276,44 @@ test("inside $math$ the Format submenu greys every mark except Math", () => {
 test("Paste is disabled with a hint when async clipboard read is unavailable", () => {
   // jsdom has no `navigator.clipboard`, so the menu can't read to paste.
   const rows = menuRows(mkView("hello world", 0, 5))
-  const paste = rows.find(
-    (r): r is MenuAction => r !== "separator" && r.label === "Paste",
-  )!
+  const paste = rows.find((r): r is MenuAction => r !== "separator" && r.label === "Paste")!
   expect(paste.disabled).toBe(true)
   expect(paste.title).toMatch(/keyboard/i)
+})
+
+test("menu groups: config picks and orders the top-level sections", () => {
+  const l = labels(menuRows(mkGroupsView("hello world", ["clipboard", "insert"])))
+  expect(l).toEqual(["Cut", "Copy", "Paste", "Insert"])
+})
+
+test("menu groups: a single group yields just that group", () => {
+  const l = labels(menuRows(mkGroupsView("hello world", ["paragraph"])))
+  expect(l).toEqual(["Paragraph"])
+})
+
+test("menu groups: link and format still yield to selectionUI 'bar'", () => {
+  const l = labels(menuRows(mkGroupsView("hello world", ["link", "format", "insert"], "bar")))
+  expect(l).toEqual(["Insert"])
+})
+
+test("resolveContextMenu maps the prop shapes", () => {
+  expect(resolveContextMenu(false).enabled).toBe(false)
+  expect(resolveContextMenu(true).groups).toEqual([
+    "link",
+    "format",
+    "paragraph",
+    "insert",
+    "clipboard",
+  ])
+  expect(resolveContextMenu(undefined).groups).toContain("link")
+  expect(resolveContextMenu({ groups: ["insert"] }).groups).toEqual(["insert"])
+  expect(resolveContextMenu({ groups: [] }).groups).toContain("clipboard") // empty → default
+})
+
+test("resolveSelectionBarItems keeps known inline ids in order, drops the rest", () => {
+  expect(resolveSelectionBarItems()).toHaveLength(7)
+  expect(resolveSelectionBarItems(["math", "bold"])).toEqual(["math", "bold"])
+  expect(resolveSelectionBarItems(["h1", "table"])).toHaveLength(7) // none valid → default
 })
 
 test("commands that can't apply where the caret sits are greyed, not removed", () => {

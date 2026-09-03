@@ -117,6 +117,37 @@ export const inPlaceTheme = EditorView.theme({
     paddingLeft: "1.75rem",
     color: "var(--stylo-text-muted)",
   },
+
+  // Callout blockquotes (`> [!note]`). A tinted box keyed by colour bucket; the
+  // head line carries a `data-callout` label in place of the hidden `[!type]`.
+  // `--stylo-callout-accent` is set per bucket and can be overridden per type.
+  ".cm-inplace-callout": {
+    borderLeft: "0.25rem solid var(--stylo-callout-accent, var(--stylo-border))",
+    paddingLeft: "1.75rem",
+    background:
+      "color-mix(in srgb, var(--stylo-callout-accent, var(--stylo-border)) 10%, transparent)",
+    color: "var(--stylo-text)",
+  },
+  ".cm-inplace-callout-note": { "--stylo-callout-accent": "var(--stylo-callout-note, #3b82f6)" },
+  ".cm-inplace-callout-tip": { "--stylo-callout-accent": "var(--stylo-callout-tip, #22c55e)" },
+  ".cm-inplace-callout-warn": { "--stylo-callout-accent": "var(--stylo-callout-warn, #f59e0b)" },
+  ".cm-inplace-callout-danger": {
+    "--stylo-callout-accent": "var(--stylo-callout-danger, #ef4444)",
+  },
+  ".cm-inplace-callout-example": {
+    "--stylo-callout-accent": "var(--stylo-callout-example, #a855f7)",
+  },
+  ".cm-inplace-callout-head::before": {
+    content: "attr(data-callout)",
+    display: "block",
+    marginLeft: "-1.75rem",
+    fontSize: "0.8em",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: "0.04em",
+    color: "var(--stylo-callout-accent, var(--stylo-text-muted))",
+  },
+
   ".cm-inplace-bullet": { color: "var(--stylo-text-muted)" },
   // Nested-list indent guides: `--sl-li-depth` 1px rules, one per level above
   // this line, spaced by an indent step and clipped to that width. Approximate

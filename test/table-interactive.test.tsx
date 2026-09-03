@@ -289,6 +289,37 @@ test("the link command wraps a cell selection as [text](url)", async () => {
   expect(view.state.doc.toString()).toContain("[1](url)")
 })
 
+test("the selection bar follows a text selection inside a table cell", async () => {
+  const { view } = await mount(T, { table: "cells", selectionUI: "bar" })
+  const cell = await focusCell(view, "tbody td", 0)
+  const bar = view.dom.querySelector<HTMLElement>(".cm-inplace-selbar")!
+  expect(bar.hidden).toBe(true)
+
+  selectText(cell)
+  document.dispatchEvent(new Event("selectionchange"))
+  await vi.waitFor(() => {
+    if (bar.hidden) throw new Error("bar still hidden for the cell selection")
+  })
+
+  // the bold button routes through the cell, not the (collapsed) editor selection
+  const bold = bar.querySelector<HTMLButtonElement>(".cm-inplace-selbar-btn")!
+  bold.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }))
+  bold.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+  expect(cell.textContent).toBe("**1**")
+})
+
+test("selectionBarItems trims and orders the bar's buttons", async () => {
+  const { view } = await mount("some words here", {
+    reveal: "never",
+    selectionUI: "bar",
+    selectionBarItems: ["math", "bold"],
+  })
+  const btns = view.dom.querySelectorAll(".cm-inplace-selbar-btn")
+  expect(btns).toHaveLength(2)
+  expect(btns[0]!.getAttribute("aria-label")).toBe("Inline math")
+  expect(btns[1]!.getAttribute("aria-label")).toBe("Bold")
+})
+
 function menuItem(view: EditorView, label: string): HTMLButtonElement {
   const it = [...view.contentDOM.querySelectorAll<HTMLButtonElement>(".cm-inplace-menu-item")].find(
     (b) => b.textContent === label,

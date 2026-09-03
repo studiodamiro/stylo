@@ -106,6 +106,22 @@ export type RevealMode = "caret" | "never"
  */
 export type SelectionUI = "menu" | "bar" | "none"
 
+/**
+ * The right-click menu's top-level groups. `link` is the internal / external
+ * link field rows; `format` the inline-mark submenu; `paragraph` the block-type
+ * submenu; `insert` the new-block submenu; `clipboard` cut / copy / paste.
+ */
+export type MenuGroupId = "link" | "format" | "paragraph" | "insert" | "clipboard"
+
+export interface ContextMenuConfig {
+  /**
+   * Which top-level groups the menu shows, in order. Omit for all five in their
+   * default order. `link` and `format` still yield to `selectionUI` when it is
+   * not `"menu"` (they move to the floating bar / toolbar).
+   */
+  groups?: MenuGroupId[]
+}
+
 export interface InPlaceConfig {
   /** Which decoration types the in-place canvas renders. Read once, at mount. */
   decorations?: InPlaceDecorationToggles
@@ -118,15 +134,22 @@ export interface InPlaceConfig {
   reveal?: RevealMode
   /**
    * Right-click a block for a context menu (inline actions on a selection,
-   * block + insert actions otherwise). `false` keeps the browser's own menu.
-   * Defaults to `true`. Read once, at mount.
+   * block + insert actions otherwise). `false` keeps the browser's own menu; an
+   * object picks and orders the menu's groups. Defaults to `true`. Read once,
+   * at mount.
    */
-  contextMenu?: boolean
+  contextMenu?: boolean | ContextMenuConfig
   /**
    * What a non-empty selection offers (see `SelectionUI`). Defaults to
    * `"menu"`. Read once, at mount.
    */
   selectionUI?: SelectionUI
+  /**
+   * Which buttons the floating selection bar shows (`selectionUI: "bar"`), in
+   * order. Any of `bold` / `italic` / `strike` / `code` / `link` / `wikilink` /
+   * `math`. Omit for all seven. Read once, at mount.
+   */
+  selectionBarItems?: ToolbarCommandId[]
 }
 
 export interface StyloProps {

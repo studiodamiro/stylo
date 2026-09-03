@@ -68,6 +68,15 @@ above, so tables look the same until you override one.
 | `--stylo-table-header-bg` | `color-mix(--stylo-border 30%)`     | header-row fill                               |
 | `--stylo-table-stripe-bg` | `transparent`                       | even body rows — set it to enable zebra striping |
 | `--stylo-guide`           | `var(--stylo-border)`               | nested-list indent-guide rules                |
+| `--stylo-callout-note`    | `#3b82f6`                           | callout accent — `note` / `info` bucket       |
+| `--stylo-callout-tip`     | `#22c55e`                           | callout accent — `tip` / `success` bucket     |
+| `--stylo-callout-warn`    | `#f59e0b`                           | callout accent — `question` / `warning` bucket |
+| `--stylo-callout-danger`  | `#ef4444`                           | callout accent — `failure` / `danger` bucket  |
+| `--stylo-callout-example` | `#a855f7`                           | callout accent — `example` / `quote` bucket   |
+
+Each callout bucket sets `--stylo-callout-accent` from its token above; override
+that per type instead (`.stylo-callout-note { --stylo-callout-accent: … }`) for
+finer control.
 
 ### Syntax colours
 

@@ -1,6 +1,7 @@
 import type { Range, Text } from "@codemirror/state"
 import { Decoration } from "@codemirror/view"
 import type { SyntaxNodeRef } from "@lezer/common"
+import { CALLOUT_HEAD_LINE, calloutBucket } from "../callout"
 import type { ResolvedToggles } from "./config"
 import { BulletWidget, CheckboxWidget, HrWidget } from "./widgets"
 
@@ -102,8 +103,23 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
     if (toggles.blockquote) {
       const first = doc.lineAt(node.from).number
       const last = doc.lineAt(Math.min(node.to, doc.length)).number
+      const headLine = doc.line(first)
+      // `> [!type]` turns the blockquote into a callout: a coloured box, the
+      // `[!type]` token hidden off-caret (a `data-callout` label takes its
+      // place), the rest of the head line read as the title.
+      const head = CALLOUT_HEAD_LINE.exec(headLine.text)
+      const kind = head ? calloutBucket(head[3]!) : null
       for (let n = first; n <= last; n++) {
-        out.push(Decoration.line({ class: "cm-inplace-quote" }).range(doc.line(n).from))
+        const base = kind ? `cm-inplace-callout cm-inplace-callout-${kind}` : "cm-inplace-quote"
+        const cls = kind && n === first ? `${base} cm-inplace-callout-head` : base
+        const spec = kind
+          ? { class: cls, attributes: { "data-callout": head![3]!.toLowerCase() } }
+          : { class: cls }
+        out.push(Decoration.line(spec).range(doc.line(n).from))
+      }
+      if (kind && !revealed.has(first)) {
+        const tokenFrom = headLine.from + head![1]!.length
+        out.push(Decoration.replace({}).range(tokenFrom, tokenFrom + head![2]!.length))
       }
     }
     return // descend for the quoted inline content and each line's QuoteMark
