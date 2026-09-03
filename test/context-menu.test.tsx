@@ -16,15 +16,18 @@ async function mount(value: string, inPlace?: InPlaceConfig) {
   await vi.waitFor(() => {
     if (!result.container.querySelector(".cm-editor")) throw new Error("not mounted")
   })
-  const view = EditorView.findFromDOM(
-    result.container.querySelector(".cm-editor") as HTMLElement,
-  )
+  const view = EditorView.findFromDOM(result.container.querySelector(".cm-editor") as HTMLElement)
   if (!view) throw new Error("no EditorView")
   return { view }
 }
 
 function rightClick(view: EditorView): MouseEvent {
-  const e = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 20, clientY: 20 })
+  const e = new MouseEvent("contextmenu", {
+    bubbles: true,
+    cancelable: true,
+    clientX: 20,
+    clientY: 20,
+  })
   view.contentDOM.dispatchEvent(e)
   return e
 }
@@ -52,14 +55,19 @@ test("inPlace.contextMenu = false leaves the browser menu alone", async () => {
   expect(document.querySelector(".cm-inplace-menu-panel")).toBeNull()
 })
 
-test("a right-click menu is not opened over an editable table cell", async () => {
+test("the canvas right-click menu does not take over an editable table cell", async () => {
   const { view } = await mount("| a | b |\n| - | - |\n| c | d |\n", { table: "cells" })
   const cell = view.dom.querySelector(".cm-inplace-table-edit td, .cm-inplace-table-edit th")
   // Table editing may be unavailable in jsdom; only assert when the cell exists.
   if (!cell) return
   const e = new MouseEvent("contextmenu", { bubbles: true, cancelable: true })
   cell.dispatchEvent(e)
-  expect(document.querySelector(".cm-inplace-menu-panel")).toBeNull()
+  // The widget's own structural menu (same shell, mounted inside .cm-content)
+  // may open; the canvas menu (mounted on .cm-editor, outside .cm-content) must not.
+  const canvasPanels = [...document.querySelectorAll(".cm-inplace-menu-panel")].filter(
+    (p) => !view.contentDOM.contains(p),
+  )
+  expect(canvasPanels).toHaveLength(0)
 })
 
 test("the selection bar element is mounted for an in-place editor", async () => {
@@ -83,9 +91,8 @@ test("selecting text and right-clicking yields an 'Add external link' flyout wit
   expect(panel, "menu panel rendered").not.toBeNull()
 
   const items = [...panel!.querySelectorAll(".cm-inplace-menu-item")]
-  const linkRow = items.find(
-    (el) => el.textContent?.trim() === "Add external link",
-  ) as HTMLElement | undefined
+  const linkRow = items.find((el) => el.textContent?.trim() === "Add external link") as
+    HTMLElement | undefined
   expect(linkRow, "an 'Add external link' row exists").toBeDefined()
   expect(
     linkRow!.classList.contains("cm-inplace-menu-parent"),

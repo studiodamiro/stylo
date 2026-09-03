@@ -3,6 +3,7 @@ import type { Range } from "@codemirror/state"
 import { Decoration, type DecorationSet, type EditorView } from "@codemirror/view"
 import { inPlaceConfigFacet, revealModeFacet } from "./config"
 import { frontmatterRange } from "./frontmatter"
+import { scanListGuides } from "./list-guides"
 import { scanInlineMath } from "./math"
 import { decorateNode } from "./nodes"
 import { revealedLines } from "./reveal"
@@ -52,6 +53,7 @@ export function buildDecorations(view: EditorView): InPlaceDecorations {
     })
     if (toggles.wikilinks) scanWikilinks(view, range.from, range.to, revealed, tree, out)
     if (toggles.math) scanInlineMath(view, range.from, range.to, caretRevealed, tree, out)
+    scanListGuides(range.from, range.to, tree, doc, toggles, out)
   }
 
   // Every replacing decoration (marker-hiding and widgets) is atomic, so the

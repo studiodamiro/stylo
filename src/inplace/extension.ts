@@ -12,6 +12,8 @@ import {
   tableEditingFacet,
 } from "./config"
 import { inPlaceEditBoundaries } from "./edit-boundaries"
+import { inPlaceInsertAssociation } from "./edit-insert-assoc"
+import { inPlaceLinePrefixEdit } from "./edit-line-prefix"
 import { frontmatterField } from "./frontmatter"
 import { linkClickEditor } from "./link-click"
 import { linkHoverTooltip } from "./link-hover"
@@ -86,7 +88,11 @@ export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
     contextMenuEnabled.of(opts.inPlace?.contextMenu ?? true),
     selectionUIFacet.of(opts.inPlace?.selectionUI ?? "menu"),
     inPlaceDecorations(),
+    // Backspace: the line-prefix unwrap gets first refusal, then the
+    // step-over-markers handler, then CodeMirror's default.
+    inPlaceLinePrefixEdit,
     inPlaceEditBoundaries,
+    inPlaceInsertAssociation,
     blockMathField,
     frontmatterField,
     tableField,

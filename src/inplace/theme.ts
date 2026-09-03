@@ -118,6 +118,16 @@ export const inPlaceTheme = EditorView.theme({
     color: "var(--stylo-text-muted)",
   },
   ".cm-inplace-bullet": { color: "var(--stylo-text-muted)" },
+  // Nested-list indent guides: `--sl-li-depth` 1px rules, one per level above
+  // this line, spaced by an indent step and clipped to that width. Approximate
+  // alignment — decorative depth cue, not a pixel-exact rail.
+  ".cm-inplace-li": {
+    backgroundImage:
+      "repeating-linear-gradient(to right, var(--stylo-guide) 0 1px, transparent 1px 1.5em)",
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "0.35em 0",
+    backgroundSize: "calc(var(--sl-li-depth, 0) * 1.5em) 100%",
+  },
   ".cm-inplace-checkbox": {
     margin: "0 0.4em 0 0",
     verticalAlign: "middle",
@@ -147,13 +157,17 @@ export const inPlaceTheme = EditorView.theme({
   },
   ".cm-inplace-table th": {
     padding: "0.35em 0.6em",
-    border: "1px solid var(--stylo-border)",
-    background: "color-mix(in srgb, var(--stylo-border) 30%, transparent)",
+    border: "1px solid var(--stylo-table-border)",
+    background: "var(--stylo-table-header-bg)",
     fontWeight: "600",
   },
   ".cm-inplace-table td": {
     padding: "0.35em 0.6em",
-    border: "1px solid var(--stylo-border)",
+    border: "1px solid var(--stylo-table-border)",
+  },
+  // Zebra striping — a no-op until the host sets `--stylo-table-stripe-bg`.
+  ".cm-inplace-table tbody tr:nth-child(even) td": {
+    background: "var(--stylo-table-stripe-bg)",
   },
 
   ".cm-inplace-table-edit .cm-inplace-tcell": {
@@ -220,39 +234,9 @@ export const inPlaceTheme = EditorView.theme({
     pointerEvents: "none",
   },
   ".cm-inplace-tg-edge:hover .cm-inplace-tg-plus": { color: "var(--stylo-text)" },
-  ".cm-inplace-table-menu": {
-    position: "absolute",
-    zIndex: "5",
-    minWidth: "11em",
-    padding: "0.25em",
-    flexDirection: "column",
-    pointerEvents: "auto",
-    background: "var(--stylo-bg, #fff)",
-    border: "1px solid var(--stylo-border)",
-    borderRadius: "6px",
-    boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
-  },
-  ".cm-inplace-table-menu:not([hidden])": { display: "flex" },
-  ".cm-inplace-table-menu[hidden]": { display: "none" },
-  ".cm-inplace-tm-sep": {
-    height: "1px",
-    margin: "0.25em 0.3em",
-    background: "var(--stylo-border)",
-  },
-  ".cm-inplace-tm-item": {
-    all: "unset",
-    padding: "0.35em 0.6em",
-    borderRadius: "4px",
-    fontSize: "0.9em",
-    cursor: "pointer",
-    whiteSpace: "nowrap",
-  },
-  ".cm-inplace-tm-item:hover": {
-    background: "color-mix(in srgb, var(--stylo-border) 40%, transparent)",
-  },
-  ".cm-inplace-tm-item[data-active]": { color: "var(--stylo-ring)", fontWeight: "600" },
 
   // --- Right-click menu (menu-plugin.ts / context-menu.ts) ---
+  // Also the editable table's structural menu (table-gizmos.ts) — same shell.
   // `.cm-inplace-menu` is a non-interactive full-viewport layer; each panel
   // inside it is a fixed-positioned popup.
   ".cm-inplace-menu": {
@@ -302,7 +286,11 @@ export const inPlaceTheme = EditorView.theme({
   ".cm-inplace-menu-item:disabled": { opacity: "0.4", cursor: "default" },
   ".cm-inplace-menu-item[data-active]": { color: "var(--stylo-ring)", fontWeight: "600" },
   ".cm-inplace-menu-item[data-active] svg": { color: "var(--stylo-ring)" },
-  ".cm-inplace-menu-parent::after": { content: '"\\203A"', marginLeft: "auto", paddingLeft: "1.5em" },
+  ".cm-inplace-menu-parent::after": {
+    content: '"\\203A"',
+    marginLeft: "auto",
+    paddingLeft: "1.5em",
+  },
   ".cm-inplace-menu-input": {
     display: "block",
     boxSizing: "border-box",
@@ -350,7 +338,10 @@ export const inPlaceTheme = EditorView.theme({
     background: "color-mix(in srgb, var(--stylo-border) 40%, transparent)",
     color: "var(--stylo-text)",
   },
-  ".cm-inplace-selbar-btn[data-active]": { color: "var(--stylo-text)", background: "color-mix(in srgb, var(--stylo-border) 55%, transparent)" },
+  ".cm-inplace-selbar-btn[data-active]": {
+    color: "var(--stylo-text)",
+    background: "color-mix(in srgb, var(--stylo-border) 55%, transparent)",
+  },
 
   // --- Link / wikilink hover bubble (link-hover.ts) ---
   ".cm-tooltip.cm-tooltip-hover:has(.cm-inplace-href-tip)": {

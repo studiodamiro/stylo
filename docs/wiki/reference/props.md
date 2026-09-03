@@ -56,6 +56,19 @@ properties you can set on `.stylo` or any ancestor:
 Defaults follow shadcn/ui's neutral conventions as a visual reference; no
 Tailwind or shadcn code is bundled.
 
+### Table and guide tokens
+
+Rendered tables (in-place **and** preview) and the in-place nested-list indent
+guides read a few extra tokens. Each defaults to a value derived from the palette
+above, so tables look the same until you override one.
+
+| Token                     | Default                             | Role                                          |
+| ------------------------- | ----------------------------------- | --------------------------------------------- |
+| `--stylo-table-border`    | `var(--stylo-border)`               | cell borders                                  |
+| `--stylo-table-header-bg` | `color-mix(--stylo-border 30%)`     | header-row fill                               |
+| `--stylo-table-stripe-bg` | `transparent`                       | even body rows — set it to enable zebra striping |
+| `--stylo-guide`           | `var(--stylo-border)`               | nested-list indent-guide rules                |
+
 ### Syntax colours
 
 Fenced code is highlighted through a token palette in the same style — set these

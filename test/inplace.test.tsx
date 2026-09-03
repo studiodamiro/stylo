@@ -136,6 +136,14 @@ test("italic, strikethrough, and inline code each get a decoration", async () =>
   expect(hasClass(view, "cm-inplace-code")).toBe(true)
 })
 
+test("nested list lines get an indent-guide decoration; a flat list gets none", async () => {
+  const flat = await mount("- a\n- b\n- c")
+  expect(hasClass(flat.view, "cm-inplace-li")).toBe(false)
+
+  const nested = await mount("- a\n  - b\n    - c")
+  expect(hasClass(nested.view, "cm-inplace-li")).toBe(true)
+})
+
 test("emphasis inside a heading is still decorated", async () => {
   const { view } = await mount("## has **bold** inside\n\nsecond line")
 

@@ -290,7 +290,7 @@ test("the link command wraps a cell selection as [text](url)", async () => {
 })
 
 function menuItem(view: EditorView, label: string): HTMLButtonElement {
-  const it = [...view.contentDOM.querySelectorAll<HTMLButtonElement>(".cm-inplace-tm-item")].find(
+  const it = [...view.contentDOM.querySelectorAll<HTMLButtonElement>(".cm-inplace-menu-item")].find(
     (b) => b.textContent === label,
   )
   if (!it) throw new Error(`no menu item "${label}"`)
@@ -303,7 +303,7 @@ function rightClick(view: EditorView, selector: "thead th" | "tbody td", nth = 0
     `.cm-inplace-table-edit ${selector}`,
   )[nth]!
   cell.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, clientX: 10, clientY: 10 }))
-  return [...view.contentDOM.querySelectorAll(".cm-inplace-tm-item")].map(
+  return [...view.contentDOM.querySelectorAll(".cm-inplace-menu-item")].map(
     (b) => b.textContent ?? "",
   )
 }
@@ -359,7 +359,7 @@ test("the cell context menu writes alignment into the delimiter", async () => {
 test("the context menu is hidden until a right-click and closes on an outside click", async () => {
   const { view } = await mount(T, { table: "cells" })
   await editCells(view)
-  const menu = view.contentDOM.querySelector<HTMLElement>(".cm-inplace-table-menu")!
+  const menu = view.contentDOM.querySelector<HTMLElement>(".cm-inplace-menu")!
   expect(menu.hidden).toBe(true)
 
   rightClick(view, "tbody td", 0)

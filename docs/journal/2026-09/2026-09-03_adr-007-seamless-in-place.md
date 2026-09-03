@@ -254,6 +254,24 @@ throughout.
     home and the caret line is the only way to reach it. It is a tracked
     exception until a dedicated math-source affordance lands (the parallel of the
     Stage 4 link field); the comment in `decorate.ts` records this.
+- **2026-09-03 — Stage 2 completed + Stage 3 landed.**
+  - _Insertion association._ `edit-insert-assoc.ts` — an `EditorState.
+    transactionFilter` that redirects a single insertion sitting exactly on a
+    hidden wrapper's content edge to the far side of the marker run: typing
+    after a bold word gives `**bold**x`, never `**boldx**`; the mirror at the
+    front gives `x**bold**`. A nested `***word***` is crossed as a unit
+    (tree-walked mark run, not one level at a time). Emphasis / strong / strike /
+    inline code only — a link keeps its directly editable label, so `wrapAt`
+    grew an `emphasisOnly` flag. Undo / redo / table-widget serialise
+    transactions are passed through untouched. This closes Stage 2 (delete- and
+    arrow-over-marker landed 2026-09-03; empty-wrapper cleanup the same day).
+  - _Line-prefix backspace (Stage 3)._ `edit-line-prefix.ts` — a `Prec.high`
+    Backspace keymap, ahead of the step-over-markers one. At visual column 0 of
+    a hidden-prefix line it removes one level instead of joining upward: heading
+    → paragraph, blockquote → one `> ` out, list → outdent a step then drop the
+    marker, task → paragraph. Fires only while the prefix is actually hidden, so
+    `reveal: "caret"` with the caret on the line is untouched. Level / type
+    changes still go through the menu, toolbar, and shortcuts.
 
 ## Consequences
 

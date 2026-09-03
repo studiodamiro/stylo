@@ -13,6 +13,15 @@
   --stylo-ring: #a1a1aa;
   --stylo-radius: 0.5rem;
 
+  /* Rendered-table styling. Overridable on `.stylo` to reskin tables on both
+     the in-place canvas and the preview surface. Defaults keep today's look;
+     `--stylo-table-stripe-bg` is `transparent`, so zebra striping is opt-in. */
+  --stylo-table-border: var(--stylo-border);
+  --stylo-table-header-bg: color-mix(in srgb, var(--stylo-border) 30%, transparent);
+  --stylo-table-stripe-bg: transparent;
+  /* Nested-list indent guides on the in-place canvas. */
+  --stylo-guide: var(--stylo-border);
+
   /* Fenced-code / embedded-language token colours (see src/editor/highlight.ts).
      Only applied where a real language grammar runs; Markdown structure is
      styled separately. Light defaults — the host overrides for dark. */

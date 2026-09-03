@@ -34,7 +34,7 @@ const WRAP: Record<string, { markType: string; toggle: "emphasis" | "code" }> = 
   InlineCode: { markType: "CodeMark", toggle: "code" },
 }
 
-interface Wrap {
+export interface Wrap {
   from: number
   to: number
   contentFrom: number
@@ -42,10 +42,8 @@ interface Wrap {
 }
 
 /** Are inline markers on this line hidden right now? */
-function markersHidden(state: EditorState, lineNumber: number): boolean {
-  return (
-    state.facet(revealModeFacet) === "never" || !revealedLines(state).has(lineNumber)
-  )
+export function markersHidden(state: EditorState, lineNumber: number): boolean {
+  return state.facet(revealModeFacet) === "never" || !revealedLines(state).has(lineNumber)
 }
 
 /**
@@ -58,7 +56,7 @@ function skipHiddenMarkers(view: EditorView, pos: number, dir: -1 | 1): number {
   if (!set) return pos
   const end = dir < 0 ? 0 : view.state.doc.length
   let p = pos
-  for (let moved = true; moved; ) {
+  for (let moved = true; moved;) {
     moved = false
     set.between(Math.min(p, end), Math.max(p, end), (from, to, deco) => {
       if (from >= to || deco.spec.widget || deco.spec.class) return
@@ -71,19 +69,20 @@ function skipHiddenMarkers(view: EditorView, pos: number, dir: -1 | 1): number {
   return p
 }
 
-/** The hidden-marker inline construct enclosing `pos`, or `null`. */
-function wrapAt(state: EditorState, pos: number): Wrap | null {
+/**
+ * The hidden-marker inline construct enclosing `pos`, or `null`. With
+ * `emphasisOnly`, only the paired-mark constructs whose *both* delimiters are
+ * hidden count (strong / emphasis / strike / inline code) — links and wikilinks
+ * keep a directly editable label, so their edges are not boundary-escaped.
+ */
+export function wrapAt(state: EditorState, pos: number, emphasisOnly = false): Wrap | null {
   const line = state.doc.lineAt(pos)
   if (!markersHidden(state, line.number)) return null
   const toggles = state.facet(inPlaceConfigFacet)
   const tree = syntaxTree(state)
 
   for (const bias of [-1, 1] as const) {
-    for (
-      let node: SyntaxNode | null = tree.resolveInner(pos, bias);
-      node;
-      node = node.parent
-    ) {
+    for (let node: SyntaxNode | null = tree.resolveInner(pos, bias); node; node = node.parent) {
       const rule = WRAP[node.name]
       if (rule) {
         if (!toggles[rule.toggle]) break
@@ -94,6 +93,7 @@ function wrapAt(state: EditorState, pos: number): Wrap | null {
         return { from: node.from, to: node.to, contentFrom: open.to, contentTo: close.from }
       }
       if (node.name === "Link") {
+        if (emphasisOnly) break
         if (state.doc.sliceString(Math.max(0, node.from - 1), node.from) === "[") break // [[wiki]] inner
         if (!toggles.links) break
         const marks = node.getChildren("LinkMark")
@@ -109,7 +109,7 @@ function wrapAt(state: EditorState, pos: number): Wrap | null {
   }
 
   // Wikilinks have no grammar node — scan the caret line.
-  if (toggles.wikilinks) {
+  if (toggles.wikilinks && !emphasisOnly) {
     for (const m of line.text.matchAll(WIKILINK_PATTERN)) {
       const from = line.from + (m.index ?? 0)
       const to = from + m[0].length
