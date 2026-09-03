@@ -156,14 +156,16 @@ untouched, and must not gate v1.
   > **Amended 2026-09-03 (pulled forward):** the in-place canvas now has a
   > floating **selection bar** (inline marks only, follows a non-empty
   > selection) and a **right-click menu** (inline actions on a selection, block
-  > + `Insert` actions otherwise; table cells keep their structural menu). Both
-  > render from `BUILTIN_COMMANDS`, so each entry's `disabled` / `isActive`
-  > drives what is shown — the "inspects the node under the selection" intent,
-  > met through the command predicates rather than a separate Lezer walk.
-  > Toggled by `inPlace.contextMenu` / `inPlace.selectionBar` (both default
-  > `true`); the `mode` enum above was not adopted. See the
-  > [right-click menu and selection bar note](./2026-09-03_context-menu-and-selection-bar.md).
-  > The `<StyloToolbarSettings />` customizer and the docks stay deferred.
+  >
+  > - `Insert` actions otherwise; table cells keep their structural menu). Both
+  >   render from `BUILTIN_COMMANDS`, so each entry's `disabled` / `isActive`
+  >   drives what is shown — the "inspects the node under the selection" intent,
+  >   met through the command predicates rather than a separate Lezer walk.
+  >   Toggled by `inPlace.contextMenu` / `inPlace.selectionBar` (both default
+  >   `true`); the `mode` enum above was not adopted. See the
+  >   [right-click menu and selection bar note](./2026-09-03_context-menu-and-selection-bar.md).
+  >   The `<StyloToolbarSettings />` customizer and the docks stay deferred.
+
 - **Debounced auto-save hook** — `autoSave={{ enabled, intervalMs, onAutoSave }}`.
 - **Richer in-place decorations** beyond math and headings (tables, callouts,
   embeds).

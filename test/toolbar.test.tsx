@@ -29,11 +29,36 @@ test("bold wraps the selection and toggles back off", () => {
   expect(view.state.doc.toString()).toBe("hello world")
 })
 
-test("bold on a bare caret drops an empty pair with the caret between", () => {
-  const view = mkView("", 0)
+test("Code block / Block math insert land the caret between the fences", () => {
+  const cb = mkView("", 0)
+  BUILTIN_BY_ID.codeBlock!.run(cb)
+  expect(cb.state.doc.toString()).toBe("```\n\n```")
+  expect(cb.state.selection.main.head).toBe(4) // the empty line between
+
+  const mb = mkView("", 0)
+  BUILTIN_BY_ID.mathBlock!.run(mb)
+  expect(mb.state.doc.toString()).toBe("$$\n\n$$")
+  expect(mb.state.selection.main.head).toBe(3)
+})
+
+test("bold on a whole-link selection wraps the link, and toggles back", () => {
+  const view = mkView("x [two words](http://a) y", 2, 23) // the whole [..](..) span
   BUILTIN_BY_ID.bold!.run(view)
-  expect(view.state.doc.toString()).toBe("****")
-  expect(view.state.selection.main.head).toBe(2)
+  expect(view.state.doc.toString()).toBe("x **[two words](http://a)** y")
+  view.dispatch({ selection: EditorSelection.single(4, 25) }) // the link again, now inside **…**
+  BUILTIN_BY_ID.bold!.run(view)
+  expect(view.state.doc.toString()).toBe("x [two words](http://a) y")
+})
+
+test("bold on a whole-wikilink selection wraps it outside the brackets", () => {
+  const view = mkView("x [[Page Name]] y", 2, 15) // "[[Page Name]]" is [2, 15)
+  BUILTIN_BY_ID.bold!.run(view)
+  expect(view.state.doc.toString()).toBe("x **[[Page Name]]** y")
+})
+
+test("bold is disabled at a bare caret with no word to wrap", () => {
+  expect(BUILTIN_BY_ID.bold!.disabled!(mkView("", 0).state)).toBe(true)
+  expect(BUILTIN_BY_ID.bold!.disabled!(mkView("a word here", 4).state)).toBe(false) // on "word"
 })
 
 test("wrapActive reports the pressed state for bold", () => {
@@ -106,6 +131,39 @@ test("bold, italic, strike all on then all off round-trips cleanly", () => {
   expect(view.state.doc.toString()).toBe("x word y")
 })
 
+test("interleaved marks (b,s,i order) still strip cleanly in any removal order", () => {
+  // Applying bold, then strike, then italic nests them interleaved:
+  // the *word*'s italic is innermost, strike around it, bold outermost.
+  expect(seq("bold", "strike", "italic")).toBe("x **~~*word*~~** y")
+
+  const view = mkView("x word y", 2, 6)
+  for (const id of ["bold", "strike", "italic"] as const) {
+    BUILTIN_BY_ID[id]!.run(view)
+    reSelectWord(view)
+  }
+  // Remove in a different order than applied — bold (outer), italic (inner), strike.
+  for (const id of ["bold", "italic", "strike"] as const) {
+    BUILTIN_BY_ID[id]!.run(view)
+    reSelectWord(view)
+  }
+  expect(view.state.doc.toString()).toBe("x word y")
+})
+
+test("interleaved marks (i,s,b order) strip cleanly too", () => {
+  expect(seq("italic", "strike", "bold")).toBe("x *~~**word**~~* y")
+
+  const view = mkView("x word y", 2, 6)
+  for (const id of ["italic", "strike", "bold"] as const) {
+    BUILTIN_BY_ID[id]!.run(view)
+    reSelectWord(view)
+  }
+  for (const id of ["bold", "italic", "strike"] as const) {
+    BUILTIN_BY_ID[id]!.run(view)
+    reSelectWord(view)
+  }
+  expect(view.state.doc.toString()).toBe("x word y")
+})
+
 test("a mark strips out of the middle of a stack, leaving the others", () => {
   const view = mkView("x word y", 2, 6)
   for (const id of ["bold", "italic", "strike"] as const) {
@@ -172,6 +230,19 @@ test("task prefixes a checkbox and isActive follows it", () => {
   expect(BUILTIN_BY_ID.task!.isActive!(view.state)).toBe(true)
   BUILTIN_BY_ID.task!.run(view)
   expect(view.state.doc.toString()).toBe("buy milk")
+})
+
+test("a list / task / quote starts on a lone blank line", () => {
+  for (const [id, out] of [
+    ["bulletList", "- "],
+    ["orderedList", "1. "],
+    ["task", "- [ ] "],
+    ["quote", "> "],
+  ] as const) {
+    const view = mkView("", 0)
+    BUILTIN_BY_ID[id]!.run(view)
+    expect(view.state.doc.toString(), id).toBe(out)
+  }
 })
 
 test("bulletList toggles across a multi-line selection", () => {
@@ -329,6 +400,7 @@ test("nothing is disabled in a plain paragraph", () => {
 test("a table cell disables the block commands, not the inline ones", () => {
   expect(disabledAt(TABLE_DOC, 29)).toEqual(
     [
+      "body",
       "bulletList",
       "frontmatter",
       "h1",

@@ -136,11 +136,32 @@ test("italic, strikethrough, and inline code each get a decoration", async () =>
   expect(hasClass(view, "cm-inplace-code")).toBe(true)
 })
 
+test("nested list lines get an indent-guide decoration; a flat list gets none", async () => {
+  const flat = await mount("- a\n- b\n- c")
+  expect(hasClass(flat.view, "cm-inplace-li")).toBe(false)
+
+  const nested = await mount("- a\n  - b\n    - c")
+  expect(hasClass(nested.view, "cm-inplace-li")).toBe(true)
+})
+
 test("emphasis inside a heading is still decorated", async () => {
   const { view } = await mount("## has **bold** inside\n\nsecond line")
 
   expect(hasClass(view, "cm-inplace-h2")).toBe(true)
   expect(hasClass(view, "cm-inplace-strong")).toBe(true)
+})
+
+test("a `> [!type]` blockquote becomes a callout; a plain one stays a quote", async () => {
+  const callout = await mount("> [!tip] Handy\n> body\n\nx")
+  expect(hasClass(callout.view, "cm-inplace-callout-tip")).toBe(true)
+  expect(hasClass(callout.view, "cm-inplace-callout-head")).toBe(true)
+
+  const warn = await mount("> [!warning] Careful\n\nx")
+  expect(hasClass(warn.view, "cm-inplace-callout-warn")).toBe(true)
+
+  const plain = await mount("> just a quote\n\nx")
+  expect(hasClass(plain.view, "cm-inplace-quote")).toBe(true)
+  expect(hasClass(plain.view, "cm-inplace-callout")).toBe(false)
 })
 
 test("a standard link is styled and its syntax hides off-line, reveals on-line", async () => {
@@ -152,6 +173,31 @@ test("a standard link is styled and its syntax hides off-line, reveals on-line",
 
   view.dispatch({ selection: { anchor: 7 } }) // inside the link text
   expect(hidesAMarker(view)).toBe(false)
+})
+
+/** How many bare marker-hiding replace ranges the live set has. */
+function hiddenMarkerCount(view: EditorView): number {
+  const set = view.plugin(inPlacePlugin)?.decorations
+  if (!set) return 0
+  let n = 0
+  set.between(0, view.state.doc.length, (from, to, deco) => {
+    if (from < to && !deco.spec.class && !deco.spec.widget) n += 1
+  })
+  return n
+}
+
+test("a bold link (**[text](url)**) hides every marker and styles the text", async () => {
+  const { view } = await mount("see **[the docs](https://x.dev)** now\n\ntail", { reveal: "never" })
+  expect(hasClass(view, "cm-inplace-strong")).toBe(true)
+  expect(hasClass(view, "cm-inplace-link")).toBe(true)
+  // ** open, ** close, [ , ](https://x.dev)  — all four hidden, no literal marks.
+  expect(hiddenMarkerCount(view)).toBe(4)
+})
+
+test("emphasis inside a link label (`[**text**](url)`) also gets its marks hidden", async () => {
+  const { view } = await mount("see [**the docs**](https://x.dev) now\n\ntail", { reveal: "never" })
+  expect(hasClass(view, "cm-inplace-strong")).toBe(true)
+  expect(hiddenMarkerCount(view)).toBe(4) // [ , ](url), ** , **
 })
 
 test("a wikilink collapses to its label and carries the target", async () => {
@@ -230,6 +276,35 @@ test("a horizontal rule becomes a widget off-line, source on-line", async () => 
   expect(countWidgets(view, HrWidget)).toBe(0)
 })
 
+test("reveal: 'never' still shows the rule's source when the caret is on it", async () => {
+  const { view } = await mount("above\n\n---\n\nbelow", { reveal: "never" })
+
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+  expect(countWidgets(view, HrWidget)).toBe(1) // widget off-caret
+
+  view.dispatch({ selection: { anchor: view.state.doc.line(3).from } }) // onto the `---`
+  expect(countWidgets(view, HrWidget)).toBe(0) // raw `---` back, a visible caret to sit on
+})
+
+test("a Setext heading (text then `---`) styles the text and hides the underline", async () => {
+  const { view } = await mount("My Title\n---\n\nbody", { reveal: "never" })
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+
+  expect(hasClass(view, "cm-inplace-h2")).toBe(true) // "My Title" styled as H2
+  expect(hasClass(view, "cm-inplace-setext-rule")).toBe(true) // underline row collapsed
+  expect(hidesAMarker(view)).toBe(true) // the `---` is hidden, not literal
+
+  view.dispatch({ selection: { anchor: view.state.doc.line(2).from } }) // onto the `---`
+  expect(hidesAMarker(view)).toBe(false) // underline shown again for editing
+  expect(hasClass(view, "cm-inplace-h2")).toBe(true) // heading size kept
+})
+
+test("a Setext H1 (`===`) is styled too", async () => {
+  const { view } = await mount("Big Title\n===\n\nbody", { reveal: "never" })
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+  expect(hasClass(view, "cm-inplace-h1")).toBe(true)
+})
+
 test("blockquote lines get the quote class and > hides off-caret, reveals on-caret", async () => {
   const { view } = await mount("> quoted\n\ntail")
   view.dispatch({ selection: { anchor: view.state.doc.length } })
@@ -260,6 +335,25 @@ test("fenced code: mono container, fences emptied off-block and shown on-caret",
   view.dispatch({ selection: { anchor: view.state.doc.line(4).from } })
   expect(emptiedFenceLines()).toBe(0)
   expect(hasClass(view, "cm-inplace-fence")).toBe(true) // fences shown, muted, on-caret
+})
+
+test("reveal: 'never' still shows a fenced block's ``` on caret entry", async () => {
+  const { view } = await mount("text\n\n```ts\nconst a = 1\n```\n\ntail", { reveal: "never" })
+
+  const emptiedFenceLines = () => {
+    let n = 0
+    view.plugin(inPlacePlugin)!.decorations.between(0, view.state.doc.length, (from, to, deco) => {
+      if (from < to && !deco.spec.class && !deco.spec.widget) n += 1
+    })
+    return n
+  }
+
+  view.dispatch({ selection: { anchor: view.state.doc.length } }) // caret on "tail"
+  expect(emptiedFenceLines()).toBe(2) // ``` hidden while the caret is away
+
+  view.dispatch({ selection: { anchor: view.state.doc.line(4).from } }) // caret in the block
+  expect(emptiedFenceLines()).toBe(0)
+  expect(hasClass(view, "cm-inplace-fence")).toBe(true)
 })
 
 test("a dash bullet is swapped for a glyph; a task item gets a checkbox instead", async () => {

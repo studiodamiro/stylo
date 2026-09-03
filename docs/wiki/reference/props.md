@@ -56,6 +56,28 @@ properties you can set on `.stylo` or any ancestor:
 Defaults follow shadcn/ui's neutral conventions as a visual reference; no
 Tailwind or shadcn code is bundled.
 
+### Table and guide tokens
+
+Rendered tables (in-place **and** preview) and the in-place nested-list indent
+guides read a few extra tokens. Each defaults to a value derived from the palette
+above, so tables look the same until you override one.
+
+| Token                     | Default                         | Role                                             |
+| ------------------------- | ------------------------------- | ------------------------------------------------ |
+| `--stylo-table-border`    | `var(--stylo-border)`           | cell borders                                     |
+| `--stylo-table-header-bg` | `color-mix(--stylo-border 30%)` | header-row fill                                  |
+| `--stylo-table-stripe-bg` | `transparent`                   | even body rows — set it to enable zebra striping |
+| `--stylo-guide`           | `var(--stylo-border)`           | nested-list indent-guide rules                   |
+| `--stylo-callout-note`    | `#3b82f6`                       | callout accent — `note` / `info` bucket          |
+| `--stylo-callout-tip`     | `#22c55e`                       | callout accent — `tip` / `success` bucket        |
+| `--stylo-callout-warn`    | `#f59e0b`                       | callout accent — `question` / `warning` bucket   |
+| `--stylo-callout-danger`  | `#ef4444`                       | callout accent — `failure` / `danger` bucket     |
+| `--stylo-callout-example` | `#a855f7`                       | callout accent — `example` / `quote` bucket      |
+
+Each callout bucket sets `--stylo-callout-accent` from its token above; override
+that per type instead (`.stylo-callout-note { --stylo-callout-accent: … }`) for
+finer control.
+
 ### Syntax colours
 
 Fenced code is highlighted through a token palette in the same style — set these

@@ -2,8 +2,11 @@ import { Facet } from "@codemirror/state"
 import type {
   InPlaceConfig,
   InPlaceDecorationToggles,
+  MenuGroupId,
   RevealMode,
+  SelectionUI,
   TableEditing,
+  ToolbarCommandId,
 } from "../types"
 
 /** `InPlaceDecorationToggles` with every key resolved to a concrete boolean. */
@@ -54,7 +57,10 @@ export const revealModeFacet = Facet.define<RevealMode, RevealMode>({
  * The host's `onLinkClick` (the "Open link" action in the right-click link
  * editor), or `null`. Seeded once by `inPlaceExtension`.
  */
-export const linkOpenFacet = Facet.define<((href: string) => void) | null, ((href: string) => void) | null>({
+export const linkOpenFacet = Facet.define<
+  ((href: string) => void) | null,
+  ((href: string) => void) | null
+>({
   combine: (values) => values[0] ?? null,
 })
 
@@ -66,10 +72,65 @@ export const contextMenuEnabled = Facet.define<boolean, boolean>({
   combine: (values) => values[0] ?? true,
 })
 
+/** The menu's groups in their default order. */
+export const DEFAULT_MENU_GROUPS: MenuGroupId[] = [
+  "link",
+  "format",
+  "paragraph",
+  "insert",
+  "clipboard",
+]
+
+/** The selection bar's buttons in their default order. */
+export const DEFAULT_SELECTION_BAR_ITEMS: ToolbarCommandId[] = [
+  "bold",
+  "italic",
+  "strike",
+  "code",
+  "link",
+  "wikilink",
+  "math",
+]
+
+/** `enabled` false keeps the browser menu; `groups` is always a non-empty list. */
+export function resolveContextMenu(c: InPlaceConfig["contextMenu"]): {
+  enabled: boolean
+  groups: MenuGroupId[]
+} {
+  if (c === false) return { enabled: false, groups: [] }
+  if (c == null || c === true) return { enabled: true, groups: DEFAULT_MENU_GROUPS }
+  return { enabled: true, groups: c.groups?.length ? c.groups : DEFAULT_MENU_GROUPS }
+}
+
 /**
- * Whether the floating inline-formatting bar follows a selection. Seeded once by
- * `inPlaceExtension`; read by `selection-bar.ts`.
+ * Ordered right-click menu groups. Seeded once by `inPlaceExtension`; read by
+ * `context-menu-actions.ts`.
  */
-export const selectionBarEnabled = Facet.define<boolean, boolean>({
-  combine: (values) => values[0] ?? true,
+export const menuGroupsFacet = Facet.define<MenuGroupId[], MenuGroupId[]>({
+  combine: (values) => values[0] ?? DEFAULT_MENU_GROUPS,
+})
+
+/** Selection-bar buttons, resolved to the known inline ids in the given order. */
+export function resolveSelectionBarItems(ids?: ToolbarCommandId[]): ToolbarCommandId[] {
+  if (!ids?.length) return DEFAULT_SELECTION_BAR_ITEMS
+  const kept = ids.filter((id) => DEFAULT_SELECTION_BAR_ITEMS.includes(id))
+  return kept.length ? kept : DEFAULT_SELECTION_BAR_ITEMS
+}
+
+/**
+ * Ordered selection-bar button ids. Seeded once by `inPlaceExtension`; read by
+ * `selection-bar.ts`.
+ */
+export const selectionBarItemsFacet = Facet.define<ToolbarCommandId[], ToolbarCommandId[]>({
+  combine: (values) => values[0] ?? DEFAULT_SELECTION_BAR_ITEMS,
+})
+
+/**
+ * What a non-empty selection offers (ADR-007). `"bar"` shows the floating
+ * formatting bar; `"menu"` (default) keeps the inline group in the right-click
+ * menu instead; `"none"` shows neither. Seeded once by `inPlaceExtension`; read
+ * by `selection-bar.ts` and `context-menu-actions.ts`.
+ */
+export const selectionUIFacet = Facet.define<SelectionUI, SelectionUI>({
+  combine: (values) => values[0] ?? "menu",
 })

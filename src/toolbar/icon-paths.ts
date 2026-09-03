@@ -25,6 +25,9 @@ export const ICON_PATHS: Record<string, string> = {
   // Menu-only glyphs (the toolbar renders these ids as text, or not at all).
   insert: "M12 5v14|M5 12h14",
   heading: "M6 4v16|M18 4v16|M6 12h12",
+  format: "M4 20l6-15 6 15|M6.5 14h7|M4 22h16",
+  paragraph: "M17 4H10a5 5 0 0 0 0 10h3|M13 4v16|M17 4v16",
+  body: "M5 6h14|M5 12h14|M5 18h9",
   frontmatter: "M4 5h16v4H4z|M4 13h10|M4 17h10",
   cut: "M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6z|M6 15a3 3 0 1 0 0 6 3 3 0 0 0 0-6z|M8.6 8.6 20 20|M8.6 15.4 20 4",
   copy: "M9 9h11v11H9z|M5 15H4V4h11v1",

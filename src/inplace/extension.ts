@@ -6,12 +6,22 @@ import {
   contextMenuEnabled,
   inPlaceConfigFacet,
   linkOpenFacet,
+  menuGroupsFacet,
+  resolveContextMenu,
+  resolveSelectionBarItems,
   resolveToggles,
   revealModeFacet,
-  selectionBarEnabled,
+  selectionBarItemsFacet,
+  selectionUIFacet,
   tableEditingFacet,
 } from "./config"
+import { inPlaceEditBoundaries } from "./edit-boundaries"
+import { inPlaceAutoformat } from "./autoformat"
+import { inPlaceInsertAssociation } from "./edit-insert-assoc"
+import { inPlaceLinePrefixEdit } from "./edit-line-prefix"
 import { frontmatterField } from "./frontmatter"
+import { linkClickEditor } from "./link-click"
+import { linkHoverTooltip } from "./link-hover"
 import { blockMathField } from "./math"
 import { contextMenuLayer } from "./menu-plugin"
 import { inPlaceDecorations } from "./plugin"
@@ -75,19 +85,30 @@ function caretOffsetInCell(cell: HTMLElement, x: number, y: number): number {
  * in-place editors only.
  */
 export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
+  const menu = resolveContextMenu(opts.inPlace?.contextMenu)
   return [
     inPlaceConfigFacet.of(resolveToggles(opts.inPlace)),
     tableEditingFacet.of(opts.inPlace?.table ?? "source"),
     revealModeFacet.of(opts.inPlace?.reveal ?? "caret"),
     linkOpenFacet.of(opts.onLinkClick ?? null),
-    contextMenuEnabled.of(opts.inPlace?.contextMenu ?? true),
-    selectionBarEnabled.of(opts.inPlace?.selectionBar ?? true),
+    contextMenuEnabled.of(menu.enabled),
+    menuGroupsFacet.of(menu.groups),
+    selectionUIFacet.of(opts.inPlace?.selectionUI ?? "menu"),
+    selectionBarItemsFacet.of(resolveSelectionBarItems(opts.inPlace?.selectionBarItems)),
     inPlaceDecorations(),
+    // Backspace: the line-prefix unwrap gets first refusal, then the
+    // step-over-markers handler, then CodeMirror's default.
+    inPlaceLinePrefixEdit,
+    inPlaceEditBoundaries,
+    inPlaceInsertAssociation,
+    inPlaceAutoformat,
     blockMathField,
     frontmatterField,
     tableField,
     contextMenuLayer,
     selectionBar,
+    linkClickEditor,
+    linkHoverTooltip,
     Prec.high(inPlaceTheme),
     EditorView.domEventHandlers({
       mousedown(event, view) {
