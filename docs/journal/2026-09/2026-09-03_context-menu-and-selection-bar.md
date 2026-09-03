@@ -40,14 +40,16 @@ keyboard shortcut.
 
 Takes over from the browser's menu when it has something to offer:
 
-| Target under the pointer                | Menu contents                                                  |
-| --------------------------------------- | ------------------------------------------------------------- |
-| A non-empty selection                   | Inline actions + Cut / Copy / Paste                          |
-| A structural block — code, quote, list, heading, divider, `$$` math, frontmatter | That block's toggles + **Insert ▸** + clipboard             |
-| A table cell, caret only                | The structural menu shipped with the table controls          |
-| A table cell with a text selection      | Inline actions (routed through `runInlineInCell`) + clipboard |
-| A plain paragraph, no selection         | **Insert ▸** + clipboard                                     |
-| Outside `.cm-content`                   | The browser's own menu (not intercepted)                     |
+| Target under the pointer                                                         | Menu contents                                                                                                                                                  |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A non-empty selection                                                            | Inline actions + Cut / Copy / Paste                                                                                                                            |
+| No selection, on a marked run                                                    | `**phrase**` etc. selects the run's text; a `[label](url)` / `[[Page\|label]]` selects the **whole** construct (so Bold wraps the link), then as the row above |
+| A structural block — code, quote, list, heading, divider, `$$` math, frontmatter | That block's toggles + **Insert ▸** + clipboard                                                                                                                |
+| A table cell, on a word or marked run                                            | Auto-selected (whole run for a marked one), then as the row below                                                                                              |
+| A table cell, on whitespace                                                      | The structural menu shipped with the table controls                                                                                                            |
+| A table cell with a text selection                                               | The structural menu + a **Format ▸** group (routed through `runInlineInCell`) + clipboard                                                                      |
+| A plain paragraph, no selection                                                  | **Insert ▸** + clipboard                                                                                                                                       |
+| Outside `.cm-content`                                                            | The browser's own menu (not intercepted)                                                                                                                       |
 
 **Insert ▸** is a hover flyout: table, divider, code block, block math,
 frontmatter.
@@ -100,18 +102,19 @@ Both read once, at mount. Stable class names (`.cm-inplace-menu*`,
 
 ## Deferred
 
-- **Selection bar inside an editable table cell.** The bar keys off
-  `state.selection`; a cell's selection is a DOM selection. The right-click menu
-  already handles that case.
-- **`table-gizmos.ts` onto the shared shell.** It keeps its own hand-rolled
-  menu for now; refactoring it is low-risk cleanup, not bundled here to avoid
-  touching a shipped feature.
-- **`contextMenu` / `selectionBar` as an ordered `items` list** like
-  `ToolbarConfig`. A boolean toggle covers "turn it off"; ordering is additive
-  later.
-- **Clipboard "Paste" in a plain document** relies on `navigator.clipboard`
-  read permission; it silently no-ops when denied (the keyboard shortcut still
-  works).
+- ~~**Selection bar inside an editable table cell.**~~ Landed 2026-09-03 — the
+  bar now measures a cell's DOM selection and routes the marks through
+  `runInlineInCell`
+  ([note](./2026-09-03_menu-groups-cell-bar-callouts.md)).
+- ~~**`table-gizmos.ts` onto the shared shell.**~~ Landed 2026-09-03
+  ([note](./2026-09-03_table-menu-shell-and-list-guides.md)).
+- ~~**`contextMenu` / `selectionBar` as an ordered list.**~~ Landed 2026-09-03 —
+  `contextMenu: { groups }` and `selectionBarItems`
+  ([note](./2026-09-03_menu-groups-cell-bar-callouts.md)).
+- ~~**Clipboard "Paste" in a plain document** silently no-ops when
+  `navigator.clipboard` read is denied.~~ Addressed 2026-09-03 — the row is now
+  disabled with a keyboard-shortcut hint when the async read is unavailable
+  ([ADR-007 rollout log](./2026-09-03_adr-007-seamless-in-place.md)).
 
 ## Log
 

@@ -191,16 +191,21 @@ onChange />` with no `mode` now lazy-loads the in-place chunk (and the shared
 - **In-place customization API** — per-type on/off toggles landed as
   [ADR-005](./2026-09-01_adr-005-in-place-decoration-toggles.md) (the `inPlace`
   prop). Still open: cursor-reveal granularity, a frontmatter display mode,
-  callout blockquotes (`> [!note]`), image previews, nested-list indent guides,
-  and any hook for consumer-supplied decorators — each its own future decision.
+  image previews, and any hook for consumer-supplied decorators — each its own
+  future decision. _Nested-list indent guides landed 2026-09-03_
+  ([note](./2026-09-03_table-menu-shell-and-list-guides.md)); _callout
+  blockquotes (`> [!note]`) landed 2026-09-03_
+  ([note](./2026-09-03_menu-groups-cell-bar-callouts.md)).
 - **Table rendering options** — v1 renders one fixed table style and shows cell
   text verbatim. _Table **editing** landed 2026-09-02_ — a `table` toolbar
   command, Tab/Shift-Tab/Enter cell navigation, and live pipe alignment on the
   raw source ([note](./2026-09-02_table-editing.md)); the interactive
   rendered-table editor is [ADR-006](./2026-09-02_adr-006-interactive-table-editing.md).
   Still open for the customization pass: inline formatting inside rendered cells
-  (`**bold**`, `` `code` ``, links, math), and consumer-facing style hooks
-  (borders, striping, colours that track the host's `--stylo-*` tokens).
+  (`**bold**`, `` `code` ``, links, math). _Consumer-facing table style hooks
+  landed 2026-09-03_ — `--stylo-table-border` / `--stylo-table-header-bg` /
+  `--stylo-table-stripe-bg` on both the in-place and preview surfaces
+  ([note](./2026-09-03_table-menu-shell-and-list-guides.md)).
 - **Frontmatter display mode** — the canvas recesses the YAML block in place
   (muted monospace, a "Properties" label, `---` fences hidden off-caret). Make
   this configurable: at least `source` (leave it raw), `inline` (current default

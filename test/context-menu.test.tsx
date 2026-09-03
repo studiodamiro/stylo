@@ -16,15 +16,18 @@ async function mount(value: string, inPlace?: InPlaceConfig) {
   await vi.waitFor(() => {
     if (!result.container.querySelector(".cm-editor")) throw new Error("not mounted")
   })
-  const view = EditorView.findFromDOM(
-    result.container.querySelector(".cm-editor") as HTMLElement,
-  )
+  const view = EditorView.findFromDOM(result.container.querySelector(".cm-editor") as HTMLElement)
   if (!view) throw new Error("no EditorView")
   return { view }
 }
 
 function rightClick(view: EditorView): MouseEvent {
-  const e = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 20, clientY: 20 })
+  const e = new MouseEvent("contextmenu", {
+    bubbles: true,
+    cancelable: true,
+    clientX: 20,
+    clientY: 20,
+  })
   view.contentDOM.dispatchEvent(e)
   return e
 }
@@ -36,12 +39,50 @@ test("right-click in the canvas opens the Stylo menu and suppresses the native o
   expect(document.querySelector(".cm-inplace-menu-panel")).not.toBeNull()
 })
 
-test("the menu reflects the caret context — a heading offers block actions", async () => {
-  const { view } = await mount("# Heading")
+test("right-clicking a word selects it and opens the grouped menu", async () => {
+  const { view } = await mount("Heading here")
   rightClick(view)
   const text = document.querySelector(".cm-inplace-menu-panel")?.textContent ?? ""
-  expect(text).toContain("Blockquote")
-  expect(text).toContain("Insert")
+  expect(text).toContain("Add link")
+  expect(text).toContain("Format")
+  expect(view.state.selection.main.empty, "the word under the pointer got selected").toBe(false)
+})
+
+test("right-clicking inside a hidden-marker run selects the whole phrase", async () => {
+  const { view } = await mount("**two words** trailing", { reveal: "never" })
+  rightClick(view) // pointer resolves to ~start of doc, inside the bold run
+  const sel = view.state.selection.main
+  expect(sel.empty).toBe(false)
+  expect(view.state.sliceDoc(sel.from, sel.to)).toBe("two words")
+})
+
+test("right-clicking a plain word still selects just that word", async () => {
+  const { view } = await mount("plain words here", { reveal: "never" })
+  rightClick(view)
+  const sel = view.state.selection.main
+  expect(view.state.sliceDoc(sel.from, sel.to)).toBe("plain")
+})
+
+test("right-clicking a link selects the whole construct, so Bold wraps it", async () => {
+  const { view } = await mount("[two words](http://x) trailing", { reveal: "never" })
+  rightClick(view)
+  const sel = view.state.selection.main
+  expect(view.state.sliceDoc(sel.from, sel.to)).toBe("[two words](http://x)")
+})
+
+test("right-clicking a wikilink selects the whole construct", async () => {
+  const { view } = await mount("[[Page Name]] trailing", { reveal: "never" })
+  rightClick(view)
+  const sel = view.state.selection.main
+  expect(view.state.sliceDoc(sel.from, sel.to)).toBe("[[Page Name]]")
+})
+
+test("phrase-wide right-click works even with the line's markers revealed", async () => {
+  const { view } = await mount("**two words** trailing", { reveal: "caret" })
+  view.dispatch({ selection: { anchor: 4 } }) // caret on the line → markers shown
+  rightClick(view)
+  const sel = view.state.selection.main
+  expect(view.state.sliceDoc(sel.from, sel.to)).toBe("two words")
 })
 
 test("inPlace.contextMenu = false leaves the browser menu alone", async () => {
@@ -51,14 +92,19 @@ test("inPlace.contextMenu = false leaves the browser menu alone", async () => {
   expect(document.querySelector(".cm-inplace-menu-panel")).toBeNull()
 })
 
-test("a right-click menu is not opened over an editable table cell", async () => {
+test("the canvas right-click menu does not take over an editable table cell", async () => {
   const { view } = await mount("| a | b |\n| - | - |\n| c | d |\n", { table: "cells" })
   const cell = view.dom.querySelector(".cm-inplace-table-edit td, .cm-inplace-table-edit th")
   // Table editing may be unavailable in jsdom; only assert when the cell exists.
   if (!cell) return
   const e = new MouseEvent("contextmenu", { bubbles: true, cancelable: true })
   cell.dispatchEvent(e)
-  expect(document.querySelector(".cm-inplace-menu-panel")).toBeNull()
+  // The widget's own structural menu (same shell, mounted inside .cm-content)
+  // may open; the canvas menu (mounted on .cm-editor, outside .cm-content) must not.
+  const canvasPanels = [...document.querySelectorAll(".cm-inplace-menu-panel")].filter(
+    (p) => !view.contentDOM.contains(p),
+  )
+  expect(canvasPanels).toHaveLength(0)
 })
 
 test("the selection bar element is mounted for an in-place editor", async () => {
@@ -66,7 +112,7 @@ test("the selection bar element is mounted for an in-place editor", async () => 
   expect(document.querySelector(".cm-inplace-selbar")).not.toBeNull()
 })
 
-test("selecting text and right-clicking yields a Link field flyout with an input", async () => {
+test("selecting text and right-clicking yields an 'Add external link' flyout with an input", async () => {
   const { view } = await mount("make this a link")
   view.dispatch({ selection: { anchor: 5, head: 9 } }) // "this"
 
@@ -82,19 +128,21 @@ test("selecting text and right-clicking yields a Link field flyout with an input
   expect(panel, "menu panel rendered").not.toBeNull()
 
   const items = [...panel!.querySelectorAll(".cm-inplace-menu-item")]
-  const linkRow = items.find((el) => el.textContent?.trim() === "Link") as HTMLElement | undefined
-  expect(linkRow, "a Link row exists").toBeDefined()
-  expect(linkRow!.classList.contains("cm-inplace-menu-parent"), "Link row is a flyout parent").toBe(
-    true,
-  )
+  const linkRow = items.find((el) => el.textContent?.trim() === "Add external link") as
+    HTMLElement | undefined
+  expect(linkRow, "an 'Add external link' row exists").toBeDefined()
+  expect(
+    linkRow!.classList.contains("cm-inplace-menu-parent"),
+    "the link row is a flyout parent",
+  ).toBe(true)
 
   linkRow!.dispatchEvent(new Event("pointerenter", { bubbles: true }))
   const input = document.querySelector(".cm-inplace-menu-input")
   expect(input, "a URL input appeared in the flyout").not.toBeNull()
 })
 
-test("the Insert submenu flyout opens on pointerenter", async () => {
-  const { view } = await mount("a plain paragraph")
+test("the Insert submenu flyout opens on pointerenter on an empty line", async () => {
+  const { view } = await mount("")
   view.contentDOM.dispatchEvent(
     new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }),
   )

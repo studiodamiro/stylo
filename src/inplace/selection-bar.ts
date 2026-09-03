@@ -3,20 +3,33 @@
  * in-place canvas, Notion style. Inline marks only — bold, italic,
  * strikethrough, inline code, link, wikilink, inline math; block and insert
  * actions live on the right-click menu.
+ *
+ * It follows an editor selection (`state.selection`) and also a text selection
+ * inside an editable table cell (a DOM selection — the widget is atomic, so it
+ * never reaches `state.selection`). In a cell the mark buttons route through
+ * `runInlineInCell`; the link / wikilink field editors do not apply there, so
+ * those buttons fall back to the plain toggle.
  */
 
 import { ViewPlugin, type EditorView, type PluginValue, type ViewUpdate } from "@codemirror/view"
 import type { ToolbarCommandId } from "../types"
+import { activeTableCell } from "../toolbar/cell-inline"
 import { BUILTIN_BY_ID } from "../toolbar/commands"
 import { ICON_PATHS, iconSvg } from "../toolbar/icon-paths"
-import { selectionBarEnabled } from "./config"
+import { selectionBarItemsFacet, selectionUIFacet } from "./config"
 import { createContextMenu, type ContextMenu } from "./context-menu"
-import { linkRow } from "./context-menu-actions"
+import { cellHasSelection, linkRow, wikiLinkRow } from "./context-menu-actions"
 
-const IDS: ToolbarCommandId[] = ["bold", "italic", "strike", "code", "link", "wikilink", "math"]
+interface Box {
+  left: number
+  right: number
+  top: number
+  bottom: number
+}
 
 class SelectionBar implements PluginValue {
   private bar: HTMLElement
+  private ids: ToolbarCommandId[]
   private buttons = new Map<ToolbarCommandId, HTMLButtonElement>()
   private linkMenu: ContextMenu
   // Scrolling detaches the bar from its selection — just dismiss it. It returns,
@@ -24,16 +37,21 @@ class SelectionBar implements PluginValue {
   private onScroll = () => {
     this.bar.hidden = true
   }
+  // A cell's text selection lives in the DOM, so no `ViewUpdate` fires for it.
+  private onSelectionChange = () => {
+    if (activeTableCell(this.view)) this.schedule()
+  }
 
   constructor(private view: EditorView) {
     const doc = view.dom.ownerDocument
+    this.ids = view.state.facet(selectionBarItemsFacet)
     this.linkMenu = createContextMenu(doc)
     view.dom.appendChild(this.linkMenu.el)
     this.bar = doc.createElement("div")
     this.bar.className = "cm-inplace-selbar"
     this.bar.setAttribute("contenteditable", "false")
     this.bar.hidden = true
-    for (const id of IDS) {
+    for (const id of this.ids) {
       const cmd = BUILTIN_BY_ID[id]!
       const b = doc.createElement("button")
       b.type = "button"
@@ -44,16 +62,23 @@ class SelectionBar implements PluginValue {
       b.addEventListener("mousedown", (e) => e.preventDefault())
       b.addEventListener("click", (e) => {
         e.preventDefault()
-        // The link button opens the URL editor rather than dropping a
-        // `[text](url)` placeholder.
-        const field = id === "link" ? linkRow(view) : null
+        const inCell = Boolean(activeTableCell(view))
+        // The link / wikilink buttons open a URL/target editor rather than
+        // dropping a placeholder — but that editor works on `state.selection`,
+        // so in a cell they fall back to the plain toggle.
+        const field =
+          !inCell && id === "link"
+            ? linkRow(view)
+            : !inCell && id === "wikilink"
+              ? wikiLinkRow(view)
+              : null
         if (field) {
           const r = b.getBoundingClientRect()
           this.linkMenu.showField(field, r.left, r.bottom + 6)
           return
         }
         cmd.run(view)
-        view.focus()
+        if (!inCell) view.focus() // a cell keeps its own DOM focus
         this.schedule()
       })
       this.buttons.set(id, b)
@@ -64,7 +89,8 @@ class SelectionBar implements PluginValue {
     view.dom.appendChild(this.bar)
     // Capture phase catches a scroll on any ancestor — the editor's own
     // scroller, or the page, when the editor grows with its content.
-    view.dom.ownerDocument.addEventListener("scroll", this.onScroll, true)
+    doc.addEventListener("scroll", this.onScroll, true)
+    doc.addEventListener("selectionchange", this.onSelectionChange)
   }
 
   update(u: ViewUpdate) {
@@ -86,36 +112,63 @@ class SelectionBar implements PluginValue {
     })
   }
 
-  private measure(): Placement {
+  /** The screen box of the current text selection — editor or table cell. */
+  private selectionBox(): { box: Box; inCell: boolean } | null {
     const { view } = this
     const sel = view.state.selection.main
-    if (!view.state.facet(selectionBarEnabled) || sel.empty || !view.hasFocus) return null
-    const from = view.coordsAtPos(sel.from)
-    const to = view.coordsAtPos(sel.to)
-    if (!from || !to) return null
+    if (!sel.empty) {
+      const from = view.coordsAtPos(sel.from)
+      const to = view.coordsAtPos(sel.to)
+      if (!from || !to) return null
+      return {
+        inCell: false,
+        box: {
+          left: Math.min(from.left, to.left),
+          right: Math.max(from.right, to.right),
+          top: Math.min(from.top, to.top),
+          bottom: Math.max(from.bottom, to.bottom),
+        },
+      }
+    }
+    if (!cellHasSelection(view)) return null
+    const dom = view.dom.ownerDocument.getSelection()
+    if (!dom || dom.rangeCount === 0) return null
+    const r = dom.getRangeAt(0).getBoundingClientRect()
+    return { inCell: true, box: { left: r.left, right: r.right, top: r.top, bottom: r.bottom } }
+  }
 
-    const rect = this.bar.getBoundingClientRect() // measurable — `[hidden]` only hides visibility
+  private measure(): Placement {
+    const { view } = this
+    if (view.state.facet(selectionUIFacet) !== "bar") return null
+    const found = this.selectionBox()
+    if (!found) return null
+    const { box, inCell } = found
+    // The editor-selection path needs editor focus; the cell path is already
+    // gated on the cell being `document.activeElement` (via `cellHasSelection`).
+    if (!inCell && !view.hasFocus) return null
+
+    const barRect = this.bar.getBoundingClientRect() // `[hidden]` hides visibility only
     const vw = view.dom.ownerDocument.defaultView?.innerWidth ?? 0
-    const midX = (Math.min(from.left, to.left) + Math.max(from.right, to.right)) / 2
-    // Above the selection, unless that clears the top of the editor (landing on
-    // the toolbar) — then drop it below.
+    const midX = (box.left + box.right) / 2
     const editorTop = view.dom.getBoundingClientRect().top
-    const aboveTop = Math.min(from.top, to.top) - rect.height - 6
-    const belowTop = Math.max(from.bottom, to.bottom) + 6
+    const aboveTop = box.top - barRect.height - 6
+    const belowTop = box.bottom + 6
 
     const disabled: Record<string, boolean> = {}
     const active: Record<string, boolean> = {}
-    for (const id of IDS) {
+    for (const id of this.ids) {
       const cmd = BUILTIN_BY_ID[id]!
-      const off = Boolean(cmd.disabled?.(view.state))
+      // Every mark applies to a non-empty cell selection; `isActive` / `disabled`
+      // read `state.selection`, which is collapsed there, so skip them.
+      const off = inCell ? false : Boolean(cmd.disabled?.(view.state))
       disabled[id] = off
-      active[id] = !off && Boolean(cmd.isActive?.(view.state))
+      active[id] = !off && !inCell && Boolean(cmd.isActive?.(view.state))
     }
     // Nothing the bar offers applies here (a fenced code / `$$` / frontmatter
     // selection) — show no bar rather than a row of dead buttons.
-    if (IDS.every((id) => disabled[id])) return null
+    if (this.ids.every((id) => disabled[id])) return null
     return {
-      left: Math.max(4, Math.min(midX - rect.width / 2, vw - rect.width - 4)),
+      left: Math.max(4, Math.min(midX - barRect.width / 2, vw - barRect.width - 4)),
       top: aboveTop < editorTop + 2 ? belowTop : aboveTop,
       disabled,
       active,
@@ -137,19 +190,19 @@ class SelectionBar implements PluginValue {
   }
 
   destroy() {
-    this.view.dom.ownerDocument.removeEventListener("scroll", this.onScroll, true)
+    const doc = this.view.dom.ownerDocument
+    doc.removeEventListener("scroll", this.onScroll, true)
+    doc.removeEventListener("selectionchange", this.onSelectionChange)
     this.linkMenu.destroy()
     this.bar.remove()
   }
 }
 
-type Placement =
-  | null
-  | {
-      left: number
-      top: number
-      disabled: Record<string, boolean>
-      active: Record<string, boolean>
-    }
+type Placement = null | {
+  left: number
+  top: number
+  disabled: Record<string, boolean>
+  active: Record<string, boolean>
+}
 
 export const selectionBar = ViewPlugin.fromClass(SelectionBar)

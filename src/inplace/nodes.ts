@@ -1,10 +1,12 @@
 import type { Range, Text } from "@codemirror/state"
 import { Decoration } from "@codemirror/view"
 import type { SyntaxNodeRef } from "@lezer/common"
+import { CALLOUT_HEAD_LINE, calloutBucket } from "../callout"
 import type { ResolvedToggles } from "./config"
 import { BulletWidget, CheckboxWidget, HrWidget } from "./widgets"
 
 const HEADING = /^ATXHeading([1-6])$/
+const SETEXT = /^SetextHeading([12])$/
 const BULLET = /^[-*+]$/
 
 /** Inline spans: style the text between the markers, hide the markers off-caret. */
@@ -19,6 +21,11 @@ const INLINE: Record<string, { mark: string; className: string; toggle: "emphasi
 export interface NodeCtx {
   doc: Text
   revealed: Set<number>
+  /** Lines the caret actually touches. Equals `revealed` except under
+   *  `reveal: "never"`, where `revealed` is empty but this is not — a few
+   *  constructs (fenced code) still reveal their delimiters on caret entry
+   *  because there is no other way to see or remove them. */
+  caretRevealed: Set<number>
   out: Range<Decoration>[]
   toggles: ResolvedToggles
   /** End of the frontmatter block, or -1. Nodes within are left to `frontmatterField`. */
@@ -27,7 +34,7 @@ export interface NodeCtx {
 
 /** Decorate one syntax node. Returns `false` to stop descent, `undefined` to continue. */
 export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undefined {
-  const { doc, revealed, out, toggles, fmEnd } = ctx
+  const { doc, revealed, caretRevealed, out, toggles, fmEnd } = ctx
   if (node.to <= fmEnd) return false
 
   const heading = HEADING.exec(node.name)
@@ -45,6 +52,33 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
       }
     }
     return // descend: emphasis / links inside the heading still get decorated
+  }
+
+  // A Setext heading is text with `===` / `---` on the next line (what you get
+  // by typing `---` directly under a line, no blank between). Style the text
+  // line like an ATX heading; hide the underline and collapse its row so it
+  // reads as one heading, not "text then a rule". `caretRevealed`, not
+  // `revealed`: the underline shows again whenever the caret is on either line,
+  // even under `reveal: "never"`, so it stays editable and the caret is visible.
+  const setext = SETEXT.exec(node.name)
+  if (setext) {
+    if (toggles.headings) {
+      const textLine = doc.lineAt(node.from)
+      out.push(
+        Decoration.line({ class: `cm-inplace-heading cm-inplace-h${setext[1]}` }).range(
+          textLine.from,
+        ),
+      )
+      const hm = node.node.getChild("HeaderMark")
+      if (hm) {
+        const underline = doc.lineAt(hm.from)
+        if (!caretRevealed.has(textLine.number) && !caretRevealed.has(underline.number)) {
+          out.push(Decoration.line({ class: "cm-inplace-setext-rule" }).range(underline.from))
+          out.push(Decoration.replace({}).range(hm.from, hm.to))
+        }
+      }
+    }
+    return // descend: inline emphasis inside the heading text
   }
 
   const rule = INLINE[node.name]
@@ -84,13 +118,17 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
         out.push(Decoration.replace({}).range(shut.from, node.to))
       }
     }
-    return false
+    return // descend: emphasis / code inside the label still gets its marks hidden
   }
 
   if (node.name === "HorizontalRule") {
     if (!toggles.horizontalRule) return false
     const line = doc.lineAt(node.from)
-    if (!revealed.has(line.number)) {
+    // `caretRevealed`, not `revealed`: with the caret on the rule line the raw
+    // `---` shows again (even under `reveal: "never"`), so there is a visible
+    // caret to sit on and the marker is editable — the same exception fenced
+    // code and `$$` math make.
+    if (!caretRevealed.has(line.number)) {
       // Zero the line's own text-row strut; the widget alone sets the height.
       out.push(Decoration.line({ class: "cm-inplace-hr-line" }).range(line.from))
       out.push(Decoration.replace({ widget: new HrWidget() }).range(line.from, line.to))
@@ -102,8 +140,23 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
     if (toggles.blockquote) {
       const first = doc.lineAt(node.from).number
       const last = doc.lineAt(Math.min(node.to, doc.length)).number
+      const headLine = doc.line(first)
+      // `> [!type]` turns the blockquote into a callout: a coloured box, the
+      // `[!type]` token hidden off-caret (a `data-callout` label takes its
+      // place), the rest of the head line read as the title.
+      const head = CALLOUT_HEAD_LINE.exec(headLine.text)
+      const kind = head ? calloutBucket(head[3]!) : null
       for (let n = first; n <= last; n++) {
-        out.push(Decoration.line({ class: "cm-inplace-quote" }).range(doc.line(n).from))
+        const base = kind ? `cm-inplace-callout cm-inplace-callout-${kind}` : "cm-inplace-quote"
+        const cls = kind && n === first ? `${base} cm-inplace-callout-head` : base
+        const spec = kind
+          ? { class: cls, attributes: { "data-callout": head![3]!.toLowerCase() } }
+          : { class: cls }
+        out.push(Decoration.line(spec).range(doc.line(n).from))
+      }
+      if (kind && !revealed.has(first)) {
+        const tokenFrom = headLine.from + head![1]!.length
+        out.push(Decoration.replace({}).range(tokenFrom, tokenFrom + head![2]!.length))
       }
     }
     return // descend for the quoted inline content and each line's QuoteMark
@@ -152,9 +205,13 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
     const first = doc.lineAt(node.from).number
     const last = doc.lineAt(node.to > node.from ? node.to - 1 : node.to).number
 
+    // `caretRevealed`, not `revealed`: a fenced block shows its ``` on caret
+    // entry even under `reveal: "never"`, because the fence has no on-screen
+    // affordance for editing — hiding it for good would trap the block (you
+    // could never delete a fence to unwrap it). Parallels the `$$` math block.
     let blockRevealed = false
     for (let n = first; n <= last && !blockRevealed; n++) {
-      if (revealed.has(n)) blockRevealed = true
+      if (caretRevealed.has(n)) blockRevealed = true
     }
     // Off-caret, a fence line's ``` text is replaced with nothing and the row
     // collapsed to zero line-height, so the container reads as just its padding

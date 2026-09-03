@@ -6,6 +6,7 @@ export type {
   InPlaceConfig,
   InPlaceDecorationToggles,
   RevealMode,
+  SelectionUI,
   StyloMode,
   StyloProps,
   TableEditing,

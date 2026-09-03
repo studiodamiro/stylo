@@ -5,6 +5,7 @@ import {
   Stylo,
   type InPlaceDecorationToggles,
   type RevealMode,
+  type SelectionUI,
   type StyloMode,
   type TableEditing,
   type ToolbarConfig,
@@ -90,6 +91,7 @@ function App() {
   const [frontmatter, setFrontmatter] = useState<"hidden" | "code">("hidden")
   const [tableEdit, setTableEdit] = useState<TableEditing>("cells")
   const [reveal, setReveal] = useState<RevealMode>("never")
+  const [selectionUI, setSelectionUI] = useState<SelectionUI>("menu")
   const [lastLink, setLastLink] = useState<string | null>(null)
   // ADR-005: inPlace config is read once at mount, so a changed toggle remounts
   // the canvas via `key` below — a deliberate demo of that construction-time rule.
@@ -209,6 +211,16 @@ function App() {
             <option value="caret">caret</option>
             <option value="never">never</option>
           </select>
+          <span style={{ marginLeft: "0.75rem" }}>selection</span>
+          <select
+            value={selectionUI}
+            onChange={(e) => setSelectionUI(e.target.value as SelectionUI)}
+            style={{ padding: "0.2rem 0.4rem", borderRadius: 6, border: "1px solid #d4d4d8" }}
+          >
+            <option value="menu">menu</option>
+            <option value="bar">bar</option>
+            <option value="none">none</option>
+          </select>
         </label>
       )}
 
@@ -242,7 +254,7 @@ function App() {
       <Stylo
         key={
           mode === "in-place"
-            ? `${JSON.stringify(decorations)}:${tableEdit}:${reveal}`
+            ? `${JSON.stringify(decorations)}:${tableEdit}:${reveal}:${selectionUI}`
             : "static"
         }
         value={doc}
@@ -250,7 +262,7 @@ function App() {
         mode={mode}
         onWikiLinkClick={setLastLink}
         onLinkClick={(href) => window.open(href, "_blank", "noopener")}
-        inPlace={{ decorations, table: tableEdit, reveal }}
+        inPlace={{ decorations, table: tableEdit, reveal, selectionUI }}
         toolbar={TOOLBARS[toolbar]}
         frontmatter={frontmatter}
         codeLanguages={languages}

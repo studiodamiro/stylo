@@ -17,13 +17,20 @@ function markRun(s: string, pos: number, dir: -1 | 1): { text: string; from: num
   return { text: s.slice(from, dir < 0 ? pos : to), from }
 }
 
-/** Offset and length of the first group of `ch` inside a mark run. */
-function charGroup(run: string, ch: string): { start: number; len: number } | null {
-  const start = run.indexOf(ch)
-  if (start < 0) return null
-  let len = 0
-  while (run[start + len] === ch) len++
-  return { start, len }
+/** Every run of `ch` inside a mark run, in index order. */
+function charGroups(run: string, ch: string): { start: number; len: number }[] {
+  const out: { start: number; len: number }[] = []
+  for (let i = 0; i < run.length;) {
+    if (run[i] !== ch) {
+      i++
+      continue
+    }
+    let len = 0
+    while (run[i + len] === ch) len++
+    out.push({ start: i, len })
+    i += len
+  }
+  return out
 }
 
 /**
@@ -84,13 +91,19 @@ export function wrapOp(text: string, from: number, to: number, mark: string): In
   }
 
   // `mark` is somewhere in the stack of marks flanking the range — possibly with
-  // other marks (`~~`, `*`) between it and the text, as in `***~~word~~***`.
-  // Strip `m` from the inner edge of its char-group on each side.
+  // other marks (`~~`, `*`) between it and the text, as in `***~~word~~***` or,
+  // when marks were applied in an interleaving order, `**~~*word*~~**`. Line the
+  // `ch`-groups up outermost-first on both sides (the left run reads outer→inner
+  // already; the right run reads inner→outer, so reverse it) and strip the
+  // outermost pair whose widths match `mark`.
   const left = markRun(text, from, -1)
   const right = markRun(text, to, 1)
-  const lg = charGroup(left.text, ch)
-  const rg = charGroup(right.text, ch)
-  if (lg && rg && surroundsExactly(lg.len, rg.len, m)) {
+  const lgs = charGroups(left.text, ch)
+  const rgs = charGroups(right.text, ch).reverse()
+  for (let k = 0; k < Math.min(lgs.length, rgs.length); k++) {
+    const lg = lgs[k]!
+    const rg = rgs[k]!
+    if (!surroundsExactly(lg.len, rg.len, m)) continue
     const lInner = left.from + lg.start + lg.len // group's edge nearest the text
     const rInner = to + rg.start
     return {
@@ -130,6 +143,34 @@ export function applyChanges(
 export function wrapString(text: string, from: number, to: number, mark: string): InlineStr {
   const op = wrapOp(text, from, to, mark)
   return { text: applyChanges(text, op.changes), from: op.from, to: op.to }
+}
+
+/**
+ * The span a right-click in a table cell should select so a Format toggle lands
+ * cleanly: the text between the delimiters for an inline mark run
+ * (`**bold phrase**`, `*em*`, `~~strike~~`, `` `code` ``), but the *whole*
+ * construct for a `[label](url)` link or `[[target|label]]` wikilink — its label
+ * is not a Markdown context, so Bold must wrap the link, not sit inside it.
+ * Returns `null` when `pos` is not in any run. Mirrors `wrapAt` on the canvas.
+ */
+export function markedContentAt(text: string, pos: number): { from: number; to: number } | null {
+  const link = linkAtIn(text, pos)
+  if (link) return { from: link.from, to: link.to }
+  const wiki = wikiLinkPartsIn(text, pos)
+  if (wiki) return { from: wiki.from, to: wiki.to }
+  let best: { from: number; to: number } | null = null
+  for (const mark of ["**", "~~", "*", "`"]) {
+    const re = new RegExp(esc(mark) + "(?!\\s)(?:[^]*?\\S)??" + esc(mark), "g")
+    for (let m: RegExpExecArray | null; (m = re.exec(text));) {
+      if (m[0].length <= 2 * mark.length) continue
+      const from = m.index + mark.length
+      const to = m.index + m[0].length - mark.length
+      if (pos >= from && pos <= to && (!best || to - from < best.to - best.from)) {
+        best = { from, to }
+      }
+    }
+  }
+  return best
 }
 
 /** The `[text](url)` span of `text` covering `head`, or `null`. */
@@ -196,6 +237,39 @@ export function wikiLinkAtIn(
     const from = m.index ?? 0
     const to = from + m[0].length
     if (head >= from && head <= to) return { from, to, label: m[2] || m[1] || "" }
+  }
+  return null
+}
+
+/**
+ * Like {@link wikiLinkAtIn} but also breaks out the target and its `[from, to)`
+ * span within `text`, for editing just the `[[…]]` target in place.
+ */
+export function wikiLinkPartsIn(
+  text: string,
+  head: number,
+): {
+  from: number
+  to: number
+  target: string
+  label: string
+  targetFrom: number
+  targetTo: number
+} | null {
+  for (const m of text.matchAll(WIKILINK_PATTERN)) {
+    const from = m.index ?? 0
+    const to = from + m[0].length
+    if (head < from || head > to) continue
+    const target = m[1] ?? ""
+    const targetFrom = from + 2 // past `[[`
+    return {
+      from,
+      to,
+      target,
+      label: m[2] ?? "",
+      targetFrom,
+      targetTo: targetFrom + target.length,
+    }
   }
   return null
 }
