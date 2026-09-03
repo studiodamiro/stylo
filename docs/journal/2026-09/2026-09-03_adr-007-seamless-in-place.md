@@ -230,6 +230,30 @@ throughout.
   not their own — applying code inside math (or vice versa, or a text mark
   inside either) produced literal `` ` `` / `$` in the output. The span's own
   mark stays live so it can still be toggled off.
+- **2026-09-03 — Stage 5 click affordance + boundary / clipboard polish.**
+  - _Collapsed links had no click route to an edit._ Hover (`link-hover.ts`)
+    shows the destination; there was still no way to change it without a
+    right-click. `link-click.ts` — under `reveal: "never"`, a plain click on a
+    collapsed `[text](url)` opens the same URL field the menu and selection bar
+    use, positioned at the pointer. External links only: a wikilink click is
+    navigation (`onWikiLinkClick`), and `InPlaceView` always forwards a wrapper
+    handler so the extension can't distinguish "nav wanted" from "nothing
+    passed" — the wikilink target stays editable via hover + right-click.
+    `"caret"` mode is untouched: a click there already reveals the source on
+    that line.
+  - _Nested wrapper emptied to a bare `****`._ `edit-boundaries.ts` removed only
+    one level of wrapper when its last inner character went, so emptying
+    `***x***` left `****`. The removal now walks outward while each enclosing
+    wrapper would also be left empty, taking the whole nest in one change.
+  - _Menu "Paste" silently no-opped without async clipboard read._ It is now a
+    disabled row with a `title` pointing at the keyboard shortcut when
+    `navigator.clipboard.readText` is unavailable, rather than a live button that
+    does nothing. (`MenuAction` gained an optional `title`.)
+  - _Inline `$…$` math reveal_ stays caret-line-revealed under `"never"` on
+    purpose: the widget replaces the whole span, so the LaTeX has no on-screen
+    home and the caret line is the only way to reach it. It is a tracked
+    exception until a dedicated math-source affordance lands (the parallel of the
+    Stage 4 link field); the comment in `decorate.ts` records this.
 
 ## Consequences
 

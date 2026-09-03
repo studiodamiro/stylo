@@ -146,12 +146,19 @@ const deleteAcrossMarkers =
     let from = dir < 0 ? solid - 1 : solid
     let to = dir < 0 ? solid : solid + 1
 
-    // Removing the last character inside a wrapper would leave empty markers —
-    // take the wrapper with it.
-    const w = wrapAt(state, dir < 0 ? from : to)
-    if (w && from <= w.contentFrom && to >= w.contentTo && w.contentTo > w.contentFrom) {
-      from = w.from
-      to = w.to
+    // Removing the last character inside a wrapper leaves empty markers — take
+    // the wrapper with it, then keep walking out: a nested `***x***` empties its
+    // outer `**…**` too, and stopping after one level would strand a bare
+    // `****` / ``` `` ``` / `[]()`. Probing at `from` (once it is the run's outer
+    // edge) is what lets `resolveInner` climb to the enclosing construct.
+    for (
+      let w = wrapAt(state, from);
+      w && from <= w.contentFrom && to >= w.contentTo && w.contentTo > w.contentFrom;
+      w = wrapAt(state, from)
+    ) {
+      if (w.from >= from && w.to <= to) break // no growth — the run is fully covered
+      from = Math.min(from, w.from)
+      to = Math.max(to, w.to)
     }
 
     view.dispatch({

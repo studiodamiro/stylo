@@ -66,6 +66,18 @@ test("emptying a wrapper's last character takes the now-useless markers with it"
   expect(view.state.doc.toString()).toBe("a  b")
 })
 
+test("emptying a nested ***x*** takes the whole nest, not just one level", () => {
+  const view = mkView("a ***x*** b", 9) // caret just past the hidden closing ***
+  expect(deleteAcrossMarkerBackward(view)).toBe(true)
+  expect(view.state.doc.toString()).toBe("a  b") // no stranded ****
+})
+
+test("emptying a nested wrapper from the front (Delete) also clears both levels", () => {
+  const view = mkView("a ***x*** b", 2) // caret before the hidden opening ***
+  expect(deleteAcrossMarkerForward(view)).toBe(true)
+  expect(view.state.doc.toString()).toBe("a  b")
+})
+
 test("Backspace steps over a hidden [ and deletes the space before a link", () => {
   const view = mkView("see [x](http://a) end", 5)
   expect(deleteAcrossMarkerBackward(view)).toBe(true)

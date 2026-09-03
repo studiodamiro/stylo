@@ -15,6 +15,8 @@ export interface MenuAction {
   active?: boolean
   /** Shown greyed and not selectable. */
   disabled?: boolean
+  /** Native `title` tooltip — e.g. why a disabled row is disabled. */
+  title?: string
   onSelect: () => void
 }
 
@@ -102,6 +104,7 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
     b.type = "button"
     b.className = `${className}-item`
     label(b, a.label, a.icon)
+    if (a.title) b.title = a.title
     if (a.active) b.dataset.active = ""
     if (a.disabled) {
       b.disabled = true

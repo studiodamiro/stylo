@@ -31,9 +31,12 @@ export interface InPlaceDecorations {
  */
 export function buildDecorations(view: EditorView): InPlaceDecorations {
   const out: Range<Decoration>[] = []
-  // `reveal: "never"` (ADR-007) — no line reveals its markers. Inline `$…$` math
-  // is the exception: its widget still needs the caret line to show `$…$` source
-  // for editing, so it keeps the real reveal set until a later ADR-007 stage.
+  // `reveal: "never"` (ADR-007) — no line reveals its markers. Inline / one-line
+  // `$…$` math is the deliberate exception: the widget replaces the whole span,
+  // so the LaTeX source has no on-screen home, and the caret line is the only
+  // way to reach it. It keeps the real reveal set until a dedicated math-source
+  // affordance lands (the parallel of the Stage 4 link field). Tracked in
+  // ADR-007's rollout log.
   const caretRevealed = revealedLines(view.state)
   const revealed = view.state.facet(revealModeFacet) === "never" ? NO_LINES : caretRevealed
   const tree = syntaxTree(view.state)

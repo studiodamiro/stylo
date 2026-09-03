@@ -13,6 +13,7 @@ import {
 } from "./config"
 import { inPlaceEditBoundaries } from "./edit-boundaries"
 import { frontmatterField } from "./frontmatter"
+import { linkClickEditor } from "./link-click"
 import { linkHoverTooltip } from "./link-hover"
 import { blockMathField } from "./math"
 import { contextMenuLayer } from "./menu-plugin"
@@ -91,6 +92,7 @@ export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
     tableField,
     contextMenuLayer,
     selectionBar,
+    linkClickEditor,
     linkHoverTooltip,
     Prec.high(inPlaceTheme),
     EditorView.domEventHandlers({

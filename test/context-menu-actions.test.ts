@@ -262,6 +262,16 @@ test("inside $math$ the Format submenu greys every mark except Math", () => {
   expect(byLabel("Inline math").disabled).toBe(false)
 })
 
+test("Paste is disabled with a hint when async clipboard read is unavailable", () => {
+  // jsdom has no `navigator.clipboard`, so the menu can't read to paste.
+  const rows = menuRows(mkView("hello world", 0, 5))
+  const paste = rows.find(
+    (r): r is MenuAction => r !== "separator" && r.label === "Paste",
+  )!
+  expect(paste.disabled).toBe(true)
+  expect(paste.title).toMatch(/keyboard/i)
+})
+
 test("commands that can't apply where the caret sits are greyed, not removed", () => {
   // Inside frontmatter the inline wrap commands report disabled.
   const fm = "---\ntitle: x\n---\n"

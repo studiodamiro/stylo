@@ -81,10 +81,15 @@ const clipboardRows = (view: EditorView): MenuRow[] => {
       /* not permitted — the keyboard shortcut still works */
     }
   }
+  // Menu Paste needs async clipboard read; without it there is no user-gesture
+  // path from a button. Rather than a live row that silently no-ops, show it
+  // disabled and point at the shortcut, which always works.
+  const clipboard = view.dom.ownerDocument.defaultView?.navigator?.clipboard
+  const canPaste = typeof clipboard?.readText === "function"
   const paste = () => {
     const cell = activeTableCell(view)
     if (!cell) view.focus()
-    view.dom.ownerDocument.defaultView?.navigator?.clipboard
+    clipboard
       ?.readText()
       .then((text) => {
         if (!text) return
@@ -98,7 +103,15 @@ const clipboardRows = (view: EditorView): MenuRow[] => {
   return [
     { label: "Cut", icon: ICON_PATHS.cut, onSelect: exec("cut") },
     { label: "Copy", icon: ICON_PATHS.copy, onSelect: exec("copy") },
-    { label: "Paste", icon: ICON_PATHS.paste, onSelect: paste },
+    canPaste
+      ? { label: "Paste", icon: ICON_PATHS.paste, onSelect: paste }
+      : {
+          label: "Paste",
+          icon: ICON_PATHS.paste,
+          disabled: true,
+          title: "Paste with the keyboard shortcut",
+          onSelect: () => {},
+        },
   ]
 }
 
