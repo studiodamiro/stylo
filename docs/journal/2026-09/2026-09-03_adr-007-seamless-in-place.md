@@ -272,6 +272,16 @@ throughout.
     marker, task → paragraph. Fires only while the prefix is actually hidden, so
     `reveal: "caret"` with the caret on the line is untouched. Level / type
     changes still go through the menu, toolbar, and shortcuts.
+- **2026-09-04 — Step-over-markers extended to `Shift`-arrow.** The Stage 2
+  arrow fix only bound bare `ArrowLeft` / `ArrowRight`; `Shift`-arrow fell
+  through to the stock `select*` commands, which park the head on the near edge
+  of a hidden run just the same, so selecting across `**bold**` cost one dead
+  press per marker. `arrowAcrossMarkers` in `edit-boundaries.ts` grew an
+  `extend` mode — same "took only hidden markers, take one more" rule, but it
+  keeps the anchor and moves the head — and the keymap now also binds
+  `Shift-ArrowLeft` / `Shift-ArrowRight`. Word- and line-wise motions
+  (`Alt` / `Mod` arrow) are left on the default: each jump clears a whole word,
+  so they do not rest on a hidden edge.
 
 ## Consequences
 

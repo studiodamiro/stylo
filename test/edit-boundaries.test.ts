@@ -4,16 +4,24 @@ import { EditorView } from "@codemirror/view"
 import { expect, test } from "vitest"
 import { inPlaceConfigFacet, resolveToggles, revealModeFacet } from "../src/inplace/config"
 import {
+  arrowAcrossMarkerLeft,
   deleteAcrossMarkerBackward,
   deleteAcrossMarkerForward,
+  selectAcrossMarkerLeft,
+  selectAcrossMarkerRight,
 } from "../src/inplace/edit-boundaries"
 import { inPlaceDecorations } from "../src/inplace/plugin"
 
-function mkView(doc: string, head: number, reveal: "caret" | "never" = "never"): EditorView {
+function mkView(
+  doc: string,
+  head: number,
+  reveal: "caret" | "never" = "never",
+  anchor = head,
+): EditorView {
   return new EditorView({
     state: EditorState.create({
       doc,
-      selection: EditorSelection.single(head),
+      selection: EditorSelection.single(anchor, head),
       extensions: [
         markdownLanguage,
         inPlaceConfigFacet.of(resolveToggles()),
@@ -110,4 +118,49 @@ test("a non-empty selection is left alone", () => {
     }),
   })
   expect(deleteAcrossMarkerBackward(view)).toBe(false)
+})
+
+test("ArrowLeft at the front of a bold word crosses the hidden ** in one press", () => {
+  const view = mkView("a **bold** b", 4) // caret visually before "bold"
+  expect(arrowAcrossMarkerLeft(view)).toBe(true)
+  const sel = view.state.selection.main
+  expect(sel.empty).toBe(true)
+  expect(sel.head).toBe(1) // past the hidden **, onto the space — not parked at 2
+})
+
+test("Shift+ArrowLeft extends past the hidden opening ** without a dead press", () => {
+  const view = mkView("a **bold** b", 4)
+  expect(selectAcrossMarkerLeft(view)).toBe(true)
+  const sel = view.state.selection.main
+  expect(sel.anchor).toBe(4) // anchor stays put
+  expect(sel.head).toBe(1) // not parked at the near edge (2)
+})
+
+test("Shift+ArrowLeft extends past the hidden closing ** in one press", () => {
+  const view = mkView("a **bold** b", 10) // caret just past the hidden closing **
+  expect(selectAcrossMarkerLeft(view)).toBe(true)
+  const sel = view.state.selection.main
+  expect(sel.anchor).toBe(10)
+  expect(sel.head).toBe(7) // onto the last content char, not parked at 8
+})
+
+test("Shift+ArrowRight extends past the hidden opening ** in one press", () => {
+  const view = mkView("a **bold** b", 2) // caret before the hidden opening **
+  expect(selectAcrossMarkerRight(view)).toBe(true)
+  const sel = view.state.selection.main
+  expect(sel.anchor).toBe(2)
+  expect(sel.head).toBe(5) // past ** and onto the first content char, not parked at 4
+})
+
+test("Shift+ArrowLeft with no hidden marker in the way is an ordinary one-char extend", () => {
+  const view = mkView("a **bold** b", 6) // caret inside the content
+  expect(selectAcrossMarkerLeft(view)).toBe(true)
+  const sel = view.state.selection.main
+  expect(sel.anchor).toBe(6)
+  expect(sel.head).toBe(5)
+})
+
+test("with reveal: caret and the caret on the line, Shift+ArrowLeft is not hijacked", () => {
+  const view = mkView("a **bold** b", 4, "caret")
+  expect(selectAcrossMarkerLeft(view)).toBe(false)
 })

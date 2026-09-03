@@ -14,10 +14,12 @@
  * Arrow keys get the same treatment: `atomicRanges` leaves both edges of a
  * hidden run as caret stops that render at the same point, so a press can look
  * like it did nothing — when a step only crossed hidden markers, take one more.
+ * This covers both a plain caret move and `Shift`-extending a selection, which
+ * the stock `select*` commands park on the near edge just the same.
  */
 
 import { syntaxTree } from "@codemirror/language"
-import { type EditorState, Prec, type Extension } from "@codemirror/state"
+import { EditorSelection, type EditorState, Prec, type Extension } from "@codemirror/state"
 import { type Command, type EditorView, keymap } from "@codemirror/view"
 import type { SyntaxNode } from "@lezer/common"
 import { WIKILINK_PATTERN } from "../wikilink"
@@ -194,34 +196,51 @@ function onlyHiddenMarkers(view: EditorView, from: number, to: number): boolean 
  * leaves *both* edges of a run as caret stops, and they render at the same
  * point, so one arrow press looks like it did nothing. When a step only crossed
  * hidden markers, take one more so every press moves the caret visibly.
+ *
+ * With `extend` the selection head moves and the anchor stays put — the same
+ * fix for `Shift`-arrow, whose stock command also parks on the near edge.
  */
 const arrowAcrossMarkers =
-  (forward: boolean): Command =>
+  (forward: boolean, extend: boolean): Command =>
   (view: EditorView): boolean => {
     if (activeTableCell(view)) return false
     const sel = view.state.selection.main
-    if (!sel.empty) return false
+    if (!extend && !sel.empty) return false
     if (!markersHidden(view.state, view.state.doc.lineAt(sel.head).number)) return false
 
-    let range = view.moveByChar(sel, forward)
-    const lo = Math.min(sel.head, range.head)
-    const hi = Math.max(sel.head, range.head)
+    let moved = view.moveByChar(sel, forward)
+    const lo = Math.min(sel.head, moved.head)
+    const hi = Math.max(sel.head, moved.head)
     if (onlyHiddenMarkers(view, lo, hi)) {
-      const next = view.moveByChar(range, forward)
+      const next = view.moveByChar(moved, forward)
       if (view.state.doc.lineAt(next.head).number === view.state.doc.lineAt(sel.head).number) {
-        range = next
+        moved = next
       }
     }
-    if (range.head === sel.head) return false
+    if (moved.head === sel.head) return false
+    const range = extend
+      ? EditorSelection.range(sel.anchor, moved.head)
+      : EditorSelection.cursor(moved.head)
     view.dispatch({ selection: range, userEvent: "select" })
     return true
   }
+
+/** Plain caret step across a hidden marker run (leftward). */
+export const arrowAcrossMarkerLeft: Command = arrowAcrossMarkers(false, false)
+/** Plain caret step — the forward mirror. */
+export const arrowAcrossMarkerRight: Command = arrowAcrossMarkers(true, false)
+/** `Shift`-extend the selection head across a hidden marker run (leftward). */
+export const selectAcrossMarkerLeft: Command = arrowAcrossMarkers(false, true)
+/** `Shift`-extend — the forward mirror. */
+export const selectAcrossMarkerRight: Command = arrowAcrossMarkers(true, true)
 
 export const inPlaceEditBoundaries: Extension = Prec.high(
   keymap.of([
     { key: "Backspace", run: deleteAcrossMarkerBackward },
     { key: "Delete", run: deleteAcrossMarkerForward },
-    { key: "ArrowLeft", run: arrowAcrossMarkers(false) },
-    { key: "ArrowRight", run: arrowAcrossMarkers(true) },
+    { key: "ArrowLeft", run: arrowAcrossMarkerLeft },
+    { key: "ArrowRight", run: arrowAcrossMarkerRight },
+    { key: "Shift-ArrowLeft", run: selectAcrossMarkerLeft },
+    { key: "Shift-ArrowRight", run: selectAcrossMarkerRight },
   ]),
 )
