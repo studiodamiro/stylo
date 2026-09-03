@@ -352,8 +352,9 @@ test("right-click on a cell selection shows structural rows AND an enabled Forma
   expect(labels).toContain("Align left")
   expect(labels).toContain("Format") // …plus the inline group
 
-  const format = [...view.contentDOM.querySelectorAll<HTMLButtonElement>(".cm-inplace-menu-item")]
-    .find((b) => b.textContent === "Format")!
+  const format = [
+    ...view.contentDOM.querySelectorAll<HTMLButtonElement>(".cm-inplace-menu-item"),
+  ].find((b) => b.textContent === "Format")!
   format.dispatchEvent(new Event("pointerenter", { bubbles: true }))
   const bold = [...document.querySelectorAll<HTMLButtonElement>(".cm-inplace-menu-item")].find(
     (b) => b.textContent === "Bold",

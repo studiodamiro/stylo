@@ -21,7 +21,7 @@ tags:
 
 [ADR-004](./2026-09-01_adr-004-in-place-decoration-canvas.md) rule 3 is
 **cursor reveal**: a construct's Markdown markers are hidden on every line
-*except* the one the caret is on. Move onto a line and its `#`, `**`, `` ` ``,
+_except_ the one the caret is on. Move onto a line and its `#`, `**`, `` ` ``,
 `>`, `[]()` reappear so you can edit the raw source; move away and they
 re-collapse. This is Obsidian's Live Preview model.
 
@@ -36,7 +36,7 @@ clicked points at a different character.
 
 The owner wants the in-place canvas to read as a **true editor with no visible
 trace of Markdown** — the Notion / Typora "seamless" feel — where markers are
-*never* painted, not even on the active line. The canonical model stays a
+_never_ painted, not even on the active line. The canonical model stays a
 Markdown string (ADR-001); the markers still exist in it and the file still
 round-trips to Obsidian. They are simply never displayed, and the caret never
 occupies them as visible characters.
@@ -67,7 +67,7 @@ Read once, at mount, like the rest of `InPlaceConfig`.
 
 ### 2. Boundary-editing rules (the actual work)
 
-With markers invisible and atomic, editing *at their edges* needs defined
+With markers invisible and atomic, editing _at their edges_ needs defined
 behaviour. One set of rules, applied to every construct:
 
 - **Insertion association.** A text insertion at the boundary between visible
@@ -80,7 +80,7 @@ behaviour. One set of rules, applied to every construct:
   right-click menu, or shortcut) with the construct selected or the caret
   inside it. Predictable, and the toggle is discoverable.
 - **Empty-wrapper cleanup.** Deleting the last visible character of a styled
-  span removes the now-empty `****` / `` `` `` / `[]()` in the same
+  span removes the now-empty `****` / ` ` `` / `[]()` in the same
   transaction, so the document never carries an invisible empty construct.
 - **Line-prefix backspace.** Backspace at visual column 0 of a heading,
   blockquote, or list item removes one level of prefix — heading → paragraph,
@@ -111,14 +111,14 @@ render as widgets or keep their source by design. They do not change.
 Each stage is shippable and testable on its own; the default stays `"caret"`
 throughout.
 
-| Stage | Scope |
-| ----- | ----- |
-| 1 | `inPlace.reveal` flag + infra: under `"never"`, hide inline markers on every line, always atomic. No boundary rules yet — establishes the baseline and shows exactly what breaks. |
-| 2 | Inline-mark boundary rules: insertion association, empty-wrapper cleanup, backspace-over-marker no-op. Bold / italic / strike / inline code feel right. |
-| 3 | Line-prefix constructs: heading / blockquote / list — backspace-at-column-0 removes the prefix; level / type changes go through the menu and shortcuts. |
-| 4 | Links + wikilinks always collapsed, with an "Edit link…" affordance for the target. |
-| 5 | Autoformat-on-type input rules (`## `, `- `, `> `, `**…**`, `` `…` ``, `[…](…)`). |
-| 6 | Flip the default to `"never"` once 2–5 are solid and dogfooded. `"caret"` stays available. |
+| Stage | Scope                                                                                                                                                                             |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | `inPlace.reveal` flag + infra: under `"never"`, hide inline markers on every line, always atomic. No boundary rules yet — establishes the baseline and shows exactly what breaks. |
+| 2     | Inline-mark boundary rules: insertion association, empty-wrapper cleanup, backspace-over-marker no-op. Bold / italic / strike / inline code feel right.                           |
+| 3     | Line-prefix constructs: heading / blockquote / list — backspace-at-column-0 removes the prefix; level / type changes go through the menu and shortcuts.                           |
+| 4     | Links + wikilinks always collapsed, with an "Edit link…" affordance for the target.                                                                                               |
+| 5     | Autoformat-on-type input rules (`## `, `- `, `> `, `**…**`, `` `…` ``, `[…](…)`).                                                                                                 |
+| 6     | Flip the default to `"never"` once 2–5 are solid and dogfooded. `"caret"` stays available.                                                                                        |
 
 ### Rollout log
 
@@ -160,17 +160,17 @@ throughout.
     markers go with it. Covers emphasis / strong / strike / inline code /
     `[text](url)` / `[[wikilink]]`; only fires while those markers are hidden.
     First slice of Stage 2; insertion association at a hidden edge and
-    line-prefix backspace still to come. Known edge: emptying a *nested*
+    line-prefix backspace still to come. Known edge: emptying a _nested_
     wrapper can leave `****`.
   - _Arrow keys stopped between adjacent hidden markers._ `EditorView.
-    atomicRanges` only skips a range the caret sits *strictly* inside, so the
+atomicRanges` only skips a range the caret sits _strictly_ inside, so the
     `**` + `*` of a `***word***` prefix left a landable seam at their junction —
     arrow keys rested there and typing split the marks (you got italic-only
     text mid-run). `buildDecorations` now **coalesces touching replace ranges**
     into one before handing them to `atomicRanges`, so a marker run is crossed
     as a single unit. The rendered decoration set is untouched.
   - _Arrow keys "crawled" — a press that didn't move the caret._ A coalesced
-    run still leaves *both* its edges as caret stops, and with the markers
+    run still leaves _both_ its edges as caret stops, and with the markers
     hidden the two render at the same point, so one ArrowLeft/ArrowRight looked
     like a no-op. `edit-boundaries.ts` now also handles Left/Right: when a step
     only crossed hidden markers it takes one more, so every press moves the
@@ -211,7 +211,7 @@ throughout.
   **Format** drop out (they live on the bar / toolbar); **Paragraph** and
   **Insert** always stay. A table cell offers **Format** + clipboard only.
 - **2026-09-03 — Blank-line polish + a fenced-code Language field.** On a lone
-  blank line `toggleLinePrefix` now *starts* the list / quote (it used to skip
+  blank line `toggleLinePrefix` now _starts_ the list / quote (it used to skip
   blank lines outright, so the bullet button did nothing on an empty line). The
   `wrap()` commands (bold / italic / strike / code / math) report `disabled`
   when the caret has no word under it — wrapping empty space just dropped a
@@ -256,7 +256,7 @@ throughout.
     Stage 4 link field); the comment in `decorate.ts` records this.
 - **2026-09-03 — Stage 2 completed + Stage 3 landed.**
   - _Insertion association._ `edit-insert-assoc.ts` — an `EditorState.
-    transactionFilter` that redirects a single insertion sitting exactly on a
+transactionFilter` that redirects a single insertion sitting exactly on a
     hidden wrapper's content edge to the far side of the marker run: typing
     after a bold word gives `**bold**x`, never `**boldx**`; the mirror at the
     front gives `x**bold**`. A nested `***word***` is crossed as a unit
@@ -296,7 +296,7 @@ throughout.
   - _Right-click selects the whole marked phrase._ The word-aware right-click
     (`menu-plugin.ts`) selected only the word under the pointer, so a Bold
     toggle on `**two words**` hit just one. It now probes `wrapAt(state, pos,
-    emphasisOnly)` first and, inside a hidden-marker construct, selects the
+emphasisOnly)` first and, inside a hidden-marker construct, selects the
     entire content span; a plain word still selects just the word, a link keeps
     its own label.
   - _Fenced code reveals its ``` on caret entry, even under `"never"`._ The
@@ -323,8 +323,8 @@ throughout.
     is not an edit and should not care whether the markers are visible.
   - _Interleaved marks now strip in any order._ Applying bold, strike, italic
     (in that order) nests them interleaved — `**~~*word*~~**` — and removing a
-    mark then failed: `wrapOp` paired the left run's *outermost* `*` group with
-    the right run's *innermost* one (both were "the first group"), so the widths
+    mark then failed: `wrapOp` paired the left run's _outermost_ `*` group with
+    the right run's _innermost_ one (both were "the first group"), so the widths
     disagreed and it wrapped again instead of unwrapping, sometimes stacking
     `****` that the parser then showed literally. It now lists the mark-char
     groups outermost-first on both sides (the right run is reversed) and strips
@@ -350,11 +350,11 @@ throughout.
     cell through its model string; deferred until it is asked for.
 - **2026-09-04 — Formatting a link now wraps the link, and renders.** Two halves
   of one bug: bolding a right-clicked link produced `[**text**](url)` (marks
-  *inside* the label), and the canvas then showed those `**` literally because
+  _inside_ the label), and the canvas then showed those `**` literally because
   the decoration walk stopped at the `Link` node and never reached the nested
   `StrongEmphasis`.
   - `Wrap` gained a `kind` (`"mark"` | `"link"`); a right-click on a link or
-    wikilink now selects the *whole* construct, so Bold / Italic / Strike wrap
+    wikilink now selects the _whole_ construct, so Bold / Italic / Strike wrap
     it — `**[text](url)**`, `**[[Page]]**` — never landing a mark inside a label
     that is not a Markdown context. `markedContentAt` does the same in a cell.
   - `nodes.ts` no longer returns `false` from the `Link` branch, so emphasis /
@@ -384,11 +384,11 @@ throughout.
   - `---` / `***` / `___` completed as the last line with a blank line above
     (i.e. a real `HorizontalRule`, not a Setext underline) → a trailing `\n` is
     appended so the caret steps off the rule.
-  The Insert-menu **Code block** / **Block math** commands (`fence.ts`) now set
-  the same between-the-fences caret instead of landing before the opener.
-  Numbered-list markers and inline `**…**` / `` `…` `` / `[…](…)` were left out:
-  the number is meant to stay visible, and the inline marks already collapse
-  once the pair is closed.
+    The Insert-menu **Code block** / **Block math** commands (`fence.ts`) now set
+    the same between-the-fences caret instead of landing before the opener.
+    Numbered-list markers and inline `**…**` / `` `…` `` / `[…](…)` were left out:
+    the number is meant to stay visible, and the inline marks already collapse
+    once the pair is closed.
 
 - **2026-09-04 — `---` typed under text now becomes a rule, not a Setext `<h2>`.**
   Stage 5's rule handling only fired when a blank line already sat above, so
@@ -438,9 +438,9 @@ throughout.
 
 - **Keep cursor reveal, fix the click mapping.** Investigated first. When
   CodeMirror maps a click it already accounts for the hidden (replaced)
-  characters, so the caret lands on the right *source* position; the problem is
+  characters, so the caret lands on the right _source_ position; the problem is
   the line then reflowing out from under the pointer. A post-reveal
-  re-placement lands on whichever character the pixel now covers — a *different*
+  re-placement lands on whichever character the pixel now covers — a _different_
   one — so there is no correct-after-the-fact fix. The seam is the reveal
   itself.
 - **Full WYSIWYG on a tree model (ProseMirror / Lexical / TipTap).** Forks the
@@ -454,5 +454,5 @@ throughout.
   boundary-editing to every consumer before the rules exist. Staged behind the
   flag instead, mirroring how ADR-004 staged its own default flip.
 - **A per-construct reveal toggle** (`reveal: { emphasis: "never", links:
-  "caret" }`). More surface than the problem needs; a single mode is enough
+"caret" }`). More surface than the problem needs; a single mode is enough
   until evidence says otherwise.

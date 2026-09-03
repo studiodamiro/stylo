@@ -65,7 +65,9 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
     if (toggles.headings) {
       const textLine = doc.lineAt(node.from)
       out.push(
-        Decoration.line({ class: `cm-inplace-heading cm-inplace-h${setext[1]}` }).range(textLine.from),
+        Decoration.line({ class: `cm-inplace-heading cm-inplace-h${setext[1]}` }).range(
+          textLine.from,
+        ),
       )
       const hm = node.node.getChild("HeaderMark")
       if (hm) {

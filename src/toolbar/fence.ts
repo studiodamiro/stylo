@@ -55,9 +55,7 @@ export function fencedCodeActive(state: EditorState): boolean {
  * opening line may be hidden in the seamless canvas, but its text is still in
  * the document, so this stays editable through the menu.
  */
-export function fenceInfoAt(
-  state: EditorState,
-): { from: number; to: number; lang: string } | null {
+export function fenceInfoAt(state: EditorState): { from: number; to: number; lang: string } | null {
   const fence = enclosingFence(state, state.selection.main.head)
   if (!fence) return null
   const open = state.doc.lineAt(fence.from)

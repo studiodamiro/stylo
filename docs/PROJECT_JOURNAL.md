@@ -29,9 +29,9 @@ milestones and Architectural Decision Records, newest first.
 
 | Date       | Entry                                                                                                                                             |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-03 | [In-place canvas — menu groups, selection bar in cells, callouts](./journal/2026-09/2026-09-03_menu-groups-cell-bar-callouts.md)                   |
-| 2026-09-03 | [In-place canvas — shared table menu, table style hooks, list indent guides](./journal/2026-09/2026-09-03_table-menu-shell-and-list-guides.md)     |
-| 2026-09-03 | [In-place canvas — right-click menu and selection bar](./journal/2026-09/2026-09-03_context-menu-and-selection-bar.md)                             |
+| 2026-09-03 | [In-place canvas — menu groups, selection bar in cells, callouts](./journal/2026-09/2026-09-03_menu-groups-cell-bar-callouts.md)                  |
+| 2026-09-03 | [In-place canvas — shared table menu, table style hooks, list indent guides](./journal/2026-09/2026-09-03_table-menu-shell-and-list-guides.md)    |
+| 2026-09-03 | [In-place canvas — right-click menu and selection bar](./journal/2026-09/2026-09-03_context-menu-and-selection-bar.md)                            |
 | 2026-09-03 | [In-place canvas — boxed blocks hold off the editor frame](./journal/2026-09/2026-09-03_boxed-block-gutter.md)                                    |
 | 2026-09-02 | [Structural controls on the editable table](./journal/2026-09/2026-09-02_table-structural-controls.md)                                            |
 | 2026-09-02 | [Syntax highlighting — a token palette for fenced code](./journal/2026-09/2026-09-02_syntax-highlighting.md)                                      |

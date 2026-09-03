@@ -4,7 +4,11 @@ import { expect, test } from "vitest"
 import { inPlaceAutoformat } from "../src/inplace/autoformat"
 
 /** Type one character at `at` and return the resulting doc + caret. */
-function type(doc: string, at: number, ch: string): { doc: string; head: number; view: EditorView } {
+function type(
+  doc: string,
+  at: number,
+  ch: string,
+): { doc: string; head: number; view: EditorView } {
   const view = new EditorView({
     state: EditorState.create({
       doc,

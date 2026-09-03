@@ -38,27 +38,27 @@ skipped.
 
 ## Command ids
 
-| Id              | Action                               | Shortcut                |
-| --------------- | ------------------------------------ | ----------------------- |
-| `undo` / `redo` | History                              | `Mod-z` / `Mod-Shift-z` |
-| `h1` `h2` `h3`  | Set / swap / clear an ATX heading    | `Mod-Alt-1..3`          |
-| `body`          | Strip any heading prefix — back to a paragraph | —             |
-| `bold`          | Wrap in `**…**`                      | `Mod-b`                 |
-| `italic`        | Wrap in `*…*`                        | `Mod-i`                 |
-| `strike`        | Wrap in `~~…~~`                      | —                       |
-| `code`          | Wrap in `` `…` ``                    | —                       |
-| `codeBlock`     | Fence the selected lines in ` ``` `  | —                       |
-| `link`          | `[text](url)`, or unlink             | `Mod-k`                 |
-| `wikilink`      | `[[target]]`, or unwrap to the label | `Mod-Shift-k`           |
-| `quote`         | Toggle a `>` line prefix             | —                       |
-| `bulletList`    | Toggle a `-` line prefix             | —                       |
-| `orderedList`   | Toggle a `1.` `2.` `3.` line prefix  | —                       |
-| `task`          | Toggle a `- [ ]` line prefix         | —                       |
-| `hr`            | Insert / remove a `---` divider      | —                       |
-| `frontmatter`   | Wrap the doc top in `---`, or unwrap | —                       |
-| `table`         | Insert a starter pipe table          | —                       |
-| `math`          | Wrap in `$…$`                        | —                       |
-| `mathBlock`     | Fence the selected lines in `$$`     | —                       |
+| Id              | Action                                         | Shortcut                |
+| --------------- | ---------------------------------------------- | ----------------------- |
+| `undo` / `redo` | History                                        | `Mod-z` / `Mod-Shift-z` |
+| `h1` `h2` `h3`  | Set / swap / clear an ATX heading              | `Mod-Alt-1..3`          |
+| `body`          | Strip any heading prefix — back to a paragraph | —                       |
+| `bold`          | Wrap in `**…**`                                | `Mod-b`                 |
+| `italic`        | Wrap in `*…*`                                  | `Mod-i`                 |
+| `strike`        | Wrap in `~~…~~`                                | —                       |
+| `code`          | Wrap in `` `…` ``                              | —                       |
+| `codeBlock`     | Fence the selected lines in ` ``` `            | —                       |
+| `link`          | `[text](url)`, or unlink                       | `Mod-k`                 |
+| `wikilink`      | `[[target]]`, or unwrap to the label           | `Mod-Shift-k`           |
+| `quote`         | Toggle a `>` line prefix                       | —                       |
+| `bulletList`    | Toggle a `-` line prefix                       | —                       |
+| `orderedList`   | Toggle a `1.` `2.` `3.` line prefix            | —                       |
+| `task`          | Toggle a `- [ ]` line prefix                   | —                       |
+| `hr`            | Insert / remove a `---` divider                | —                       |
+| `frontmatter`   | Wrap the doc top in `---`, or unwrap           | —                       |
+| `table`         | Insert a starter pipe table                    | —                       |
+| `math`          | Wrap in `$…$`                                  | —                       |
+| `mathBlock`     | Fence the selected lines in `$$`               | —                       |
 
 The default bar shows every id above, grouped by kind: history · headings ·
 inline text (with `link` and `wikilink`) · the three list markers · block
@@ -104,7 +104,7 @@ The `bold` / `italic` / `strike` marks **nest** rather than consume one another:
 `italic` on `**word**` gives `***word***`, and toggling one mark back off leaves
 the others intact. `code` and `math` do **not** nest — inside an inline
 `` `…` `` or `$…$` span every other mark (including the other of the two) is
-disabled, since `` `**x**` `` / `` $`x`$ `` are not valid; the span's own
+disabled, since `` `**x**` `` / ``$`x`$`` are not valid; the span's own
 button stays live to toggle it off. `codeBlock` and `mathBlock` unwrap when the
 caret is inside their fence pair. `hr` drops the divider on its own line,
 inserting a blank line first when the current line has text so CommonMark reads

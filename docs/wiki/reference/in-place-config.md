@@ -73,14 +73,14 @@ Optional, defaults to `true`. A right-click inside the canvas opens Stylo's own
 menu instead of the browser's. It has **one shape everywhere** (Obsidian's
 layout), so nothing jumps around:
 
-| Row                  | Opens                                                                                          |
-| -------------------- | -------------------------------------------------------------------------------------------- |
-| **Add link**         | A `[[target]]` field. Prefilled + **Remove link** and labelled **Edit link** when the caret is in one. |
-| **Add external link** | A `[text](url)` field. Prefilled + **Open link** (fires `onLinkClick`) + **Remove link**, labelled **Edit external link**, when the caret is in one. |
-| **Format** ›         | Bold · Italic · Strikethrough · Inline code · Inline math                                     |
-| **Paragraph** ›      | Bulleted / Numbered / Task list · Heading 1–3 · **Body** (strip the heading) · Blockquote      |
-| **Insert** ›         | Table · Divider · Code block · Block math · Frontmatter — **greyed unless the line is empty** |
-| **Cut / Copy / Paste** | Clipboard                                                                                  |
+| Row                    | Opens                                                                                                                                                |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Add link**           | A `[[target]]` field. Prefilled + **Remove link** and labelled **Edit link** when the caret is in one.                                               |
+| **Add external link**  | A `[text](url)` field. Prefilled + **Open link** (fires `onLinkClick`) + **Remove link**, labelled **Edit external link**, when the caret is in one. |
+| **Format** ›           | Bold · Italic · Strikethrough · Inline code · Inline math                                                                                            |
+| **Paragraph** ›        | Bulleted / Numbered / Task list · Heading 1–3 · **Body** (strip the heading) · Blockquote                                                            |
+| **Insert** ›           | Table · Divider · Code block · Block math · Frontmatter — **greyed unless the line is empty**                                                        |
+| **Cut / Copy / Paste** | Clipboard                                                                                                                                            |
 
 A right-click with no selection first **selects the word under the pointer**, so
 the menu acts on that word. Items that can't produce valid Markdown where the
@@ -131,11 +131,11 @@ from the list but are otherwise fixed.
 Optional, defaults to `"menu"`. Picks the affordance a non-empty text selection
 gets. Only one applies at a time, so the same buttons never appear twice.
 
-| Value    | A selection gets                                                                                     |
-| -------- | --------------------------------------------------------------------------------------------------- |
+| Value    | A selection gets                                                                                                                           |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `"menu"` | The inline-mark group inside the right-click menu (bold / italic / strike / code, Link and Wikilink fields, inline math). No floating bar. |
-| `"bar"`  | A floating bar above the selection with those same inline-mark buttons; the right-click menu drops its inline group. |
-| `"none"` | Neither — the main toolbar is the only formatting surface.                                          |
+| `"bar"`  | A floating bar above the selection with those same inline-mark buttons; the right-click menu drops its inline group.                       |
+| `"none"` | Neither — the main toolbar is the only formatting surface.                                                                                 |
 
 The main editor toolbar is independent of this setting: it is always present
 unless hidden through the `toolbar` prop, and it always acts on the current
@@ -199,10 +199,10 @@ folded into the triggering keystroke's own transaction, so a single undo returns
 the literal text. Specified in
 [ADR-007](../../journal/2026-09/2026-09-03_adr-007-seamless-in-place.md) (Stage 5).
 
-| You type | You get |
-| --- | --- |
-| `[] ` / `[ ] ` at the start of a line | `- [ ] ` — a task item |
-| `` ``` `` or `$$` alone on a line | the block scaffolded with its closing fence, caret on the empty line between |
+| You type                                | You get                                                                                                                                                                                                                         |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `[] ` / `[ ] ` at the start of a line   | `- [ ] ` — a task item                                                                                                                                                                                                          |
+| ` ``` ` or `$$` alone on a line         | the block scaffolded with its closing fence, caret on the empty line between                                                                                                                                                    |
 | `---` / `***` / `___` completing a line | a thematic break; a blank line is inserted above a `---` that sits directly under text so it is a rule, not a Setext `<h2>` underline, and a trailing newline is added when the rule is the last line so the caret steps off it |
 
 `# `, `- `, `> ` and the other line prefixes need no expansion — their markers

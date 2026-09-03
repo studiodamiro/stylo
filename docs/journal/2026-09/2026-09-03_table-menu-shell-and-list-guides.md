@@ -40,11 +40,11 @@ Rendered tables — in-place **and** preview — now read their border, header f
 and row-stripe colours from dedicated tokens, so a host can reskin them without
 overriding rules:
 
-| Token | Default | Effect |
-| ----- | ------- | ------ |
-| `--stylo-table-border` | `var(--stylo-border)` | cell borders, both surfaces |
-| `--stylo-table-header-bg` | `color-mix(--stylo-border 30%)` | header row fill |
-| `--stylo-table-stripe-bg` | `transparent` | `tbody tr:nth-child(even)` — zebra striping, opt-in |
+| Token                     | Default                         | Effect                                              |
+| ------------------------- | ------------------------------- | --------------------------------------------------- |
+| `--stylo-table-border`    | `var(--stylo-border)`           | cell borders, both surfaces                         |
+| `--stylo-table-header-bg` | `color-mix(--stylo-border 30%)` | header row fill                                     |
+| `--stylo-table-stripe-bg` | `transparent`                   | `tbody tr:nth-child(even)` — zebra striping, opt-in |
 
 Defaults reproduce today's look (the preview header gains the same subtle fill
 the canvas already had — the two now match). Striping is a no-op until the host

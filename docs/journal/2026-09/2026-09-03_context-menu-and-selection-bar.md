@@ -40,16 +40,16 @@ keyboard shortcut.
 
 Takes over from the browser's menu when it has something to offer:
 
-| Target under the pointer                | Menu contents                                                  |
-| --------------------------------------- | ------------------------------------------------------------- |
-| A non-empty selection                   | Inline actions + Cut / Copy / Paste                          |
-| No selection, on a marked run            | `**phrase**` etc. selects the run's text; a `[label](url)` / `[[Page\|label]]` selects the **whole** construct (so Bold wraps the link), then as the row above |
-| A structural block — code, quote, list, heading, divider, `$$` math, frontmatter | That block's toggles + **Insert ▸** + clipboard             |
-| A table cell, on a word or marked run    | Auto-selected (whole run for a marked one), then as the row below |
-| A table cell, on whitespace              | The structural menu shipped with the table controls          |
-| A table cell with a text selection      | The structural menu + a **Format ▸** group (routed through `runInlineInCell`) + clipboard |
-| A plain paragraph, no selection         | **Insert ▸** + clipboard                                     |
-| Outside `.cm-content`                   | The browser's own menu (not intercepted)                     |
+| Target under the pointer                                                         | Menu contents                                                                                                                                                  |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A non-empty selection                                                            | Inline actions + Cut / Copy / Paste                                                                                                                            |
+| No selection, on a marked run                                                    | `**phrase**` etc. selects the run's text; a `[label](url)` / `[[Page\|label]]` selects the **whole** construct (so Bold wraps the link), then as the row above |
+| A structural block — code, quote, list, heading, divider, `$$` math, frontmatter | That block's toggles + **Insert ▸** + clipboard                                                                                                                |
+| A table cell, on a word or marked run                                            | Auto-selected (whole run for a marked one), then as the row below                                                                                              |
+| A table cell, on whitespace                                                      | The structural menu shipped with the table controls                                                                                                            |
+| A table cell with a text selection                                               | The structural menu + a **Format ▸** group (routed through `runInlineInCell`) + clipboard                                                                      |
+| A plain paragraph, no selection                                                  | **Insert ▸** + clipboard                                                                                                                                       |
+| Outside `.cm-content`                                                            | The browser's own menu (not intercepted)                                                                                                                       |
 
 **Insert ▸** is a hover flyout: table, divider, code block, block math,
 frontmatter.

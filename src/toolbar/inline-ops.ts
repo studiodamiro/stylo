@@ -20,7 +20,7 @@ function markRun(s: string, pos: number, dir: -1 | 1): { text: string; from: num
 /** Every run of `ch` inside a mark run, in index order. */
 function charGroups(run: string, ch: string): { start: number; len: number }[] {
   const out: { start: number; len: number }[] = []
-  for (let i = 0; i < run.length; ) {
+  for (let i = 0; i < run.length;) {
     if (run[i] !== ch) {
       i++
       continue
@@ -161,7 +161,7 @@ export function markedContentAt(text: string, pos: number): { from: number; to: 
   let best: { from: number; to: number } | null = null
   for (const mark of ["**", "~~", "*", "`"]) {
     const re = new RegExp(esc(mark) + "(?!\\s)(?:[^]*?\\S)??" + esc(mark), "g")
-    for (let m: RegExpExecArray | null; (m = re.exec(text)); ) {
+    for (let m: RegExpExecArray | null; (m = re.exec(text));) {
       if (m[0].length <= 2 * mark.length) continue
       const from = m.index + mark.length
       const to = m.index + m[0].length - mark.length

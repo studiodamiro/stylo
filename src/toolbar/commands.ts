@@ -173,8 +173,7 @@ export const BUILTIN_COMMANDS: ToolbarCommand[] = [
       if (!clearHeading(view)) view.focus()
       return true
     },
-    isActive: (state) =>
-      !/^#{1,6} /.test(state.doc.lineAt(state.selection.main.head).text),
+    isActive: (state) => !/^#{1,6} /.test(state.doc.lineAt(state.selection.main.head).text),
     disabled: disabledWhen(tableActive, inLiteral),
   },
   wrap("bold", "Bold", "**", ["Mod-b"]),
