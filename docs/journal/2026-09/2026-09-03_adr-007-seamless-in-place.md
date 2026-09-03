@@ -372,6 +372,23 @@ throughout.
   `reveal: "never"` — which also fixes the missing caret on a rule line (a
   zero-height replaced widget had nowhere to draw one). The `---` is one atomic
   step, so a single arrow crosses it.
+- **2026-09-04 — Stage 5 landed (autoformat on type).** `## `, `- `, `> ` were
+  already seamless — their markers hide as you type. What was missing is now in
+  `autoformat.ts`, one `EditorState.transactionFilter` that appends its rewrite
+  to the keystroke's own transaction (`sequential: true`, so one undo goes back
+  to the literal text):
+  - `[] ` / `[ ] ` at the start of a line → `- [ ] ` (a task item — GFM has no
+    bare `[ ]` task, so this is the one that genuinely needed help).
+  - ` ``` ` or `$$` alone on a line → the block is scaffolded with its closing
+    fence and the caret drops on the empty line between.
+  - `---` / `***` / `___` completed as the last line with a blank line above
+    (i.e. a real `HorizontalRule`, not a Setext underline) → a trailing `\n` is
+    appended so the caret steps off the rule.
+  The Insert-menu **Code block** / **Block math** commands (`fence.ts`) now set
+  the same between-the-fences caret instead of landing before the opener.
+  Numbered-list markers and inline `**…**` / `` `…` `` / `[…](…)` were left out:
+  the number is meant to stay visible, and the inline marks already collapse
+  once the pair is closed.
 
 ## Consequences
 
@@ -398,12 +415,14 @@ throughout.
 - `atomicRanges` + selection is, per ADR-002, "the classic source of CodeMirror
   rich-editing bugs". More of the canvas now depends on it.
 - Undo granularity for autoformat rewrites must fold into the triggering
-  keystroke, or undo feels broken.
+  keystroke, or undo feels broken. _Done in Stage 5 via `sequential` filter
+  specs._
 - Accessibility: the rendered DOM now never shows structural markers, so the
   semantic layer matters more. In-place headings today are `.cm-line` size
   classes, not real `<hN>` — worth revisiting as a follow-up.
-- Pasted Markdown should ideally autoformat rather than sit as literal markup;
-  covered once stage 5 exists.
+- Pasted Markdown should ideally autoformat rather than sit as literal markup.
+  Stage 5's rewrite rules are typing-only (single-character `input.type`); a
+  paste path is still open.
 
 ## Alternatives rejected
 

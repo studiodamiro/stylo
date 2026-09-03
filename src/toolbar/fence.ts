@@ -35,6 +35,8 @@ export function toggleFencedCode(view: EditorView): boolean {
         { from: s.doc.line(first).from, insert: "```\n" },
         { from: s.doc.line(last).to, insert: "\n```" },
       ],
+      // Land the caret on the line between the fences, not before the opener.
+      selection: { anchor: s.doc.line(first).from + 4 },
       scrollIntoView: true,
     })
   }
@@ -115,6 +117,8 @@ export function toggleMathBlock(view: EditorView): boolean {
         { from: s.doc.line(first).from, insert: "$$\n" },
         { from: s.doc.line(last).to, insert: "\n$$" },
       ],
+      // Land the caret on the line between the fences, not before the opener.
+      selection: { anchor: s.doc.line(first).from + 3 },
       scrollIntoView: true,
     })
   }

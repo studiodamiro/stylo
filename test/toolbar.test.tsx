@@ -29,6 +29,18 @@ test("bold wraps the selection and toggles back off", () => {
   expect(view.state.doc.toString()).toBe("hello world")
 })
 
+test("Code block / Block math insert land the caret between the fences", () => {
+  const cb = mkView("", 0)
+  BUILTIN_BY_ID.codeBlock!.run(cb)
+  expect(cb.state.doc.toString()).toBe("```\n\n```")
+  expect(cb.state.selection.main.head).toBe(4) // the empty line between
+
+  const mb = mkView("", 0)
+  BUILTIN_BY_ID.mathBlock!.run(mb)
+  expect(mb.state.doc.toString()).toBe("$$\n\n$$")
+  expect(mb.state.selection.main.head).toBe(3)
+})
+
 test("bold on a whole-link selection wraps the link, and toggles back", () => {
   const view = mkView("x [two words](http://a) y", 2, 23) // the whole [..](..) span
   BUILTIN_BY_ID.bold!.run(view)

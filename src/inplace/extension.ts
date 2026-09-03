@@ -16,6 +16,7 @@ import {
   tableEditingFacet,
 } from "./config"
 import { inPlaceEditBoundaries } from "./edit-boundaries"
+import { inPlaceAutoformat } from "./autoformat"
 import { inPlaceInsertAssociation } from "./edit-insert-assoc"
 import { inPlaceLinePrefixEdit } from "./edit-line-prefix"
 import { frontmatterField } from "./frontmatter"
@@ -100,6 +101,7 @@ export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
     inPlaceLinePrefixEdit,
     inPlaceEditBoundaries,
     inPlaceInsertAssociation,
+    inPlaceAutoformat,
     blockMathField,
     frontmatterField,
     tableField,
