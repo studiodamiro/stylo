@@ -63,18 +63,18 @@ test("right-clicking a plain word still selects just that word", async () => {
   expect(view.state.sliceDoc(sel.from, sel.to)).toBe("plain")
 })
 
-test("right-clicking a multi-word link selects the whole label", async () => {
+test("right-clicking a link selects the whole construct, so Bold wraps it", async () => {
   const { view } = await mount("[two words](http://x) trailing", { reveal: "never" })
   rightClick(view)
   const sel = view.state.selection.main
-  expect(view.state.sliceDoc(sel.from, sel.to)).toBe("two words")
+  expect(view.state.sliceDoc(sel.from, sel.to)).toBe("[two words](http://x)")
 })
 
-test("right-clicking a multi-word wikilink selects the whole target", async () => {
+test("right-clicking a wikilink selects the whole construct", async () => {
   const { view } = await mount("[[Page Name]] trailing", { reveal: "never" })
   rightClick(view)
   const sel = view.state.selection.main
-  expect(view.state.sliceDoc(sel.from, sel.to)).toBe("Page Name")
+  expect(view.state.sliceDoc(sel.from, sel.to)).toBe("[[Page Name]]")
 })
 
 test("phrase-wide right-click works even with the line's markers revealed", async () => {

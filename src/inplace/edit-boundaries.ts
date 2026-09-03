@@ -41,6 +41,10 @@ export interface Wrap {
   to: number
   contentFrom: number
   contentTo: number
+  /** `"mark"` — a paired inline mark (`**`, `*`, `~~`, `` ` ``); `"link"` — a
+   *  link or wikilink, whose label is not itself a Markdown context, so a
+   *  right-click formats the *whole* construct rather than the label. */
+  kind: "mark" | "link"
 }
 
 /** Are inline markers on this line hidden right now? */
@@ -102,7 +106,13 @@ export function wrapAt(
         const open = marks[0]
         const close = marks[marks.length - 1]
         if (!open || !close || open === close) break
-        return { from: node.from, to: node.to, contentFrom: open.to, contentTo: close.from }
+        return {
+          from: node.from,
+          to: node.to,
+          contentFrom: open.to,
+          contentTo: close.from,
+          kind: "mark",
+        }
       }
       if (node.name === "Link") {
         if (emphasisOnly) break
@@ -115,6 +125,7 @@ export function wrapAt(
           to: node.to,
           contentFrom: marks[0]!.to,
           contentTo: marks[1]!.from,
+          kind: "link",
         }
       }
     }
@@ -133,6 +144,7 @@ export function wrapAt(
         to,
         contentFrom: from + 2 + (labelled ? target.length + 1 : 0),
         contentTo: to - 2,
+        kind: "link",
       }
     }
   }

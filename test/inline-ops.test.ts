@@ -24,10 +24,11 @@ test("markedContentAt returns the innermost run for a nested stack", () => {
   expect(content(t, t.indexOf("alpha"))).toBe("alpha beta")
 })
 
-test("markedContentAt spans a link label and a wikilink target/label", () => {
-  expect(content("see [two words](http://x) end", 6)).toBe("two words")
-  expect(content("go [[Page Name]] now", 6)).toBe("Page Name")
-  expect(content("go [[api/ref|the docs page]] now", 15)).toBe("the docs page")
+test("markedContentAt spans the WHOLE link / wikilink, not just the label", () => {
+  // Bold must wrap the construct (**[a](b)**), never land marks inside it.
+  expect(content("see [two words](http://x) end", 6)).toBe("[two words](http://x)")
+  expect(content("go [[Page Name]] now", 6)).toBe("[[Page Name]]")
+  expect(content("go [[api/ref|the docs page]] now", 15)).toBe("[[api/ref|the docs page]]")
 })
 
 test("markedContentAt is null outside any run", () => {

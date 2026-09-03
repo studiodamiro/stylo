@@ -90,7 +90,7 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
         out.push(Decoration.replace({}).range(shut.from, node.to))
       }
     }
-    return false
+    return // descend: emphasis / code inside the label still gets its marks hidden
   }
 
   if (node.name === "HorizontalRule") {

@@ -348,6 +348,18 @@ throughout.
     while focused, that is how it is edited — and re-hide when focus leaves.
     Removing that flash would need a formatting path that works on the rendered
     cell through its model string; deferred until it is asked for.
+- **2026-09-04 — Formatting a link now wraps the link, and renders.** Two halves
+  of one bug: bolding a right-clicked link produced `[**text**](url)` (marks
+  *inside* the label), and the canvas then showed those `**` literally because
+  the decoration walk stopped at the `Link` node and never reached the nested
+  `StrongEmphasis`.
+  - `Wrap` gained a `kind` (`"mark"` | `"link"`); a right-click on a link or
+    wikilink now selects the *whole* construct, so Bold / Italic / Strike wrap
+    it — `**[text](url)**`, `**[[Page]]**` — never landing a mark inside a label
+    that is not a Markdown context. `markedContentAt` does the same in a cell.
+  - `nodes.ts` no longer returns `false` from the `Link` branch, so emphasis /
+    code inside a label (`[**text**](url)`, however it got there) also has its
+    markers hidden and its text styled.
 
 ## Consequences
 

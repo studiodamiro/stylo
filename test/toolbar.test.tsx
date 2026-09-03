@@ -29,6 +29,21 @@ test("bold wraps the selection and toggles back off", () => {
   expect(view.state.doc.toString()).toBe("hello world")
 })
 
+test("bold on a whole-link selection wraps the link, and toggles back", () => {
+  const view = mkView("x [two words](http://a) y", 2, 23) // the whole [..](..) span
+  BUILTIN_BY_ID.bold!.run(view)
+  expect(view.state.doc.toString()).toBe("x **[two words](http://a)** y")
+  view.dispatch({ selection: EditorSelection.single(4, 25) }) // the link again, now inside **…**
+  BUILTIN_BY_ID.bold!.run(view)
+  expect(view.state.doc.toString()).toBe("x [two words](http://a) y")
+})
+
+test("bold on a whole-wikilink selection wraps it outside the brackets", () => {
+  const view = mkView("x [[Page Name]] y", 2, 15) // "[[Page Name]]" is [2, 15)
+  BUILTIN_BY_ID.bold!.run(view)
+  expect(view.state.doc.toString()).toBe("x **[[Page Name]]** y")
+})
+
 test("bold is disabled at a bare caret with no word to wrap", () => {
   expect(BUILTIN_BY_ID.bold!.disabled!(mkView("", 0).state)).toBe(true)
   expect(BUILTIN_BY_ID.bold!.disabled!(mkView("a word here", 4).state)).toBe(false) // on "word"

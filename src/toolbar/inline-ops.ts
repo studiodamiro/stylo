@@ -146,25 +146,18 @@ export function wrapString(text: string, from: number, to: number, mark: string)
 }
 
 /**
- * The content span (text between the delimiters) of the innermost inline mark
- * run of `text` covering `pos` — `**bold phrase**`, `*em*`, `~~strike~~`,
- * `` `code` ``, `[label](url)`, `[[target|label]]` — or `null`. Widens a
- * right-click in a table cell from the bare word to the whole run, so a Format
- * toggle covers all of it (the canvas does the same through `wrapAt`).
+ * The span a right-click in a table cell should select so a Format toggle lands
+ * cleanly: the text between the delimiters for an inline mark run
+ * (`**bold phrase**`, `*em*`, `~~strike~~`, `` `code` ``), but the *whole*
+ * construct for a `[label](url)` link or `[[target|label]]` wikilink — its label
+ * is not a Markdown context, so Bold must wrap the link, not sit inside it.
+ * Returns `null` when `pos` is not in any run. Mirrors `wrapAt` on the canvas.
  */
 export function markedContentAt(text: string, pos: number): { from: number; to: number } | null {
   const link = linkAtIn(text, pos)
-  if (link) {
-    const from = link.from + 1 // past `[`
-    const to = from + link.label.length
-    if (pos >= from && pos <= to) return { from, to }
-  }
+  if (link) return { from: link.from, to: link.to }
   const wiki = wikiLinkPartsIn(text, pos)
-  if (wiki) {
-    const from = wiki.label ? wiki.to - 2 - wiki.label.length : wiki.targetFrom
-    const to = wiki.label ? wiki.to - 2 : wiki.targetTo
-    if (pos >= from && pos <= to) return { from, to }
-  }
+  if (wiki) return { from: wiki.from, to: wiki.to }
   let best: { from: number; to: number } | null = null
   for (const mark of ["**", "~~", "*", "`"]) {
     const re = new RegExp(esc(mark) + "(?!\\s)(?:[^]*?\\S)??" + esc(mark), "g")

@@ -175,6 +175,31 @@ test("a standard link is styled and its syntax hides off-line, reveals on-line",
   expect(hidesAMarker(view)).toBe(false)
 })
 
+/** How many bare marker-hiding replace ranges the live set has. */
+function hiddenMarkerCount(view: EditorView): number {
+  const set = view.plugin(inPlacePlugin)?.decorations
+  if (!set) return 0
+  let n = 0
+  set.between(0, view.state.doc.length, (from, to, deco) => {
+    if (from < to && !deco.spec.class && !deco.spec.widget) n += 1
+  })
+  return n
+}
+
+test("a bold link (**[text](url)**) hides every marker and styles the text", async () => {
+  const { view } = await mount("see **[the docs](https://x.dev)** now\n\ntail", { reveal: "never" })
+  expect(hasClass(view, "cm-inplace-strong")).toBe(true)
+  expect(hasClass(view, "cm-inplace-link")).toBe(true)
+  // ** open, ** close, [ , ](https://x.dev)  — all four hidden, no literal marks.
+  expect(hiddenMarkerCount(view)).toBe(4)
+})
+
+test("emphasis inside a link label (`[**text**](url)`) also gets its marks hidden", async () => {
+  const { view } = await mount("see [**the docs**](https://x.dev) now\n\ntail", { reveal: "never" })
+  expect(hasClass(view, "cm-inplace-strong")).toBe(true)
+  expect(hiddenMarkerCount(view)).toBe(4) // [ , ](url), ** , **
+})
+
 test("a wikilink collapses to its label and carries the target", async () => {
   const { view } = await mount("go to [[Notes/Home|home]] please\n\nsecond line")
   view.dispatch({ selection: { anchor: view.state.doc.length } })
