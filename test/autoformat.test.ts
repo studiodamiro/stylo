@@ -55,13 +55,19 @@ test("completing `---` as the last line, blank above, appends a newline", () => 
   expect(r.head).toBe(5) // on the fresh line below the rule
 })
 
-test("`---` under text (a Setext underline) is not touched", () => {
+test("`---` typed under text gets a blank line above, so it is a rule not a Setext h2", () => {
   const r = type("Title\n--", 8, "-")
-  expect(r.doc).toBe("Title\n---")
-  expect(r.head).toBe(9)
+  expect(r.doc).toBe("Title\n\n---\n") // blank line above (break out of Setext) + newline below (last line)
+  expect(r.head).toBe(11) // on the fresh line below the rule
 })
 
-test("`---` that is not the last line is not touched", () => {
+test("`---` typed under text mid-document breaks out of Setext without a trailing newline", () => {
+  const r = type("Title\n--\n\nbody", 8, "-")
+  expect(r.doc).toBe("Title\n\n---\n\nbody")
+  expect(r.head).toBe(10)
+})
+
+test("`---` on a line that already has a blank line above is left as-is mid-document", () => {
   const r = type("\n--\n\nmore", 3, "-")
   expect(r.doc).toBe("\n---\n\nmore")
 })

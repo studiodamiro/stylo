@@ -390,6 +390,16 @@ throughout.
   the number is meant to stay visible, and the inline marks already collapse
   once the pair is closed.
 
+- **2026-09-04 — `---` typed under text now becomes a rule, not a Setext `<h2>`.**
+  Stage 5's rule handling only fired when a blank line already sat above, so
+  `paragraph` + Enter + `---` rendered the paragraph as a big `<h2>` — Markdown
+  reads `text` immediately followed by `---` as a `SetextHeading2` underline.
+  `***` and `___` have no Setext meaning, so they were already fine. The
+  `autoformat.ts` rule now, for a `-{3,}` line whose previous line is non-blank,
+  inserts a blank line above it so the parse is an unambiguous thematic break;
+  the trailing-newline step still runs when the rule is the last line. Typing a
+  Setext heading by hand is the cost — `## ` is the seamless way to an `<h2>`.
+
 ## Consequences
 
 ### Positive

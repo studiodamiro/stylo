@@ -5,7 +5,10 @@
  *   - `[] ` / `[ ] ` at the line start  → `- [ ] ` (a task item)
  *   - ` ``` ` alone on a line           → a fenced block, caret on the line between
  *   - `$$` alone on a line              → a math block, caret between
- *   - `---` / `***` / `___` as the last line, blank line above → append `\n`,
+ *   - `---` typed directly under text   → a blank line is inserted above it, so
+ *     Markdown reads it as a thematic break, not a Setext `<h2>` underline —
+ *     matching `***` / `___`, which have no Setext meaning and already do this
+ *   - a rule (`---` / `***` / `___`) completed as the last line → append `\n`,
  *     so the caret steps off the rule instead of being stranded on it
  *
  * Headings (`# `), bullets (`- `), and quotes (`> `) need nothing here — their
@@ -50,13 +53,18 @@ export const inPlaceAutoformat: Extension = EditorState.transactionFilter.of((tr
     spec = { changes: { from: head, insert: "\n\n```" }, anchor: head + 1 }
   } else if (inserted === "$" && text === "$$") {
     spec = { changes: { from: head, insert: "\n\n$$" }, anchor: head + 1 }
-  } else if (
-    RULE_CHAR.has(inserted) &&
-    new RegExp(`^\\${inserted}{3,}$`).test(text) &&
-    line.number === doc.lines &&
-    (line.number === 1 || doc.line(line.number - 1).text.trim() === "")
-  ) {
-    spec = { changes: { from: line.to, insert: "\n" }, anchor: line.to + 1 }
+  } else if (RULE_CHAR.has(inserted) && new RegExp(`^\\${inserted}{3,}$`).test(text)) {
+    const prevBlank = line.number === 1 || doc.line(line.number - 1).text.trim() === ""
+    // `---` under a non-blank line is a Setext `<h2>` underline in Markdown, not
+    // a rule. Push a blank line above so it renders as a thematic break.
+    const breakOut = inserted === "-" && !prevBlank
+    const isLast = line.number === doc.lines
+    if (breakOut || isLast) {
+      const changes: { from: number; insert: string }[] = []
+      if (breakOut) changes.push({ from: line.from, insert: "\n" })
+      if (isLast) changes.push({ from: line.to, insert: "\n" })
+      spec = { changes, anchor: line.to + (breakOut ? 1 : 0) + (isLast ? 1 : 0) }
+    }
   }
 
   if (!spec) return tr
