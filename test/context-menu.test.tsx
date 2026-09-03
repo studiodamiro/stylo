@@ -48,6 +48,21 @@ test("right-clicking a word selects it and opens the grouped menu", async () => 
   expect(view.state.selection.main.empty, "the word under the pointer got selected").toBe(false)
 })
 
+test("right-clicking inside a hidden-marker run selects the whole phrase", async () => {
+  const { view } = await mount("**two words** trailing", { reveal: "never" })
+  rightClick(view) // pointer resolves to ~start of doc, inside the bold run
+  const sel = view.state.selection.main
+  expect(sel.empty).toBe(false)
+  expect(view.state.sliceDoc(sel.from, sel.to)).toBe("two words")
+})
+
+test("right-clicking a plain word still selects just that word", async () => {
+  const { view } = await mount("plain words here", { reveal: "never" })
+  rightClick(view)
+  const sel = view.state.selection.main
+  expect(view.state.sliceDoc(sel.from, sel.to)).toBe("plain")
+})
+
 test("inPlace.contextMenu = false leaves the browser menu alone", async () => {
   const { view } = await mount("a plain paragraph", { contextMenu: false })
   const e = rightClick(view)

@@ -291,6 +291,29 @@ throughout.
   hands the press straight to the end of the line above / start of the line
   below, as a column-0 `ArrowLeft` should. The only remaining no-op is the very
   first line of the document, where there is genuinely nowhere further left.
+- **2026-09-04 — Three hidden-marker rough edges, from hands-on use under
+  `"never"`.**
+  - _Right-click selects the whole marked phrase._ The word-aware right-click
+    (`menu-plugin.ts`) selected only the word under the pointer, so a Bold
+    toggle on `**two words**` hit just one. It now probes `wrapAt(state, pos,
+    emphasisOnly)` first and, inside a hidden-marker construct, selects the
+    entire content span; a plain word still selects just the word, a link keeps
+    its own label.
+  - _Fenced code reveals its ``` on caret entry, even under `"never"`._ The
+    fence lines were replaced with nothing and collapsed on every line under
+    `"never"`, with no way to see or delete a fence to unwrap the block. Fenced
+    code now reads the real caret-reveal set (via a `caretRevealed` field on
+    `NodeCtx`), the same standing exception the `$$` math block already has —
+    the delimiter has no other on-screen affordance. Inline `` `code` `` is
+    unchanged: it edits like `**bold**` and toggles from the Format menu.
+  - _Table-cell right-click gained the Format group, force-enabled._ A cell's
+    selection lives in the DOM, so `cmd.disabled(state)` (reading the collapsed
+    `state.selection`) greyed every inline mark. `toAction` now takes an
+    `inCell` flag that forces the mark rows live — the same move the floating
+    selection bar makes — and the editable-table widget appends
+    `cellSelectionRows(view)` (Format ▸ + clipboard) under its structural rows,
+    so one menu covers the table and the selected text. The canvas menu no
+    longer has a table fall-through path.
 
 ## Consequences
 

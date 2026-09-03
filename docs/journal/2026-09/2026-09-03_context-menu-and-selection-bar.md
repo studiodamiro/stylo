@@ -45,7 +45,7 @@ Takes over from the browser's menu when it has something to offer:
 | A non-empty selection                   | Inline actions + Cut / Copy / Paste                          |
 | A structural block — code, quote, list, heading, divider, `$$` math, frontmatter | That block's toggles + **Insert ▸** + clipboard             |
 | A table cell, caret only                | The structural menu shipped with the table controls          |
-| A table cell with a text selection      | Inline actions (routed through `runInlineInCell`) + clipboard |
+| A table cell with a text selection      | The structural menu + a **Format ▸** group (routed through `runInlineInCell`) + clipboard |
 | A plain paragraph, no selection         | **Insert ▸** + clipboard                                     |
 | Outside `.cm-content`                   | The browser's own menu (not intercepted)                     |
 

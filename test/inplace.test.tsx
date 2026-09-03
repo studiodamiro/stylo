@@ -283,6 +283,25 @@ test("fenced code: mono container, fences emptied off-block and shown on-caret",
   expect(hasClass(view, "cm-inplace-fence")).toBe(true) // fences shown, muted, on-caret
 })
 
+test("reveal: 'never' still shows a fenced block's ``` on caret entry", async () => {
+  const { view } = await mount("text\n\n```ts\nconst a = 1\n```\n\ntail", { reveal: "never" })
+
+  const emptiedFenceLines = () => {
+    let n = 0
+    view.plugin(inPlacePlugin)!.decorations.between(0, view.state.doc.length, (from, to, deco) => {
+      if (from < to && !deco.spec.class && !deco.spec.widget) n += 1
+    })
+    return n
+  }
+
+  view.dispatch({ selection: { anchor: view.state.doc.length } }) // caret on "tail"
+  expect(emptiedFenceLines()).toBe(2) // ``` hidden while the caret is away
+
+  view.dispatch({ selection: { anchor: view.state.doc.line(4).from } }) // caret in the block
+  expect(emptiedFenceLines()).toBe(0)
+  expect(hasClass(view, "cm-inplace-fence")).toBe(true)
+})
+
 test("a dash bullet is swapped for a glyph; a task item gets a checkbox instead", async () => {
   const { view } = await mount("- plain item\n- [ ] a task\n\ntail")
   view.dispatch({ selection: { anchor: view.state.doc.length } })

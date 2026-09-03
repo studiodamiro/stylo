@@ -339,6 +339,39 @@ function rightClick(view: EditorView, selector: "thead th" | "tbody td", nth = 0
   )
 }
 
+test("right-click on a cell selection shows structural rows AND an enabled Format group", async () => {
+  const { view } = await mount(T, { table: "cells" })
+  const cell = await focusCell(view, "tbody td", 0)
+  selectText(cell) // whole cell "1"
+  cell.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, clientX: 10, clientY: 10 }))
+
+  const labels = [...view.contentDOM.querySelectorAll(".cm-inplace-menu-item")].map(
+    (b) => b.textContent ?? "",
+  )
+  expect(labels).toContain("Insert row above") // structural set still there
+  expect(labels).toContain("Align left")
+  expect(labels).toContain("Format") // …plus the inline group
+
+  const format = [...view.contentDOM.querySelectorAll<HTMLButtonElement>(".cm-inplace-menu-item")]
+    .find((b) => b.textContent === "Format")!
+  format.dispatchEvent(new Event("pointerenter", { bubbles: true }))
+  const bold = [...document.querySelectorAll<HTMLButtonElement>(".cm-inplace-menu-item")].find(
+    (b) => b.textContent === "Bold",
+  )!
+  expect(bold.disabled).toBe(false) // not greyed by the collapsed state.selection
+})
+
+test("right-click on a collapsed cell caret shows only the structural menu", async () => {
+  const { view } = await mount(T, { table: "cells" })
+  const cell = await focusCell(view, "tbody td", 0)
+  cell.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, clientX: 10, clientY: 10 }))
+  const labels = [...view.contentDOM.querySelectorAll(".cm-inplace-menu-item")].map(
+    (b) => b.textContent ?? "",
+  )
+  expect(labels).toContain("Insert row above")
+  expect(labels).not.toContain("Format")
+})
+
 test("the add-column gizmo appends a column", async () => {
   const { view } = await mount(T, { table: "cells" })
   await editCells(view)

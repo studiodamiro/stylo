@@ -92,12 +92,19 @@ bare caret with no word, the marks are disabled too. Inside an inline
 the menu (they live on the floating bar or the toolbar); **Paragraph** and
 **Insert** always stay.
 
-Two contexts replace the whole menu: a right-click in an **editable table cell**
-offers **Format** + clipboard only, and a right-click **inside a fenced code
-block** offers a **Language** field (edits the ` ```lang ` info string) with
-**Remove code block**, plus clipboard. A right-click outside the text area gets
-the browser's own menu. Set `contextMenu: false` to keep the browser menu
+A right-click in an **editable table cell** opens the table's own structural
+menu (insert / delete row and column, align); with a text selection in the cell
+it also carries a **Format** group and clipboard, so one menu covers the table
+and the selected characters. A right-click **inside a fenced code block**
+replaces the menu with a **Language** field (edits the ` ```lang ` info string)
+and **Remove code block**, plus clipboard. A right-click outside the text area
+gets the browser's own menu. Set `contextMenu: false` to keep the browser menu
 everywhere.
+
+A right-click with no selection first checks whether the pointer is inside a
+hidden-marker span (`**bold**`, `*italic*`, `~~strike~~`, `` `code` ``): if so it
+selects the whole span, so a toggle covers the entire phrase, not just the word
+under the pointer.
 
 ### Picking and ordering the groups
 

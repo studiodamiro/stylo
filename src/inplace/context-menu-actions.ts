@@ -43,14 +43,20 @@ export function cellHasSelection(view: EditorView): boolean {
   return to > from
 }
 
-const toAction = (view: EditorView, id: ToolbarCommandId): MenuAction | null => {
+/**
+ * `inCell`: the selection is a table cell's DOM range, not `state.selection`, so
+ * `cmd.disabled` / `cmd.isActive` (which read `state.selection`, collapsed here)
+ * would grey every item out. The inline commands route through `runInlineInCell`
+ * regardless, so force them live — same call the floating selection bar makes.
+ */
+const toAction = (view: EditorView, id: ToolbarCommandId, inCell = false): MenuAction | null => {
   const cmd = BUILTIN_BY_ID[id]
   if (!cmd) return null
   return {
     label: cmd.title,
     icon: iconFor(id),
-    active: Boolean(cmd.isActive?.(view.state)),
-    disabled: Boolean(cmd.disabled?.(view.state)),
+    active: inCell ? false : Boolean(cmd.isActive?.(view.state)),
+    disabled: inCell ? false : Boolean(cmd.disabled?.(view.state)),
     onSelect: () => {
       cmd.run(view)
       view.focus()
@@ -58,10 +64,15 @@ const toAction = (view: EditorView, id: ToolbarCommandId): MenuAction | null => 
   }
 }
 
-const actions = (view: EditorView, ids: ToolbarCommandId[], dropDisabled = false): MenuAction[] => {
+const actions = (
+  view: EditorView,
+  ids: ToolbarCommandId[],
+  dropDisabled = false,
+  inCell = false,
+): MenuAction[] => {
   const out: MenuAction[] = []
   for (const id of ids) {
-    const a = toAction(view, id)
+    const a = toAction(view, id, inCell)
     if (a && !(dropDisabled && a.disabled)) out.push(a)
   }
   return out
@@ -320,11 +331,27 @@ export function codeBlockRow(view: EditorView): MenuField {
 }
 
 /** Bold / Italic / Strikethrough, then inline code + inline math. */
-const formatGroup = (view: EditorView): MenuRow[] => [
-  ...actions(view, FORMAT_MARK_IDS),
+const formatGroup = (view: EditorView, inCell = false): MenuRow[] => [
+  ...actions(view, FORMAT_MARK_IDS, false, inCell),
   "separator",
-  ...actions(view, FORMAT_CODE_IDS),
+  ...actions(view, FORMAT_CODE_IDS, false, inCell),
 ]
+
+/**
+ * Rows for a non-empty selection inside an editable table cell: the Format
+ * submenu (forced live — see `toAction`) and clipboard, gated by `menuGroups`.
+ * Shared by the canvas menu and the table widget's own structural menu, which
+ * appends these under its row / column / align actions.
+ */
+export function cellSelectionRows(view: EditorView): MenuRow[] {
+  const groups = view.state.facet(menuGroupsFacet)
+  const rows: MenuRow[] = []
+  if (groups.includes("format")) {
+    pushGroup(rows, [submenu("Format", ICON_PATHS.format, formatGroup(view, true))])
+  }
+  if (groups.includes("clipboard")) pushGroup(rows, clipboardRows(view))
+  return rows
+}
 
 /** List types, then heading levels + Body, then quote. Obsidian's "Paragraph". */
 const paragraphGroup = (view: EditorView): MenuRow[] => [
@@ -362,12 +389,9 @@ export function menuRows(view: EditorView): MenuRow[] {
   const has = (g: MenuGroupId) => groups.includes(g)
 
   // A table cell only supports inline formatting — no block or insert there.
-  if (cellHasSelection(view)) {
-    const rows: MenuRow[] = []
-    if (has("format")) pushGroup(rows, [submenu("Format", ICON_PATHS.format, formatGroup(view))])
-    if (has("clipboard")) pushGroup(rows, clipboardRows(view))
-    return rows
-  }
+  // (The editable-table widget shows these under its own structural rows; this
+  // path stands in for a cell selection reaching the canvas menu directly.)
+  if (cellHasSelection(view)) return cellSelectionRows(view)
 
   // A fenced code block is a literal context — offer only its language and an
   // unwrap, plus clipboard.

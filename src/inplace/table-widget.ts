@@ -2,6 +2,7 @@ import { Annotation } from "@codemirror/state"
 import { EditorView, WidgetType } from "@codemirror/view"
 import { handleCellShortcut } from "../toolbar/cell-inline"
 import { type Align, serializeGrid } from "../toolbar/table-grid"
+import { cellHasSelection, cellSelectionRows } from "./context-menu-actions"
 import { renderInline } from "./inline-md"
 import {
   gridOf,
@@ -341,24 +342,16 @@ export class EditableTableWidget extends WidgetType {
       document.execCommand("insertText", false, text)
     })
     // Right-click (and long-press on touch) opens the structural menu for the
-    // cell under the pointer — but only for a collapsed caret. A text selection
-    // inside the cell falls through to the canvas context menu, which offers
-    // inline formatting for the selected characters.
+    // cell under the pointer. With a text selection in the cell the Format group
+    // (and clipboard) is appended below the row / column / align actions, so one
+    // menu covers both the table and the selected characters.
     table.addEventListener("contextmenu", (e) => {
       const cell = (e.target as HTMLElement).closest<HTMLTableCellElement>("td, th")
       if (!cell) return
-      const sel = cell.ownerDocument.getSelection()
-      if (
-        sel &&
-        !sel.isCollapsed &&
-        cell.contains(sel.anchorNode) &&
-        cell.contains(sel.focusNode)
-      ) {
-        return
-      }
       e.preventDefault()
       e.stopPropagation()
-      this.gizmos?.openFor(cell, e.clientX, e.clientY)
+      const extra = cellHasSelection(view) ? cellSelectionRows(view) : undefined
+      this.gizmos?.openFor(cell, e.clientX, e.clientY, extra)
     })
 
     this.gizmos = createTableGizmos(document, {

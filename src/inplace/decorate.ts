@@ -43,7 +43,14 @@ export function buildDecorations(view: EditorView): InPlaceDecorations {
   const tree = syntaxTree(view.state)
   const { doc } = view.state
   const toggles = view.state.facet(inPlaceConfigFacet)
-  const ctx = { doc, revealed, out, toggles, fmEnd: frontmatterRange(doc)?.to ?? -1 }
+  const ctx = {
+    doc,
+    revealed,
+    caretRevealed,
+    out,
+    toggles,
+    fmEnd: frontmatterRange(doc)?.to ?? -1,
+  }
 
   for (const range of view.visibleRanges) {
     tree.iterate({

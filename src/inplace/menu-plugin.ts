@@ -7,7 +7,8 @@
 import { ViewPlugin, type EditorView, type PluginValue } from "@codemirror/view"
 import { contextMenuEnabled } from "./config"
 import { createContextMenu, type ContextMenu } from "./context-menu"
-import { cellHasSelection, menuRows } from "./context-menu-actions"
+import { menuRows } from "./context-menu-actions"
+import { wrapAt } from "./edit-boundaries"
 
 class ContextMenuController implements PluginValue {
   private menu: ContextMenu
@@ -36,25 +37,31 @@ class ContextMenuController implements PluginValue {
       if (!view.state.facet(contextMenuEnabled)) return
       const target = e.target as HTMLElement | null
 
-      // Inside an editable table: a collapsed caret gets the widget's own
-      // structural menu (it stops propagation before this fires). Only a
-      // selection inside a cell reaches here — offer inline actions for it.
-      const inEditableTable = Boolean(target?.closest(".cm-inplace-table-edit"))
-      if (inEditableTable && !cellHasSelection(view)) return
+      // Editable tables run their own context menu (structural rows, plus the
+      // format group when a cell has a selection) and stop propagation before
+      // this fires. Anything from that subtree that still reaches here is not a
+      // cell — leave it to the browser.
+      if (target?.closest(".cm-inplace-table-edit")) return
 
       // A right-click that landed inside a selection may have collapsed it in
       // the DOM before this fired — put it back so the menu still offers the
       // selection rows (Link field, inline marks).
       if (this.stashed && view.state.selection.main.empty) {
         view.dispatch({ selection: this.stashed })
-      } else if (!inEditableTable && view.state.selection.main.empty) {
-        // No prior selection: select the word under the pointer so the menu
-        // offers formatting for it, exactly as it would for a highlighted word.
-        // If the pointer is not on a word (empty line, whitespace, punctuation)
-        // just drop the caret there.
+      } else if (view.state.selection.main.empty) {
+        // No prior selection: select what the pointer is on so the menu offers
+        // formatting for it. Inside a hidden-marker construct (`**two words**`,
+        // `*a phrase*`, `~~struck~~`) take the whole marked run, so a toggle
+        // hits all of it; otherwise the single word; failing that (blank line,
+        // whitespace, punctuation) just drop the caret.
         const pos = view.posAtCoords({ x: e.clientX, y: e.clientY })
         if (pos != null) {
-          view.dispatch({ selection: view.state.wordAt(pos) ?? { anchor: pos } })
+          const wrap = wrapAt(view.state, pos, true)
+          const span =
+            wrap && wrap.contentTo > wrap.contentFrom
+              ? { anchor: wrap.contentFrom, head: wrap.contentTo }
+              : (view.state.wordAt(pos) ?? { anchor: pos })
+          view.dispatch({ selection: span })
         }
       }
 

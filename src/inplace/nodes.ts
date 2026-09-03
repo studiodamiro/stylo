@@ -20,6 +20,11 @@ const INLINE: Record<string, { mark: string; className: string; toggle: "emphasi
 export interface NodeCtx {
   doc: Text
   revealed: Set<number>
+  /** Lines the caret actually touches. Equals `revealed` except under
+   *  `reveal: "never"`, where `revealed` is empty but this is not — a few
+   *  constructs (fenced code) still reveal their delimiters on caret entry
+   *  because there is no other way to see or remove them. */
+  caretRevealed: Set<number>
   out: Range<Decoration>[]
   toggles: ResolvedToggles
   /** End of the frontmatter block, or -1. Nodes within are left to `frontmatterField`. */
@@ -28,7 +33,7 @@ export interface NodeCtx {
 
 /** Decorate one syntax node. Returns `false` to stop descent, `undefined` to continue. */
 export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undefined {
-  const { doc, revealed, out, toggles, fmEnd } = ctx
+  const { doc, revealed, caretRevealed, out, toggles, fmEnd } = ctx
   if (node.to <= fmEnd) return false
 
   const heading = HEADING.exec(node.name)
@@ -168,9 +173,13 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
     const first = doc.lineAt(node.from).number
     const last = doc.lineAt(node.to > node.from ? node.to - 1 : node.to).number
 
+    // `caretRevealed`, not `revealed`: a fenced block shows its ``` on caret
+    // entry even under `reveal: "never"`, because the fence has no on-screen
+    // affordance for editing — hiding it for good would trap the block (you
+    // could never delete a fence to unwrap it). Parallels the `$$` math block.
     let blockRevealed = false
     for (let n = first; n <= last && !blockRevealed; n++) {
-      if (revealed.has(n)) blockRevealed = true
+      if (caretRevealed.has(n)) blockRevealed = true
     }
     // Off-caret, a fence line's ``` text is replaced with nothing and the row
     // collapsed to zero line-height, so the container reads as just its padding

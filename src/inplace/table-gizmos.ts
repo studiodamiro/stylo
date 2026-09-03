@@ -21,8 +21,9 @@ export interface TableGizmos {
   el: HTMLElement
   /** Re-place the edge `+` buttons against the current `<table>` layout. */
   layout: (table: HTMLTableElement) => void
-  /** Open the structural menu for `cell` at a screen point. */
-  openFor: (cell: HTMLElement, x: number, y: number) => void
+  /** Open the structural menu for `cell` at a screen point. `extra` rows (the
+   *  Format group for a cell selection) are appended below the structural set. */
+  openFor: (cell: HTMLElement, x: number, y: number, extra?: MenuRow[]) => void
   /** Drop the document-level menu listeners. */
   destroy: () => void
 }
@@ -80,7 +81,7 @@ export function createTableGizmos(doc: Document, host: GizmoHost): TableGizmos {
   )
   el.append(addCol, addRow, menu.el)
 
-  const rows = (r: number, c: number): MenuRow[] => {
+  const rows = (r: number, c: number, extra: MenuRow[] = []): MenuRow[] => {
     const { cols, rows: rowCount, alignAt } = host.dims()
     const item = (label: string, op: StructOp, active = false): MenuRow => ({
       label,
@@ -103,11 +104,12 @@ export function createTableGizmos(doc: Document, host: GizmoHost): TableGizmos {
     for (const value of ["left", "center", "right"] as const) {
       list.push(item(`Align ${value}`, { kind: "align", at: c, value }, alignAt(c) === value))
     }
+    if (extra.length) list.push("separator", ...extra)
     return list
   }
 
-  const openFor = (cell: HTMLElement, x: number, y: number) => {
-    menu.show(rows(Number(cell.dataset.r), Number(cell.dataset.c)), x, y)
+  const openFor = (cell: HTMLElement, x: number, y: number, extra?: MenuRow[]) => {
+    menu.show(rows(Number(cell.dataset.r), Number(cell.dataset.c), extra), x, y)
   }
 
   const layout = (table: HTMLTableElement) => {
