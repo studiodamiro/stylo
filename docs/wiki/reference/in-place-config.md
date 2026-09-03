@@ -191,6 +191,26 @@ destination is otherwise never on screen, so this is the way to read it without
 turning the link into an edit. Gated by `decorations.links` /
 `decorations.wikilinks`; styled through `.cm-inplace-href-tip`.
 
+## Autoformat on type
+
+On the canvas, a few Markdown shorthands expand as you finish typing them, so
+the seamless surface never leaves you looking at a raw marker. Each expansion is
+folded into the triggering keystroke's own transaction, so a single undo returns
+the literal text. Specified in
+[ADR-007](../../journal/2026-09/2026-09-03_adr-007-seamless-in-place.md) (Stage 5).
+
+| You type | You get |
+| --- | --- |
+| `[] ` / `[ ] ` at the start of a line | `- [ ] ` — a task item |
+| `` ``` `` or `$$` alone on a line | the block scaffolded with its closing fence, caret on the empty line between |
+| `---` / `***` / `___` completing a line | a thematic break; a blank line is inserted above a `---` that sits directly under text so it is a rule, not a Setext `<h2>` underline, and a trailing newline is added when the rule is the last line so the caret steps off it |
+
+`# `, `- `, `> ` and the other line prefixes need no expansion — their markers
+already hide as they are typed. Numbered-list markers keep their visible number,
+and inline `**…**` / `` `…` `` / `[…](…)` collapse on their own once the closing
+pair is typed. Pasted Markdown is **not** autoformatted — the rules fire only on
+single-character typing.
+
 ## Applied at mount
 
 The config is read once, when the in-place canvas is constructed. Changing
