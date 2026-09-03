@@ -1,58 +1,40 @@
 /**
  * Maps the shared toolbar command set onto rows for the in-place right-click
- * menu, and classifies what the caret is sitting in so the menu offers the
- * right group. Every command already carries its own `run` / `isActive` /
- * `disabled`, so context-sensitivity is inherited, not re-derived here.
+ * menu. One shape everywhere (Obsidian style): the link rows, then Format /
+ * Paragraph / Insert submenus, then clipboard. Every command already carries
+ * its own `run` / `isActive` / `disabled`, so an item that can't apply where
+ * the caret sits is greyed, not hidden — the menu shape stays put.
  */
 
 import type { EditorState } from "@codemirror/state"
 import type { EditorView } from "@codemirror/view"
-import type { ToolbarCommandId } from "../types"
-import { frontmatterRange } from "../frontmatter"
+import type { MenuGroupId, ToolbarCommandId } from "../types"
 import { activeTableCell } from "../toolbar/cell-inline"
 import { BUILTIN_BY_ID } from "../toolbar/commands"
-import { fencedCodeActive, mathBlockActive } from "../toolbar/fence"
+import { fenceInfoAt, fencedCodeActive } from "../toolbar/fence"
 import { ICON_PATHS } from "../toolbar/icon-paths"
-import { linkPartsIn } from "../toolbar/inline-ops"
-import { tableActive } from "../toolbar/table"
-import { linkOpenFacet } from "./config"
-import type { MenuAction, MenuField, MenuRow } from "./context-menu"
+import { linkPartsIn, wikiLinkAtIn, wikiLinkPartsIn } from "../toolbar/inline-ops"
+import { linkOpenFacet, menuGroupsFacet, selectionUIFacet } from "./config"
+import type { MenuAction, MenuField, MenuRow, MenuSubmenu } from "./context-menu"
 import { selectionOffsets } from "./table-cell-dom"
 
 /** Menu glyph for a command id — headings share one, the rest map by id. */
 const iconFor = (id: ToolbarCommandId): string | undefined =>
   id === "h1" || id === "h2" || id === "h3" ? ICON_PATHS.heading : ICON_PATHS[id]
 
-const INLINE_MARK_IDS: ToolbarCommandId[] = ["bold", "italic", "strike", "code"]
-const BLOCK_IDS: ToolbarCommandId[] = [
-  "h1",
-  "h2",
-  "h3",
-  "quote",
-  "bulletList",
-  "orderedList",
-  "task",
-  "codeBlock",
-  "hr",
-  "mathBlock",
-  "frontmatter",
-]
-const INSERT_IDS: ToolbarCommandId[] = ["table", "hr", "codeBlock", "mathBlock", "frontmatter"]
-
-const caretLine = (s: EditorState): string => s.doc.lineAt(s.selection.main.head).text
-const inHeading = (s: EditorState): boolean => /^\s{0,3}#{1,6}(?:\s|$)/.test(caretLine(s))
-const inQuoteOrList = (s: EditorState): boolean =>
-  /^\s{0,3}(?:>|[-*+] |\d+\. )/.test(caretLine(s))
-const inFrontmatter = (s: EditorState): boolean => {
-  const r = frontmatterRange(s.doc)
-  return r !== null && s.selection.main.head <= r.to
-}
+/** Obsidian's three grouped submenus, adapted to the commands Stylo has. */
+const FORMAT_MARK_IDS: ToolbarCommandId[] = ["bold", "italic", "strike"]
+const FORMAT_CODE_IDS: ToolbarCommandId[] = ["code", "math"]
+const PARA_LIST_IDS: ToolbarCommandId[] = ["bulletList", "orderedList", "task"]
+const PARA_HEADING_IDS: ToolbarCommandId[] = ["h1", "h2", "h3"]
+const INSERT_INLINE_IDS: ToolbarCommandId[] = ["table", "hr"]
+const INSERT_BLOCK_IDS: ToolbarCommandId[] = ["codeBlock", "mathBlock", "frontmatter"]
 
 /**
  * A non-empty text selection inside a focused editable table cell. The cell is a
  * `contenteditable` surface, so this selection lives in the DOM, not in
  * `state.selection` — but the inline commands route through `runInlineInCell`,
- * so the inline group still applies.
+ * so the Format group still applies.
  */
 export function cellHasSelection(view: EditorView): boolean {
   const cell = activeTableCell(view)
@@ -61,32 +43,20 @@ export function cellHasSelection(view: EditorView): boolean {
   return to > from
 }
 
-export type MenuContext = "selection" | "block" | "plain"
-
-/** What the menu should lead with, given the current selection. */
-export function classifyContext(state: EditorState): MenuContext {
-  if (!state.selection.main.empty) return "selection"
-  if (
-    fencedCodeActive(state) ||
-    mathBlockActive(state) ||
-    tableActive(state) ||
-    inFrontmatter(state) ||
-    inHeading(state) ||
-    inQuoteOrList(state)
-  ) {
-    return "block"
-  }
-  return "plain"
-}
-
-const toAction = (view: EditorView, id: ToolbarCommandId): MenuAction | null => {
+/**
+ * `inCell`: the selection is a table cell's DOM range, not `state.selection`, so
+ * `cmd.disabled` / `cmd.isActive` (which read `state.selection`, collapsed here)
+ * would grey every item out. The inline commands route through `runInlineInCell`
+ * regardless, so force them live — same call the floating selection bar makes.
+ */
+const toAction = (view: EditorView, id: ToolbarCommandId, inCell = false): MenuAction | null => {
   const cmd = BUILTIN_BY_ID[id]
   if (!cmd) return null
   return {
     label: cmd.title,
     icon: iconFor(id),
-    active: Boolean(cmd.isActive?.(view.state)),
-    disabled: Boolean(cmd.disabled?.(view.state)),
+    active: inCell ? false : Boolean(cmd.isActive?.(view.state)),
+    disabled: inCell ? false : Boolean(cmd.disabled?.(view.state)),
     onSelect: () => {
       cmd.run(view)
       view.focus()
@@ -98,10 +68,11 @@ const actions = (
   view: EditorView,
   ids: ToolbarCommandId[],
   dropDisabled = false,
+  inCell = false,
 ): MenuAction[] => {
   const out: MenuAction[] = []
   for (const id of ids) {
-    const a = toAction(view, id)
+    const a = toAction(view, id, inCell)
     if (a && !(dropDisabled && a.disabled)) out.push(a)
   }
   return out
@@ -117,10 +88,15 @@ const clipboardRows = (view: EditorView): MenuRow[] => {
       /* not permitted — the keyboard shortcut still works */
     }
   }
+  // Menu Paste needs async clipboard read; without it there is no user-gesture
+  // path from a button. Rather than a live row that silently no-ops, show it
+  // disabled and point at the shortcut, which always works.
+  const clipboard = view.dom.ownerDocument.defaultView?.navigator?.clipboard
+  const canPaste = typeof clipboard?.readText === "function"
   const paste = () => {
     const cell = activeTableCell(view)
     if (!cell) view.focus()
-    view.dom.ownerDocument.defaultView?.navigator?.clipboard
+    clipboard
       ?.readText()
       .then((text) => {
         if (!text) return
@@ -134,16 +110,18 @@ const clipboardRows = (view: EditorView): MenuRow[] => {
   return [
     { label: "Cut", icon: ICON_PATHS.cut, onSelect: exec("cut") },
     { label: "Copy", icon: ICON_PATHS.copy, onSelect: exec("copy") },
-    { label: "Paste", icon: ICON_PATHS.paste, onSelect: paste },
+    canPaste
+      ? { label: "Paste", icon: ICON_PATHS.paste, onSelect: paste }
+      : {
+          label: "Paste",
+          icon: ICON_PATHS.paste,
+          disabled: true,
+          title: "Paste with the keyboard shortcut",
+          onSelect: () => {},
+        },
   ]
 }
 
-/**
- * A "Link" row: an editable URL field. Prefilled + Open / Remove when the caret
- * is inside an existing `[text](url)`; empty (wraps the selection on submit)
- * when there is a selection; `null` when neither applies. Wikilinks keep the
- * plain toggle for now — the same field is a fast follow.
- */
 /** The `(...)` destination for a link — angle-bracketed when it has whitespace
  *  or parens, so `[a](b c)` (invalid Markdown) becomes `[a](<b c>)`. */
 const linkDest = (url: string): string => {
@@ -153,7 +131,34 @@ const linkDest = (url: string): string => {
 /** Strip angle brackets for display in the URL input. */
 const bareUrl = (url: string): string => url.replace(/^<([^]*)>$/, "$1")
 
-export function linkRow(view: EditorView): MenuField | null {
+/**
+ * The `[text](url)` or `[[target|label]]` that the selection sits in, with its
+ * display text and full span. Applying a link or wikilink to such a selection
+ * then *replaces* that construct instead of nesting a new one inside it (which
+ * produces malformed Markdown). `null` when the selection is in neither.
+ */
+function inlineLinkHost(
+  state: EditorState,
+  sel: { from: number; to: number },
+): { from: number; to: number; text: string } | null {
+  const line = state.doc.lineAt(sel.from)
+  if (state.doc.lineAt(sel.to).number !== line.number) return null
+  const a = sel.from - line.from
+  const b = sel.to - line.from
+  const link = linkPartsIn(line.text, a) ?? linkPartsIn(line.text, b)
+  if (link) return { from: line.from + link.from, to: line.from + link.to, text: link.label }
+  const wiki = wikiLinkAtIn(line.text, a) ?? wikiLinkAtIn(line.text, b)
+  if (wiki) return { from: line.from + wiki.from, to: line.from + wiki.to, text: wiki.label }
+  return null
+}
+
+/**
+ * The "Add external link" row — an editable `[text](url)` URL field. Prefilled,
+ * with Open / Remove and the label "Edit external link", when the caret sits in
+ * an existing `[text](url)`; otherwise an empty field that wraps the selection
+ * (or the word the menu just selected) on submit.
+ */
+export function linkRow(view: EditorView): MenuField {
   const { state } = view
   const sel = state.selection.main
   const line = state.doc.lineAt(sel.head)
@@ -185,7 +190,7 @@ export function linkRow(view: EditorView): MenuField | null {
     })
     return {
       field: true,
-      label: "Link",
+      label: "Edit external link",
       icon: ICON_PATHS.link,
       value: bareUrl(parts.url),
       placeholder: "https://…",
@@ -197,64 +202,227 @@ export function linkRow(view: EditorView): MenuField | null {
     }
   }
 
-  if (!sel.empty) {
-    const label = state.sliceDoc(sel.from, sel.to)
-    return {
-      field: true,
-      label: "Link",
-      icon: ICON_PATHS.link,
-      value: "",
-      placeholder: "https://…",
-      onSubmit: (url) => {
-        const text = label || "link"
-        view.dispatch({
-          changes: { from: sel.from, to: sel.to, insert: `[${text}](${linkDest(url)})` },
-          selection: { anchor: sel.from + 1, head: sel.from + 1 + text.length },
-        })
-        view.focus()
-      },
-    }
+  // A selection already inside a link / wikilink: swap that whole construct for
+  // the new link rather than nesting one inside it.
+  const host = inlineLinkHost(state, sel)
+  const from = host ? host.from : sel.from
+  const to = host ? host.to : sel.to
+  const label = (host ? host.text : state.sliceDoc(sel.from, sel.to)) || "link"
+  return {
+    field: true,
+    label: "Add external link",
+    icon: ICON_PATHS.link,
+    value: "",
+    placeholder: "https://…",
+    onSubmit: (url) => {
+      view.dispatch({
+        changes: { from, to, insert: `[${label}](${linkDest(url)})` },
+        selection: { anchor: from + 1, head: from + 1 + label.length },
+      })
+      view.focus()
+    },
   }
-  return null
 }
 
-/** Inline-mark rows, then the Link field (or its plain toggle), the wikilink
- *  toggle, and inline math. */
-function inlineGroup(view: EditorView): MenuRow[] {
-  const rows: MenuRow[] = actions(view, INLINE_MARK_IDS)
-  const link = linkRow(view)
-  const linkToggle = toAction(view, "link")
-  if (link) rows.push(link)
-  else if (linkToggle) rows.push(linkToggle)
-  const wiki = toAction(view, "wikilink")
-  if (wiki) rows.push(wiki)
-  rows.push(...actions(view, ["math"]))
+/**
+ * The "Add link" row — an editable `[[target]]` field for an internal link.
+ * Prefilled, with Remove and the label "Edit link", when the caret sits in an
+ * existing `[[target|label]]`; otherwise an empty field that wraps the
+ * selection (or the word the menu just selected) on submit.
+ */
+export function wikiLinkRow(view: EditorView): MenuField {
+  const { state } = view
+  const sel = state.selection.main
+  const line = state.doc.lineAt(sel.head)
+  const parts = wikiLinkPartsIn(line.text, sel.head - line.from)
+
+  if (parts) {
+    const from = line.from + parts.from
+    const to = line.from + parts.to
+    const targetFrom = line.from + parts.targetFrom
+    const targetTo = line.from + parts.targetTo
+    const display = parts.label || parts.target
+    return {
+      field: true,
+      label: "Edit link",
+      icon: ICON_PATHS.wikilink,
+      value: parts.target,
+      placeholder: "note or path",
+      onSubmit: (target) => {
+        if (target) {
+          view.dispatch({ changes: { from: targetFrom, to: targetTo, insert: target } })
+        }
+        view.focus()
+      },
+      actions: [
+        {
+          label: "Remove link",
+          onSelect: () => {
+            view.dispatch({
+              changes: { from, to, insert: display },
+              selection: { anchor: from, head: from + display.length },
+            })
+            view.focus()
+          },
+        },
+      ],
+    }
+  }
+
+  // A selection already inside a link / wikilink: swap that whole construct
+  // rather than nesting a `[[…]]` inside it.
+  const host = inlineLinkHost(state, sel)
+  const from = host ? host.from : sel.from
+  const to = host ? host.to : sel.to
+  const label = host ? host.text : state.sliceDoc(sel.from, sel.to)
+  return {
+    field: true,
+    label: "Add link",
+    icon: ICON_PATHS.wikilink,
+    value: "",
+    placeholder: "note or path",
+    onSubmit: (target) => {
+      const t = target || label || "target"
+      const insert = !target || target === label ? `[[${t}]]` : `[[${target}|${label}]]`
+      view.dispatch({
+        changes: { from, to, insert },
+        selection: { anchor: from + 2, head: from + 2 + (target || t).length },
+      })
+      view.focus()
+    },
+  }
+}
+
+const submenu = (
+  label: string,
+  icon: string | undefined,
+  rows: MenuRow[],
+  disabled = false,
+): MenuSubmenu => ({ label, icon, rows, disabled })
+
+/**
+ * The "Language" row shown when the caret is in a fenced code block: an
+ * editable info string (` ```ts `), plus **Remove code block** to unwrap it.
+ * The opening fence line is hidden in the seamless canvas, so this is the way
+ * to reach the language at all.
+ */
+export function codeBlockRow(view: EditorView): MenuField {
+  const info = fenceInfoAt(view.state)
+  return {
+    field: true,
+    label: "Language",
+    icon: ICON_PATHS.codeBlock,
+    value: info?.lang ?? "",
+    placeholder: "ts, python, …",
+    onSubmit: (lang) => {
+      if (info) view.dispatch({ changes: { from: info.from, to: info.to, insert: lang.trim() } })
+      view.focus()
+    },
+    actions: [
+      {
+        label: "Remove code block",
+        onSelect: () => {
+          BUILTIN_BY_ID.codeBlock?.run(view)
+          view.focus()
+        },
+      },
+    ],
+  }
+}
+
+/** Bold / Italic / Strikethrough, then inline code + inline math. */
+const formatGroup = (view: EditorView, inCell = false): MenuRow[] => [
+  ...actions(view, FORMAT_MARK_IDS, false, inCell),
+  "separator",
+  ...actions(view, FORMAT_CODE_IDS, false, inCell),
+]
+
+/**
+ * Rows for a non-empty selection inside an editable table cell: the Format
+ * submenu (forced live — see `toAction`) and clipboard, gated by `menuGroups`.
+ * Shared by the canvas menu and the table widget's own structural menu, which
+ * appends these under its row / column / align actions.
+ */
+export function cellSelectionRows(view: EditorView): MenuRow[] {
+  const groups = view.state.facet(menuGroupsFacet)
+  const rows: MenuRow[] = []
+  if (groups.includes("format")) {
+    pushGroup(rows, [submenu("Format", ICON_PATHS.format, formatGroup(view, true))])
+  }
+  if (groups.includes("clipboard")) pushGroup(rows, clipboardRows(view))
   return rows
 }
 
-/** The full row list for a right-click at the current selection. */
+/** List types, then heading levels + Body, then quote. Obsidian's "Paragraph". */
+const paragraphGroup = (view: EditorView): MenuRow[] => [
+  ...actions(view, PARA_LIST_IDS),
+  "separator",
+  ...actions(view, [...PARA_HEADING_IDS, "body"]),
+  "separator",
+  ...actions(view, ["quote"]),
+]
+
+/** New-block actions. Each still carries its own enabled state. */
+const insertGroup = (view: EditorView): MenuRow[] => [
+  ...actions(view, INSERT_INLINE_IDS),
+  "separator",
+  ...actions(view, INSERT_BLOCK_IDS),
+]
+
+/** Append `add` as its own separator-delimited group. */
+function pushGroup(rows: MenuRow[], add: MenuRow[]): void {
+  if (!add.length) return
+  if (rows.length) rows.push("separator")
+  rows.push(...add)
+}
+
+/**
+ * The right-click menu. `menuGroupsFacet` picks and orders the top-level groups
+ * (`link` / `format` / `paragraph` / `insert` / `clipboard`); `selectionUI`
+ * independently decides whether `link` and `format` live here or on the floating
+ * bar. A table-cell selection and a fenced-code caret are focused contexts that
+ * ignore the ordering and offer only what applies.
+ */
 export function menuRows(view: EditorView): MenuRow[] {
-  const ctx = classifyContext(view.state)
-  const link = linkRow(view)
-  if (ctx === "selection" || cellHasSelection(view)) {
-    return [...inlineGroup(view), "separator", ...clipboardRows(view)]
+  const { state } = view
+  const groups = state.facet(menuGroupsFacet)
+  const has = (g: MenuGroupId) => groups.includes(g)
+
+  // A table cell only supports inline formatting — no block or insert there.
+  // (The editable-table widget shows these under its own structural rows; this
+  // path stands in for a cell selection reaching the canvas menu directly.)
+  if (cellHasSelection(view)) return cellSelectionRows(view)
+
+  // A fenced code block is a literal context — offer only its language and an
+  // unwrap, plus clipboard.
+  if (fencedCodeActive(state)) {
+    const rows: MenuRow[] = [codeBlockRow(view)]
+    if (has("clipboard")) pushGroup(rows, clipboardRows(view))
+    return rows
   }
-  const lead: MenuRow[] = link ? [link, "separator"] : []
-  const insert: MenuRow = {
-    label: "Insert",
-    icon: ICON_PATHS.insert,
-    rows: actions(view, INSERT_IDS, true),
+
+  const sel = state.selection.main
+  const line = state.doc.lineAt(sel.head)
+  // Insert drops a brand-new block — the whole submenu is disabled off an empty
+  // line (a table mid-paragraph would split it) rather than every item greyed.
+  const insertOk = line.text.trim() === ""
+  // Nothing to format at a bare caret with no word — wrapping there just drops
+  // an empty `****`, which shows as literal marks. The right-click menu selects
+  // the word first, so this only bites on a blank line or in whitespace.
+  const formatOk = !sel.empty || Boolean(state.wordAt(sel.head))
+  // `link` / `format` are on the floating bar / toolbar unless the menu owns them.
+  const marksHere = state.facet(selectionUIFacet) === "menu"
+
+  const rows: MenuRow[] = []
+  for (const g of groups) {
+    if (g === "link" && marksHere) pushGroup(rows, [wikiLinkRow(view), linkRow(view)])
+    else if (g === "format" && marksHere)
+      pushGroup(rows, [submenu("Format", ICON_PATHS.format, formatGroup(view), !formatOk)])
+    else if (g === "paragraph")
+      pushGroup(rows, [submenu("Paragraph", ICON_PATHS.paragraph, paragraphGroup(view))])
+    else if (g === "insert")
+      pushGroup(rows, [submenu("Insert", ICON_PATHS.insert, insertGroup(view), !insertOk)])
+    else if (g === "clipboard") pushGroup(rows, clipboardRows(view))
   }
-  if (ctx === "block") {
-    const rows = actions(view, BLOCK_IDS, true)
-    return [
-      ...lead,
-      ...rows,
-      ...(rows.length ? ["separator" as const] : []),
-      insert,
-      "separator",
-      ...clipboardRows(view),
-    ]
-  }
-  return [...lead, insert, "separator", ...clipboardRows(view)]
+  return rows
 }

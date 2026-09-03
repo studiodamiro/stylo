@@ -99,6 +99,9 @@ export const inPlaceTheme = EditorView.theme({
   // fence rows) so it does not stack under the widget's height — that stacking
   // was the extra space above and below the rule.
   ".cm-inplace-hr-line": { fontSize: "0", lineHeight: "0" },
+  // A Setext heading's `===` / `---` underline row, collapsed to nothing off
+  // the caret so the heading reads as one line (the `---` text is also hidden).
+  ".cm-inplace-setext-rule": { fontSize: "0", lineHeight: "0" },
   ".cm-inplace-hr": {
     display: "block",
     // ~one text row, so the rule renders in the `---`'s own footprint with no
@@ -117,7 +120,48 @@ export const inPlaceTheme = EditorView.theme({
     paddingLeft: "1.75rem",
     color: "var(--stylo-text-muted)",
   },
+
+  // Callout blockquotes (`> [!note]`). A tinted box keyed by colour bucket; the
+  // head line carries a `data-callout` label in place of the hidden `[!type]`.
+  // `--stylo-callout-accent` is set per bucket and can be overridden per type.
+  ".cm-inplace-callout": {
+    borderLeft: "0.25rem solid var(--stylo-callout-accent, var(--stylo-border))",
+    paddingLeft: "1.75rem",
+    background:
+      "color-mix(in srgb, var(--stylo-callout-accent, var(--stylo-border)) 10%, transparent)",
+    color: "var(--stylo-text)",
+  },
+  ".cm-inplace-callout-note": { "--stylo-callout-accent": "var(--stylo-callout-note, #3b82f6)" },
+  ".cm-inplace-callout-tip": { "--stylo-callout-accent": "var(--stylo-callout-tip, #22c55e)" },
+  ".cm-inplace-callout-warn": { "--stylo-callout-accent": "var(--stylo-callout-warn, #f59e0b)" },
+  ".cm-inplace-callout-danger": {
+    "--stylo-callout-accent": "var(--stylo-callout-danger, #ef4444)",
+  },
+  ".cm-inplace-callout-example": {
+    "--stylo-callout-accent": "var(--stylo-callout-example, #a855f7)",
+  },
+  ".cm-inplace-callout-head::before": {
+    content: "attr(data-callout)",
+    display: "block",
+    marginLeft: "-1.75rem",
+    fontSize: "0.8em",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: "0.04em",
+    color: "var(--stylo-callout-accent, var(--stylo-text-muted))",
+  },
+
   ".cm-inplace-bullet": { color: "var(--stylo-text-muted)" },
+  // Nested-list indent guides: `--sl-li-depth` 1px rules, one per level above
+  // this line, spaced by an indent step and clipped to that width. Approximate
+  // alignment — decorative depth cue, not a pixel-exact rail.
+  ".cm-inplace-li": {
+    backgroundImage:
+      "repeating-linear-gradient(to right, var(--stylo-guide) 0 1px, transparent 1px 1.5em)",
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "0.35em 0",
+    backgroundSize: "calc(var(--sl-li-depth, 0) * 1.5em) 100%",
+  },
   ".cm-inplace-checkbox": {
     margin: "0 0.4em 0 0",
     verticalAlign: "middle",
@@ -147,13 +191,17 @@ export const inPlaceTheme = EditorView.theme({
   },
   ".cm-inplace-table th": {
     padding: "0.35em 0.6em",
-    border: "1px solid var(--stylo-border)",
-    background: "color-mix(in srgb, var(--stylo-border) 30%, transparent)",
+    border: "1px solid var(--stylo-table-border)",
+    background: "var(--stylo-table-header-bg)",
     fontWeight: "600",
   },
   ".cm-inplace-table td": {
     padding: "0.35em 0.6em",
-    border: "1px solid var(--stylo-border)",
+    border: "1px solid var(--stylo-table-border)",
+  },
+  // Zebra striping — a no-op until the host sets `--stylo-table-stripe-bg`.
+  ".cm-inplace-table tbody tr:nth-child(even) td": {
+    background: "var(--stylo-table-stripe-bg)",
   },
 
   ".cm-inplace-table-edit .cm-inplace-tcell": {
@@ -220,39 +268,9 @@ export const inPlaceTheme = EditorView.theme({
     pointerEvents: "none",
   },
   ".cm-inplace-tg-edge:hover .cm-inplace-tg-plus": { color: "var(--stylo-text)" },
-  ".cm-inplace-table-menu": {
-    position: "absolute",
-    zIndex: "5",
-    minWidth: "11em",
-    padding: "0.25em",
-    flexDirection: "column",
-    pointerEvents: "auto",
-    background: "var(--stylo-bg, #fff)",
-    border: "1px solid var(--stylo-border)",
-    borderRadius: "6px",
-    boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
-  },
-  ".cm-inplace-table-menu:not([hidden])": { display: "flex" },
-  ".cm-inplace-table-menu[hidden]": { display: "none" },
-  ".cm-inplace-tm-sep": {
-    height: "1px",
-    margin: "0.25em 0.3em",
-    background: "var(--stylo-border)",
-  },
-  ".cm-inplace-tm-item": {
-    all: "unset",
-    padding: "0.35em 0.6em",
-    borderRadius: "4px",
-    fontSize: "0.9em",
-    cursor: "pointer",
-    whiteSpace: "nowrap",
-  },
-  ".cm-inplace-tm-item:hover": {
-    background: "color-mix(in srgb, var(--stylo-border) 40%, transparent)",
-  },
-  ".cm-inplace-tm-item[data-active]": { color: "var(--stylo-ring)", fontWeight: "600" },
 
   // --- Right-click menu (menu-plugin.ts / context-menu.ts) ---
+  // Also the editable table's structural menu (table-gizmos.ts) — same shell.
   // `.cm-inplace-menu` is a non-interactive full-viewport layer; each panel
   // inside it is a fixed-positioned popup.
   ".cm-inplace-menu": {
@@ -302,7 +320,11 @@ export const inPlaceTheme = EditorView.theme({
   ".cm-inplace-menu-item:disabled": { opacity: "0.4", cursor: "default" },
   ".cm-inplace-menu-item[data-active]": { color: "var(--stylo-ring)", fontWeight: "600" },
   ".cm-inplace-menu-item[data-active] svg": { color: "var(--stylo-ring)" },
-  ".cm-inplace-menu-parent::after": { content: '"\\203A"', marginLeft: "auto", paddingLeft: "1.5em" },
+  ".cm-inplace-menu-parent::after": {
+    content: '"\\203A"',
+    marginLeft: "auto",
+    paddingLeft: "1.5em",
+  },
   ".cm-inplace-menu-input": {
     display: "block",
     boxSizing: "border-box",
@@ -350,5 +372,26 @@ export const inPlaceTheme = EditorView.theme({
     background: "color-mix(in srgb, var(--stylo-border) 40%, transparent)",
     color: "var(--stylo-text)",
   },
-  ".cm-inplace-selbar-btn[data-active]": { color: "var(--stylo-text)", background: "color-mix(in srgb, var(--stylo-border) 55%, transparent)" },
+  ".cm-inplace-selbar-btn[data-active]": {
+    color: "var(--stylo-text)",
+    background: "color-mix(in srgb, var(--stylo-border) 55%, transparent)",
+  },
+
+  // --- Link / wikilink hover bubble (link-hover.ts) ---
+  ".cm-tooltip.cm-tooltip-hover:has(.cm-inplace-href-tip)": {
+    border: "none",
+    background: "transparent",
+  },
+  ".cm-inplace-href-tip": {
+    maxWidth: "min(28em, 70vw)",
+    padding: "0.3em 0.55em",
+    borderRadius: "5px",
+    background: "var(--stylo-bg, #fff)",
+    border: "1px solid var(--stylo-border)",
+    boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
+    color: "var(--stylo-text-muted)",
+    fontSize: "0.82em",
+    lineHeight: "1.4",
+    wordBreak: "break-all",
+  },
 })

@@ -258,6 +258,43 @@
   color: var(--stylo-text-muted);
 }
 
+/* Obsidian callouts (`> [!note]`) — mirrors the in-place canvas. `remark-callout`
+   adds `stylo-callout stylo-callout-<bucket>` + `data-callout`. Override
+   `--stylo-callout-<bucket>` (or `--stylo-callout-accent` per type) to reskin. */
+.preview :global(.stylo-callout) {
+  margin: 1.6em 0;
+  padding: 0.6em 1em;
+  border-left: 0.25rem solid var(--stylo-callout-accent, var(--stylo-border));
+  border-radius: var(--stylo-radius);
+  background: color-mix(in srgb, var(--stylo-callout-accent, var(--stylo-border)) 10%, transparent);
+  color: var(--stylo-text);
+}
+.preview :global(.stylo-callout)::before {
+  content: attr(data-callout);
+  display: block;
+  margin-bottom: 0.2em;
+  font-size: 0.8em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--stylo-callout-accent, var(--stylo-text-muted));
+}
+.preview :global(.stylo-callout-note) {
+  --stylo-callout-accent: var(--stylo-callout-note, #3b82f6);
+}
+.preview :global(.stylo-callout-tip) {
+  --stylo-callout-accent: var(--stylo-callout-tip, #22c55e);
+}
+.preview :global(.stylo-callout-warn) {
+  --stylo-callout-accent: var(--stylo-callout-warn, #f59e0b);
+}
+.preview :global(.stylo-callout-danger) {
+  --stylo-callout-accent: var(--stylo-callout-danger, #ef4444);
+}
+.preview :global(.stylo-callout-example) {
+  --stylo-callout-accent: var(--stylo-callout-example, #a855f7);
+}
+
 .preview table {
   display: block;
   margin: 2em 0;
@@ -267,8 +304,18 @@
 
 .preview :is(th, td) {
   padding: 0.35em 0.6em;
-  border: 1px solid var(--stylo-border);
+  border: 1px solid var(--stylo-table-border);
   text-align: left;
+}
+
+.preview thead th {
+  background: var(--stylo-table-header-bg);
+  font-weight: 600;
+}
+
+/* Opt-in zebra striping — no-op until the host sets `--stylo-table-stripe-bg`. */
+.preview tbody tr:nth-child(even) td {
+  background: var(--stylo-table-stripe-bg);
 }
 
 /* prose sets `hr { margin: 3em 0 }`, which reads as a page break, not a rule.

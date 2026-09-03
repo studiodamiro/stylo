@@ -289,8 +289,39 @@ test("the link command wraps a cell selection as [text](url)", async () => {
   expect(view.state.doc.toString()).toContain("[1](url)")
 })
 
+test("the selection bar follows a text selection inside a table cell", async () => {
+  const { view } = await mount(T, { table: "cells", selectionUI: "bar" })
+  const cell = await focusCell(view, "tbody td", 0)
+  const bar = view.dom.querySelector<HTMLElement>(".cm-inplace-selbar")!
+  expect(bar.hidden).toBe(true)
+
+  selectText(cell)
+  document.dispatchEvent(new Event("selectionchange"))
+  await vi.waitFor(() => {
+    if (bar.hidden) throw new Error("bar still hidden for the cell selection")
+  })
+
+  // the bold button routes through the cell, not the (collapsed) editor selection
+  const bold = bar.querySelector<HTMLButtonElement>(".cm-inplace-selbar-btn")!
+  bold.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }))
+  bold.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+  expect(cell.textContent).toBe("**1**")
+})
+
+test("selectionBarItems trims and orders the bar's buttons", async () => {
+  const { view } = await mount("some words here", {
+    reveal: "never",
+    selectionUI: "bar",
+    selectionBarItems: ["math", "bold"],
+  })
+  const btns = view.dom.querySelectorAll(".cm-inplace-selbar-btn")
+  expect(btns).toHaveLength(2)
+  expect(btns[0]!.getAttribute("aria-label")).toBe("Inline math")
+  expect(btns[1]!.getAttribute("aria-label")).toBe("Bold")
+})
+
 function menuItem(view: EditorView, label: string): HTMLButtonElement {
-  const it = [...view.contentDOM.querySelectorAll<HTMLButtonElement>(".cm-inplace-tm-item")].find(
+  const it = [...view.contentDOM.querySelectorAll<HTMLButtonElement>(".cm-inplace-menu-item")].find(
     (b) => b.textContent === label,
   )
   if (!it) throw new Error(`no menu item "${label}"`)
@@ -303,10 +334,65 @@ function rightClick(view: EditorView, selector: "thead th" | "tbody td", nth = 0
     `.cm-inplace-table-edit ${selector}`,
   )[nth]!
   cell.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, clientX: 10, clientY: 10 }))
-  return [...view.contentDOM.querySelectorAll(".cm-inplace-tm-item")].map(
+  return [...view.contentDOM.querySelectorAll(".cm-inplace-menu-item")].map(
     (b) => b.textContent ?? "",
   )
 }
+
+test("right-click on a cell selection shows structural rows AND an enabled Format group", async () => {
+  const { view } = await mount(T, { table: "cells" })
+  const cell = await focusCell(view, "tbody td", 0)
+  selectText(cell) // whole cell "1"
+  cell.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, clientX: 10, clientY: 10 }))
+
+  const labels = [...view.contentDOM.querySelectorAll(".cm-inplace-menu-item")].map(
+    (b) => b.textContent ?? "",
+  )
+  expect(labels).toContain("Insert row above") // structural set still there
+  expect(labels).toContain("Align left")
+  expect(labels).toContain("Format") // …plus the inline group
+
+  const format = [
+    ...view.contentDOM.querySelectorAll<HTMLButtonElement>(".cm-inplace-menu-item"),
+  ].find((b) => b.textContent === "Format")!
+  format.dispatchEvent(new Event("pointerenter", { bubbles: true }))
+  const bold = [...document.querySelectorAll<HTMLButtonElement>(".cm-inplace-menu-item")].find(
+    (b) => b.textContent === "Bold",
+  )!
+  expect(bold.disabled).toBe(false) // not greyed by the collapsed state.selection
+})
+
+test("right-click on a word in a cell with no selection auto-selects it and adds Format", async () => {
+  const { view } = await mount(T, { table: "cells" })
+  const cell = await focusCell(view, "tbody td", 0) // raw source "1"
+  expect(cell.ownerDocument.getSelection()?.toString()).not.toBe("1") // nothing selected yet
+  cell.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, clientX: 10, clientY: 10 }))
+  expect(cell.ownerDocument.getSelection()?.toString()).toBe("1") // the word got selected
+  const labels = [...view.contentDOM.querySelectorAll(".cm-inplace-menu-item")].map(
+    (b) => b.textContent ?? "",
+  )
+  expect(labels).toContain("Insert row above")
+  expect(labels).toContain("Format")
+})
+
+test("right-click on a marked word in a cell selects the whole run, not one word", async () => {
+  const { view } = await mount(T, { table: "cells" })
+  const cell = await focusCell(view, "tbody td", 0)
+  // Give the cell some marked source, then blur/refocus so it holds raw text.
+  cell.textContent = "**bold phrase**"
+  cell.dispatchEvent(new Event("input", { bubbles: true }))
+  const text = cell.firstChild as Text
+  // jsdom has no caretPositionFromPoint — stub it to land inside "phrase".
+  const doc = cell.ownerDocument as Document & { caretPositionFromPoint?: unknown }
+  doc.caretPositionFromPoint = () => ({
+    offsetNode: text,
+    offset: 9,
+    getClientRect: () => new DOMRect(),
+  })
+
+  cell.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, clientX: 10, clientY: 10 }))
+  expect(cell.ownerDocument.getSelection()?.toString()).toBe("bold phrase") // not "bold"
+})
 
 test("the add-column gizmo appends a column", async () => {
   const { view } = await mount(T, { table: "cells" })
@@ -359,7 +445,7 @@ test("the cell context menu writes alignment into the delimiter", async () => {
 test("the context menu is hidden until a right-click and closes on an outside click", async () => {
   const { view } = await mount(T, { table: "cells" })
   await editCells(view)
-  const menu = view.contentDOM.querySelector<HTMLElement>(".cm-inplace-table-menu")!
+  const menu = view.contentDOM.querySelector<HTMLElement>(".cm-inplace-menu")!
   expect(menu.hidden).toBe(true)
 
   rightClick(view, "tbody td", 0)

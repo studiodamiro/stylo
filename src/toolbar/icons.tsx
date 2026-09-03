@@ -32,6 +32,7 @@ export const DEFAULT_ICONS: Record<ToolbarCommandId, ReactNode> = {
   h1: <b aria-hidden="true">H1</b>,
   h2: <b aria-hidden="true">H2</b>,
   h3: <b aria-hidden="true">H3</b>,
+  body: <Svg d={ICON_PATHS.body!} />,
   bold: <Svg d={ICON_PATHS.bold!} />,
   italic: <Svg d={ICON_PATHS.italic!} />,
   strike: <Svg d={ICON_PATHS.strike!} />,

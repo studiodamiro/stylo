@@ -34,6 +34,23 @@ export function toggleHeading(view: EditorView, level: number): boolean {
   return true
 }
 
+/** Strip any ATX heading prefix from every line the selection touches — the
+ *  explicit "back to body text" that toggling a heading level does obliquely. */
+export function clearHeading(view: EditorView): boolean {
+  const s = view.state
+  const [first, last] = selectedLines(s)
+  const changes = []
+  for (let n = first; n <= last; n++) {
+    const line = s.doc.line(n)
+    const m = /^#{1,6} +/.exec(line.text)
+    if (m) changes.push({ from: line.from, to: line.from + m[0].length })
+  }
+  if (!changes.length) return false
+  view.dispatch({ changes, scrollIntoView: true })
+  view.focus()
+  return true
+}
+
 export interface LinePrefixSpec {
   /** Detects this exact prefix; `match[0]` (from line start) is what gets stripped. */
   match: RegExp
@@ -60,19 +77,18 @@ export interface LinePrefixSpec {
 export function toggleLinePrefix(view: EditorView, spec: LinePrefixSpec): boolean {
   const s = view.state
   const [first, last] = selectedLines(s)
-  let allHave = true
-  for (let n = first; n <= last; n++) {
+  // A lone blank line: start the list / quote on it rather than skipping it.
+  const soleBlank = first === last && !s.doc.line(first).text.trim()
+  let allHave = !soleBlank
+  for (let n = first; n <= last && allHave; n++) {
     const t = s.doc.line(n).text
-    if (t.trim() && !spec.match.test(t)) {
-      allHave = false
-      break
-    }
+    if (t.trim() && !spec.match.test(t)) allHave = false
   }
   const changes = []
   let added = 0
   for (let n = first; n <= last; n++) {
     const line = s.doc.line(n)
-    if (!line.text.trim()) continue
+    if (!line.text.trim() && !soleBlank) continue
     const m = spec.match.exec(line.text)
     if (allHave) {
       if (m) changes.push({ from: line.from, to: line.from + m[0].length })
@@ -92,6 +108,7 @@ export function toggleLinePrefix(view: EditorView, spec: LinePrefixSpec): boolea
       changes.push({ from: line.from + indent, insert: prefix })
     }
   }
+  if (!changes.length) return false
   view.dispatch({ changes, scrollIntoView: true })
   view.focus()
   return true
