@@ -5,6 +5,7 @@ import { expect, test } from "vitest"
 import { inPlaceConfigFacet, resolveToggles, revealModeFacet } from "../src/inplace/config"
 import {
   arrowAcrossMarkerLeft,
+  arrowAcrossMarkerRight,
   deleteAcrossMarkerBackward,
   deleteAcrossMarkerForward,
   selectAcrossMarkerLeft,
@@ -163,4 +164,28 @@ test("Shift+ArrowLeft with no hidden marker in the way is an ordinary one-char e
 test("with reveal: caret and the caret on the line, Shift+ArrowLeft is not hijacked", () => {
   const view = mkView("a **bold** b", 4, "caret")
   expect(selectAcrossMarkerLeft(view)).toBe(false)
+})
+
+test("ArrowLeft past a bold word at column 0 lands on the line above in one press", () => {
+  const view = mkView("top\n**bold** x", 6) // caret before "b", the run is against the line start
+  expect(arrowAcrossMarkerLeft(view)).toBe(true)
+  const sel = view.state.selection.main
+  expect(sel.empty).toBe(true)
+  expect(sel.head).toBe(3) // end of "top", not parked at 4 (same screen point as 6)
+})
+
+test("Shift+ArrowLeft past a column-0 bold word extends onto the line above", () => {
+  const view = mkView("top\n**bold** x", 6)
+  expect(selectAcrossMarkerLeft(view)).toBe(true)
+  const sel = view.state.selection.main
+  expect(sel.anchor).toBe(6)
+  expect(sel.head).toBe(3)
+})
+
+test("ArrowRight past a bold word at line end lands on the next line in one press", () => {
+  const view = mkView("a **bold**\nnext", 8) // caret after "d", the run is against the line end
+  expect(arrowAcrossMarkerRight(view)).toBe(true)
+  const sel = view.state.selection.main
+  expect(sel.empty).toBe(true)
+  expect(sel.head).toBe(11) // start of "next", not parked at 10
 })

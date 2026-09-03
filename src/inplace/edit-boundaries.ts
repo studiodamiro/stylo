@@ -195,7 +195,11 @@ function onlyHiddenMarkers(view: EditorView, from: number, to: number): boolean 
  * Arrow-key motion that doesn't "stick" on a hidden marker run. `atomicRanges`
  * leaves *both* edges of a run as caret stops, and they render at the same
  * point, so one arrow press looks like it did nothing. When a step only crossed
- * hidden markers, take one more so every press moves the caret visibly.
+ * hidden markers, take one more so every press moves the caret visibly — even
+ * when that extra step leaves the line, which is what a bold word at column 0
+ * needs (the run sits against the line start, so the only visible landing is the
+ * end of the line above). `onlyHiddenMarkers` never spans a line break — a
+ * newline is not a hidden marker — so the guard there is enough.
  *
  * With `extend` the selection head moves and the anchor stays put — the same
  * fix for `Shift`-arrow, whose stock command also parks on the near edge.
@@ -211,12 +215,7 @@ const arrowAcrossMarkers =
     let moved = view.moveByChar(sel, forward)
     const lo = Math.min(sel.head, moved.head)
     const hi = Math.max(sel.head, moved.head)
-    if (onlyHiddenMarkers(view, lo, hi)) {
-      const next = view.moveByChar(moved, forward)
-      if (view.state.doc.lineAt(next.head).number === view.state.doc.lineAt(sel.head).number) {
-        moved = next
-      }
-    }
+    if (onlyHiddenMarkers(view, lo, hi)) moved = view.moveByChar(moved, forward)
     if (moved.head === sel.head) return false
     const range = extend
       ? EditorSelection.range(sel.anchor, moved.head)

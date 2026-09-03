@@ -282,6 +282,15 @@ throughout.
   `Shift-ArrowLeft` / `Shift-ArrowRight`. Word- and line-wise motions
   (`Alt` / `Mod` arrow) are left on the default: each jump clears a whole word,
   so they do not rest on a hidden edge.
+- **2026-09-04 — …and the extra step is now allowed to leave the line.** A bold
+  word as the first thing on a line still cost two presses: the run sits against
+  the line start, so the "take one more" step landed on the line above and an
+  over-cautious same-line guard refused it, parking the caret invisibly on the
+  hidden `**`. The guard is gone — `onlyHiddenMarkers` already never spans a
+  newline, so a run that reaches column 0 (or the line end, going right) now
+  hands the press straight to the end of the line above / start of the line
+  below, as a column-0 `ArrowLeft` should. The only remaining no-op is the very
+  first line of the document, where there is genuinely nowhere further left.
 
 ## Consequences
 
