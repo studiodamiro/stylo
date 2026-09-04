@@ -114,6 +114,12 @@
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   transition: opacity 0.15s ease;
+  /* The base `.toolbar` deliberately leaves font-family to inherit from
+     wherever the host mounts `<Stylo>`. A sticky bar can't rely on that: it's
+     portalled to `document.body` (see Stylo.tsx), so "wherever it's mounted"
+     is no longer where it's drawn. Set an explicit stack rather than
+     inherit the browser's serif default. */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 .toolbarSticky::-webkit-scrollbar {

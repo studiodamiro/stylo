@@ -178,6 +178,18 @@ pinned to the real window as powerful but squarely in the path of whatever
 quirks the host browser's own chrome has; budget for a real device pass, not
 just the test suite, before shipping a sticky change.
 
+The portal itself briefly broke theming: every `--stylo-*` token is only
+_defined_ on the `.stylo` class, reaching the bar by ordinary CSS inheritance,
+and a portal breaks that chain exactly like it breaks the ancestor chain the
+fix targets. The bar showed a transparent background and its `H1`/`H2`/`H3`
+glyphs fell back to the browser default serif font (the base toolbar has
+never set its own `font-family`, only ever inherited whatever the host's page
+sets). Fixed by wrapping the portalled content in a bare `<div
+className="stylo">` — the token-defining class only, none of `.root`'s
+border/`overflow` — and giving `.toolbarSticky` its own explicit font stack.
+Portalling a themed element escapes every ancestor, wanted or not; anything it
+was relying on inheriting has to be re-declared at the new mount point.
+
 ### `stickyVisibility` — fade it out when nothing is focused
 
 ```tsx

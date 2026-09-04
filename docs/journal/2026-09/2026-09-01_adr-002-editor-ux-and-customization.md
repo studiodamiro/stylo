@@ -230,6 +230,25 @@ untouched, and must not gate v1.
   > **fourth** distinct native-chrome interaction found by hands-on testing on
   > this one feature — still unconfirmed on the real device, but this fix
   > removes a whole class of cause rather than one instance of it.
+  >
+  > **The portal itself shipped with a theming regression, caught on the same
+  > device pass:** the bar rendered with a transparent background and the
+  > `H1`/`H2`/`H3` glyphs fell back to the browser's default serif font. Every
+  > `--stylo-*` token is only ever _defined_ on the `.stylo` class (see
+  > `tokens.css`); it reaches the toolbar by ordinary CSS inheritance the same
+  > way any CSS custom property does, and a portal breaks that chain along
+  > with everything else about the DOM position. The base `.toolbar` also
+  > never sets its own `font-family` at all — it has always leaned on
+  > inheriting whatever font the host's page sets wherever `<Stylo>` happens
+  > to be mounted, which stopped being where the bar was drawn. Fixed by
+  > wrapping the portalled content in a plain `<div className="stylo">` (the
+  > bare token-defining class, none of `.root`'s box model) so the custom
+  > properties resolve again, and giving `.toolbarSticky` its own explicit
+  > system-font stack rather than a second inheritance path that could break
+  > the same way. The lesson generalises: portalling a themed element to
+  > `document.body` doesn't just escape unwanted ancestors, it also escapes
+  > every wanted one — anything the component was relying on inheriting has to
+  > be re-declared at the new mount point.
 
 #### 3. Styling: CSS Modules + a small custom-property token set
 

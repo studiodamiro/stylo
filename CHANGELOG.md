@@ -38,9 +38,13 @@ Notable changes to Stylo. The format follows
   disappear across the browser's own address-bar show/hide animation on
   scroll — plus, since that alone was reported insufficient, the bar now
   renders through a React portal onto `document.body` so it's never nested
-  inside `<Stylo>`'s own root (or the host page's layout) at all. Off by
-  default; combine with your own responsive check if you only want it below a
-  breakpoint. New `stickyVisibility` prop (`"consistent"`, the default, or
+  inside `<Stylo>`'s own root (or the host page's layout) at all. The portal
+  wrapper carries the bare `stylo` class so the `--stylo-*` theme tokens (only
+  ever defined there) still reach it, and `.toolbarSticky` now sets its own
+  font stack instead of inheriting one from wherever `<Stylo>` happens to be
+  mounted. Off by default; combine with your own responsive check if you only
+  want it below a breakpoint. New `stickyVisibility` prop (`"consistent"`, the
+  default, or
   `"dynamic"`) fades the bar out while the editing surface is unfocused.
   ADR-002 §2 amendment.
 

@@ -131,8 +131,19 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
           // animation, `.root`'s own included. Portalling straight to `<body>`
           // sidesteps the ancestor chain entirely instead of chasing which
           // property triggers it.
+          //
+          // Every `--stylo-*` token is only *defined* on `.stylo` (see
+          // tokens.css) — it reaches descendants by ordinary CSS inheritance,
+          // which a portal breaks along with everything else about the DOM
+          // position. Re-declaring the bare `stylo` class (no layout, just the
+          // custom-property block) on the portal's own wrapper puts the
+          // tokens back in scope without dragging `.root`'s box model
+          // (border, `overflow: hidden`) along with them.
           return stickyToolbar && typeof document !== "undefined"
-            ? createPortal(rendered, document.body)
+            ? createPortal(
+                <div className={["stylo", className].filter(Boolean).join(" ")}>{rendered}</div>,
+                document.body,
+              )
             : rendered
         })()}
 
