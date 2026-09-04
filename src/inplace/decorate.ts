@@ -50,6 +50,7 @@ export function buildDecorations(view: EditorView): InPlaceDecorations {
     out,
     toggles,
     fmEnd: frontmatterRange(doc)?.to ?? -1,
+    quoteRevealed: new Set<number>(),
   }
 
   for (const range of view.visibleRanges) {
@@ -74,6 +75,14 @@ export function buildDecorations(view: EditorView): InPlaceDecorations {
     .sort((a, b) => a.from - b.from || a.to - b.to)
   const atomic: Range<Decoration>[] = []
   for (const r of replaces) {
+    // A non-widget replace that covers an entire line (a bare `>` callout line)
+    // would leave the caret nowhere to land — clicks bounce and a vertical
+    // arrow skips the line. Keep it hidden but not atomic so both edges stay
+    // reachable.
+    if (!r.value.spec.widget) {
+      const line = doc.lineAt(r.from)
+      if (r.from === line.from && r.to === line.to) continue
+    }
     const last = atomic[atomic.length - 1]
     if (last && r.from <= last.to) {
       if (r.to > last.to) atomic[atomic.length - 1] = ATOMIC.range(last.from, r.to)

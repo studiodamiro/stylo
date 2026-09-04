@@ -26,6 +26,7 @@ import { blockMathField } from "./math"
 import { contextMenuLayer } from "./menu-plugin"
 import { inPlaceDecorations } from "./plugin"
 import { selectionBar } from "./selection-bar"
+import { inPlaceTableEnter } from "./table-enter"
 import { tableField } from "./tables"
 import { inPlaceTheme } from "./theme"
 
@@ -100,6 +101,7 @@ export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
     // step-over-markers handler, then CodeMirror's default.
     inPlaceLinePrefixEdit,
     inPlaceEditBoundaries,
+    inPlaceTableEnter,
     inPlaceInsertAssociation,
     inPlaceAutoformat,
     blockMathField,

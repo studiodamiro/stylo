@@ -1,6 +1,7 @@
 import { redo, undo } from "@codemirror/commands"
 import type { EditorState } from "@codemirror/state"
 import type { EditorView } from "@codemirror/view"
+import { runSave, saveHandler } from "../editor/save"
 import type { ToolbarCommandId } from "../types"
 import {
   clearHeading,
@@ -161,6 +162,18 @@ function prefix(
 export const BUILTIN_COMMANDS: ToolbarCommand[] = [
   history("undo", "Undo", undo),
   history("redo", "Redo", redo),
+  {
+    // Calls the `onSave` prop with the document (same path as `Mod-s`).
+    // Disabled — and never in the default bar — until a handler is wired.
+    id: "save",
+    title: "Save",
+    run: (view) => {
+      const ok = runSave(view)
+      view.focus()
+      return ok
+    },
+    disabled: (state) => state.facet(saveHandler) == null,
+  },
   heading(1),
   heading(2),
   heading(3),

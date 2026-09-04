@@ -82,6 +82,19 @@ Adopt approach **3**. Specifically:
   > exposing parsed data, and a rendered key/value "Properties" panel, stay
   > deferred to their own decision. See the
   > [preview-frontmatter note](./2026-09-02_preview-frontmatter.md).
+  >
+  > **Amended 2026-09-04 (raw callback, no parser):** the decision is made —
+  > Stylo exposes the frontmatter **as raw text and does not parse it**. An
+  > **`onFrontmatter(raw: string | null)`** prop fires on mount and whenever the
+  > block changes; `splitFrontmatter(md)` is now a public export for the same
+  > split synchronously. A structured panel and a bundled YAML dependency stay
+  > **rejected**: parsing is a policy (schema, dates, `!!` tags, multi-doc) that
+  > belongs to the host, which passes `raw` to its own `yaml` parser — the same
+  > compose-don't-adopt stance as the render pipeline. **Revisit trigger:** if
+  > three or more consumers hand-roll the same flat `key: value` parser, add a
+  > minimal built-in one (still no dependency); a full YAML parser in the bundle
+  > stays off the table. See the
+  > [frontmatter callback note](./2026-09-04_frontmatter-callback.md).
 
 - **No ProseMirror / Lexical / TipTap / Milkdown dependency.**
 - First release ships `source`, `preview`, and `split` view modes. Obsidian-style

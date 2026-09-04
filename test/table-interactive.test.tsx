@@ -479,3 +479,59 @@ test("Enter in the last row appends a row", async () => {
     "| A   | B   |\n| --- | --- |\n| 1   | 2   |\n|     |     |",
   )
 })
+
+const arrow = (key: string) =>
+  new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true })
+
+test("ArrowDown from the line above a table focuses its first cell", async () => {
+  const { view } = await mount(`intro\n\n${T}`, { table: "cells" })
+  await editCells(view)
+  view.dispatch({ selection: { anchor: view.state.doc.line(2).from } }) // blank line above
+  view.contentDOM.dispatchEvent(arrow("ArrowDown"))
+
+  const active = view.dom.ownerDocument.activeElement as HTMLElement
+  expect(active.matches("th[data-r='0'][data-c='0']")).toBe(true)
+})
+
+test("ArrowUp from the line below a table focuses its last cell", async () => {
+  const { view } = await mount(`${T}\n\nafter`, { table: "cells" })
+  await editCells(view)
+  view.dispatch({ selection: { anchor: view.state.doc.line(4).from } }) // blank line below
+  view.contentDOM.dispatchEvent(arrow("ArrowUp"))
+
+  const active = view.dom.ownerDocument.activeElement as HTMLElement
+  expect(active.matches("td[data-r='1'][data-c='1']")).toBe(true)
+})
+
+test("ArrowDown walks the column, then leaves the table past the last row", async () => {
+  const { view } = await mount(T, { table: "cells" })
+  const cell = await focusCell(view, "thead th", 1) // "B", column 1
+
+  cell.dispatchEvent(arrow("ArrowDown"))
+  expect(caretCell(view)).toMatchObject({ row: 1, col: 1 }) // body row, same column
+
+  caretCell(view)!.cell.dispatchEvent(arrow("ArrowDown"))
+  expect(caretCell(view)).toBeNull() // caret is back in the document
+})
+
+test("ArrowRight crosses to the next cell only from the end of the text", async () => {
+  const { view } = await mount("| hello | b |\n| - | - |\n| 1 | 2 |", { table: "cells" })
+  const cell = await focusCell(view, "thead th", 0) // "hello"
+
+  selectText(cell, 0, 0) // caret at the start — mid-text, stays put
+  cell.dispatchEvent(arrow("ArrowRight"))
+  expect(caretCell(view)).toMatchObject({ row: 0, col: 0 })
+
+  selectText(cell, 5, 5) // caret at the end — crosses
+  cell.dispatchEvent(arrow("ArrowRight"))
+  expect(caretCell(view)).toMatchObject({ row: 0, col: 1 })
+})
+
+test("ArrowLeft from the start of the first cell leaves the table above", async () => {
+  const { view } = await mount(`intro\n\n${T}`, { table: "cells" })
+  const cell = await focusCell(view, "thead th", 0)
+
+  selectText(cell, 0, 0)
+  cell.dispatchEvent(arrow("ArrowLeft"))
+  expect(caretCell(view)).toBeNull()
+})

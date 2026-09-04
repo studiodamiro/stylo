@@ -6,6 +6,7 @@ import { markdownKeymap } from "../toolbar/keymap"
 import { tableKeymap, tableRealign } from "../toolbar/table"
 import type { CodeLanguages } from "../types"
 import { styloHighlighting } from "./highlight"
+import { saveHandler } from "./save"
 import { styloTheme } from "./theme"
 
 /**
@@ -33,10 +34,15 @@ export function baseExtensions(codeLanguages?: CodeLanguages): Extension {
 }
 
 /** Extensions that depend on props and are swapped via a compartment on change. */
-export function dynamicConfig(opts: { readOnly: boolean; placeholder?: string }): Extension {
+export function dynamicConfig(opts: {
+  readOnly: boolean
+  placeholder?: string
+  save?: (value: string) => void
+}): Extension {
   return [
     EditorState.readOnly.of(opts.readOnly),
     EditorView.editable.of(!opts.readOnly),
     opts.placeholder ? placeholderExt(opts.placeholder) : [],
+    opts.save ? saveHandler.of(opts.save) : [],
   ]
 }

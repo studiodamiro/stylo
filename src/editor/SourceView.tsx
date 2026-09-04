@@ -10,6 +10,8 @@ export interface SourceViewProps {
   placeholder?: string
   /** Fenced-code grammars, forwarded to the Markdown language. Read once. */
   codeLanguages?: CodeLanguages
+  /** Called with the doc string on `Mod-s`. */
+  onSave?: (value: string) => void
   /** Called with the `EditorView` once created, and with `null` on teardown. */
   onViewChange?: (view: EditorView | null) => void
 }
@@ -21,8 +23,17 @@ export function SourceView({
   readOnly,
   placeholder,
   codeLanguages,
+  onSave,
   onViewChange,
 }: SourceViewProps) {
-  const ref = useCodeMirror({ value, onChange, readOnly, placeholder, codeLanguages, onViewChange })
+  const ref = useCodeMirror({
+    value,
+    onChange,
+    readOnly,
+    placeholder,
+    codeLanguages,
+    onSave,
+    onViewChange,
+  })
   return <div className={styles.source} ref={ref} />
 }
