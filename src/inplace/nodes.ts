@@ -42,7 +42,15 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
     if (toggles.headings) {
       const line = doc.lineAt(node.from)
       out.push(
-        Decoration.line({ class: `cm-inplace-heading cm-inplace-h${heading[1]}` }).range(line.from),
+        Decoration.line({
+          class: `cm-inplace-heading cm-inplace-h${heading[1]}`,
+          // Expose the heading to assistive tech and outline tools. Under
+          // `reveal: "never"` the `#` markers are never in the DOM, so the ARIA
+          // role is the only structural cue left. A `role`/`aria-level` on the
+          // line stands in for an `<hN>` tag, which CodeMirror's line rendering
+          // does not let us emit.
+          attributes: { role: "heading", "aria-level": heading[1]! },
+        }).range(line.from),
       )
       if (!revealed.has(line.number)) {
         const hm = node.node.firstChild
@@ -65,9 +73,10 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
     if (toggles.headings) {
       const textLine = doc.lineAt(node.from)
       out.push(
-        Decoration.line({ class: `cm-inplace-heading cm-inplace-h${setext[1]}` }).range(
-          textLine.from,
-        ),
+        Decoration.line({
+          class: `cm-inplace-heading cm-inplace-h${setext[1]}`,
+          attributes: { role: "heading", "aria-level": setext[1]! },
+        }).range(textLine.from),
       )
       const hm = node.node.getChild("HeaderMark")
       if (hm) {

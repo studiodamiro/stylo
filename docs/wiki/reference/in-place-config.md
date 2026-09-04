@@ -48,6 +48,11 @@ Every key is optional and defaults to `true`.
 | `frontmatter`    | the recessed in-place styling of the leading YAML block              |
 | `tables`         | the rendered `<table>`                                               |
 
+With `headings` on, a heading line also carries `role="heading"` and
+`aria-level` so screen readers and outline tools see the structure — the `#`
+markers themselves are hidden (and, under `reveal: "never"`, never in the DOM),
+so the ARIA role stands in for an `<hN>` tag.
+
 ## `inPlace.table`
 
 How the caret entering a table behaves. Optional, defaults to `"source"`.
