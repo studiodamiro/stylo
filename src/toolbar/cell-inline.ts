@@ -1,6 +1,12 @@
 import type { EditorView } from "@codemirror/view"
 import { placeCaret, selectionOffsets } from "../inplace/table-cell-dom"
-import { type InlineStr, linkString, wikiLinkString, wrapString } from "./inline-ops"
+import {
+  type InlineStr,
+  linkString,
+  underlineString,
+  wikiLinkString,
+  wrapString,
+} from "./inline-ops"
 
 /** Rewrites a cell's text + selection given the current text and selection span. */
 type Build = (text: string, from: number, to: number) => InlineStr
@@ -38,14 +44,15 @@ export function runInlineInCell(view: EditorView, build: Build): boolean {
 const SHORTCUTS: Record<string, Build> = {
   b: (t, f, u) => wrapString(t, f, u, "**"),
   i: (t, f, u) => wrapString(t, f, u, "*"),
+  u: underlineString,
   k: linkString,
   K: wikiLinkString, // Mod-Shift-k
 }
 
 /**
- * Handle a formatting shortcut (`Mod-b` / `Mod-i` / `Mod-k` / `Mod-Shift-k`)
- * typed inside `cell`. The widget calls this because `ignoreEvent()` keeps such
- * keydowns from ever reaching CodeMirror's keymap.
+ * Handle a formatting shortcut (`Mod-b` / `Mod-i` / `Mod-u` / `Mod-k` /
+ * `Mod-Shift-k`) typed inside `cell`. The widget calls this because
+ * `ignoreEvent()` keeps such keydowns from ever reaching CodeMirror's keymap.
  */
 export function handleCellShortcut(event: KeyboardEvent, cell: HTMLElement): boolean {
   if (!(event.metaKey || event.ctrlKey) || event.altKey) return false

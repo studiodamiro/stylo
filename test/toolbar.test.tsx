@@ -681,7 +681,8 @@ test("underline is disabled in a fenced code block and inside inline code", () =
   expect(BUILTIN_BY_ID.underline!.disabled!(mkView("plain words", 3).state)).toBe(false)
 })
 
-test("underline ships as a command but is not in the default bar", () => {
+test("underline ships as a command, bound to Mod-u, but is not in the default bar", () => {
   expect(BUILTIN_BY_ID.underline).toBeDefined()
+  expect(BUILTIN_BY_ID.underline!.keys).toEqual(["Mod-u"])
   expect(DEFAULT_TOOLBAR_ITEMS).not.toContain("underline")
 })

@@ -103,7 +103,7 @@ pressed-state updates.
 | `bold`          | Wrap in `**…**`                                          | `Mod-b`                 |
 | `italic`        | Wrap in `*…*`                                            | `Mod-i`                 |
 | `strike`        | Wrap in `~~…~~`                                          | —                       |
-| `underline`     | Wrap in `<u>…</u>` (raw HTML) — _not in the default bar_ | —                       |
+| `underline`     | Wrap in `<u>…</u>` (raw HTML) — _not in the default bar_ | `Mod-u`                 |
 | `code`          | Wrap in `` `…` ``                                        | —                       |
 | `codeBlock`     | Fence the selected lines in ` ``` `                      | —                       |
 | `link`          | `[text](url)`, or unlink                                 | `Mod-k`                 |
@@ -135,8 +135,8 @@ command writes a raw `<u>…</u>` HTML pair. That renders underlined wherever th
 consuming app renders inline HTML (Obsidian, GitHub, anything running
 `rehype-raw` or similar). Stylo's own bundled `preview` does **not** enable raw
 HTML, so `<u>` tags there show through as text — enable it only if your render
-path handles inline HTML. No default shortcut; bind `Mod-u` yourself against
-`getView()` if you want one.
+path handles inline HTML. `Mod-u` is bound on every editing surface (like the
+other inline shortcuts) whether or not the button is shown.
 
 `Mod` is `Cmd` on macOS and `Ctrl` elsewhere. The shortcuts are bound on the
 CodeMirror surface whether or not the visible bar is mounted; `toolbar={false}`

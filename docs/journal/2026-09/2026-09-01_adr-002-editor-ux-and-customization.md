@@ -106,8 +106,9 @@ untouched, and must not gate v1.
   >
   > A built-in `underline` id also ships now. Markdown has no underline, so it
   > writes a raw `<u>…</u>` pair — correct wherever the host renders inline HTML.
-  > It is kept out of the default bar (like `save`) and carries no shortcut, so a
-  > consumer opts in deliberately.
+  > It is kept out of the default bar (like `save`) so a consumer opts the button
+  > in deliberately, but it binds `Mod-u` on every surface like the other inline
+  > shortcuts.
   >
   > **Still deferred:** keyboard shortcuts for custom items — built-in `keys`
   > are compiled into CodeMirror's keymap at construction, so a custom binding

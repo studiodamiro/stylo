@@ -203,6 +203,7 @@ export const BUILTIN_COMMANDS: ToolbarCommand[] = [
     run: (view) => runInlineInCell(view, underlineString) || toggleUnderline(view),
     isActive: underlineActive,
     disabled: disabledWhen(inLiteral, inOtherInlineLiteral("u"), nothingToWrap),
+    keys: ["Mod-u"],
   },
   wrap("code", "Inline code", "`"),
   {
