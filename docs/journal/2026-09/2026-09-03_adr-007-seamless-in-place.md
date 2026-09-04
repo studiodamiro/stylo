@@ -400,6 +400,16 @@ emphasisOnly)` first and, inside a hidden-marker construct, selects the
   the trailing-newline step still runs when the rule is the last line. Typing a
   Setext heading by hand is the cost — `## ` is the seamless way to an `<h2>`.
 
+- **2026-09-04 — Heading lines carry ARIA heading semantics.** Prep for Stage 6:
+  under `reveal: "never"` the `#` markers are never in the DOM, so a heading was
+  visually large but structurally a plain `.cm-line` `<div>` — invisible to
+  screen readers, outline views, and export. The ATX and Setext heading
+  branches in `nodes.ts` now add `attributes: { role: "heading", "aria-level":
+n }` to the line decoration they already emit. No new dependency; `role` +
+  `aria-level` on the line is the accessible-name equivalent of an `<hN>` tag,
+  which CodeMirror's line rendering will not let us emit. Covered by two tests
+  in `inplace.test.tsx`.
+
 ## Consequences
 
 ### Positive
@@ -428,8 +438,13 @@ emphasisOnly)` first and, inside a hidden-marker construct, selects the
   keystroke, or undo feels broken. _Done in Stage 5 via `sequential` filter
   specs._
 - Accessibility: the rendered DOM now never shows structural markers, so the
-  semantic layer matters more. In-place headings today are `.cm-line` size
-  classes, not real `<hN>` — worth revisiting as a follow-up.
+  semantic layer matters more. _Addressed for headings 2026-09-04:_ a heading
+  line now carries `role="heading"` + `aria-level` (`nodes.ts`), so assistive
+  tech and outline tools see the structure even when the `#` is never painted.
+  A literal `<hN>` tag was the alternative but CodeMirror renders every line as
+  a `.cm-line` `<div>` and does not let the tag be swapped; the ARIA role on
+  the line is the equivalent and does not fight the line renderer. Other
+  constructs (lists, blockquotes) may want the same treatment later.
 - Pasted Markdown should ideally autoformat rather than sit as literal markup.
   Stage 5's rewrite rules are typing-only (single-character `input.type`); a
   paste path is still open.
