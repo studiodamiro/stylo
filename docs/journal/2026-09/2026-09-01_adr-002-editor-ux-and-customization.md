@@ -211,6 +211,25 @@ untouched, and must not gate v1.
   > pressed states. Deterministic JS, no native-chrome dependency, and unlike
   > the position work above, verified end-to-end (focus, blur, initial state)
   > without a device-only caveat.
+  >
+  > **A fourth on-device round: `translateZ(0)` alone was not enough.** The
+  > disappearing-on-scroll bug persisted for `"top"` even with visibility left
+  > on its default — ruling out the fade as the cause and pointing back at the
+  > same underlying WebKit fixed-position bug the compositing fix was meant to
+  > close. Rather than keep guessing at which exact WebKit code path was still
+  > tripping (compositing promotion is a real fix for the address-bar-collapse
+  > variant of this bug, but nested-`overflow: hidden` ancestors are a
+  > separately documented trigger for the same failure family, and `.root`
+  > carries `overflow: hidden` for its own reasons), the bar is now portalled
+  > straight to `document.body` with React's `createPortal` whenever `sticky`
+  > is set. This removes the entire ancestor chain — `.root` and anything the
+  > host nests `<Stylo>` inside — as a variable, rather than fixing one more
+  > property on it; it is the same technique overlay libraries (dialogs,
+  > toasts) use for exactly this reason. `translateZ(0)` stays on
+  > `.toolbarStickyTop` as a low-cost second layer of defence. This is now the
+  > **fourth** distinct native-chrome interaction found by hands-on testing on
+  > this one feature — still unconfirmed on the real device, but this fix
+  > removes a whole class of cause rather than one instance of it.
 
 #### 3. Styling: CSS Modules + a small custom-property token set
 

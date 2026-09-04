@@ -36,10 +36,13 @@ Notable changes to Stylo. The format follows
   with a keyboard or its accessory bar; it also carries a `translateZ(0)`
   compositing-layer fix for a WebKit quirk where a plain fixed element can
   disappear across the browser's own address-bar show/hide animation on
-  scroll. Off by default; combine with your own responsive check if you only
-  want it below a breakpoint. New `stickyVisibility` prop (`"consistent"`,
-  the default, or `"dynamic"`) fades the bar out while the editing surface is
-  unfocused. ADR-002 §2 amendment.
+  scroll — plus, since that alone was reported insufficient, the bar now
+  renders through a React portal onto `document.body` so it's never nested
+  inside `<Stylo>`'s own root (or the host page's layout) at all. Off by
+  default; combine with your own responsive check if you only want it below a
+  breakpoint. New `stickyVisibility` prop (`"consistent"`, the default, or
+  `"dynamic"`) fades the bar out while the editing surface is unfocused.
+  ADR-002 §2 amendment.
 
 ### Documentation
 

@@ -1,4 +1,5 @@
 import { forwardRef, Suspense, useEffect, useImperativeHandle, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { EditorView } from "@codemirror/view"
 import { SourceView } from "./editor/SourceView"
 import { LazyInPlaceView } from "./inplace/lazyInPlace"
@@ -121,7 +122,18 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
               stickyVisibility={stickyVisibility}
             />
           )
-          return toolbarRender ? toolbarRender(bar, { view }) : bar
+          const rendered = toolbarRender ? toolbarRender(bar, { view }) : bar
+          // Sticky bars are `position: fixed`, so their place in the DOM tree
+          // only matters for CSS containment: an ancestor `.root` never sets
+          // `transform`/`filter`/etc. itself, but WebKit has a long history of
+          // still mispositioning a fixed descendant nested inside *any*
+          // `overflow: hidden` ancestor during its own scroll/address-bar
+          // animation, `.root`'s own included. Portalling straight to `<body>`
+          // sidesteps the ancestor chain entirely instead of chasing which
+          // property triggers it.
+          return stickyToolbar && typeof document !== "undefined"
+            ? createPortal(rendered, document.body)
+            : rendered
         })()}
 
       {resolved === "source" && (

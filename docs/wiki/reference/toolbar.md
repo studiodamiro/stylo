@@ -158,19 +158,25 @@ keyboard.
 It has its own on-device finding: a plain `position: fixed; top: 0` element
 can disappear and fail to reliably reappear while scrolling on iOS Safari —
 WebKit has a long-documented history of losing track of a fixed element across
-its own address-bar show/hide animation (separate from the keyboard). Fixed
-with the standard mitigation, a static `transform: translateZ(0)` forcing the
-bar onto its own compositing layer. `"bottom"` never showed this, because its
-keyboard-tracking `translateY()` gives it the same layer promotion as a side
-effect.
+its own address-bar show/hide animation (separate from the keyboard), and
+separately across a nested `overflow: hidden` ancestor, which `<Stylo>`'s own
+root element carries. A static `transform: translateZ(0)` on the bar (forcing
+its own compositing layer — the fix `"bottom"` already gets for free from its
+keyboard-tracking `translateY()`) closes the first cause but was reported
+insufficient on its own. Any `sticky` bar is now also rendered through a React
+portal straight onto `document.body`, so it is never a descendant of
+`<Stylo>`'s root (or of whatever the host page nests `<Stylo>` inside) in the
+first place — the same technique overlay libraries use for dialogs and toasts,
+for the same reason. `translateZ(0)` stays on as a second, low-cost layer of
+defence.
 
 Between the selection callout racing a long-press, the input accessory bar
-out-layering `"bottom"`, and this, three distinct native-chrome interactions
-turned up in one day of hands-on testing — none reproducible from a headless
-browser. Treat `position: fixed` pinned to the real window as powerful but
-squarely in the path of whatever quirks the host browser's own chrome has;
-budget for a real device pass, not just the test suite, before shipping a
-sticky change.
+out-layering `"bottom"`, and two rounds of this scroll-disappearing bug, four
+distinct native-chrome interactions turned up from one day of hands-on
+testing — none reproducible from a headless browser. Treat `position: fixed`
+pinned to the real window as powerful but squarely in the path of whatever
+quirks the host browser's own chrome has; budget for a real device pass, not
+just the test suite, before shipping a sticky change.
 
 ### `stickyVisibility` — fade it out when nothing is focused
 
