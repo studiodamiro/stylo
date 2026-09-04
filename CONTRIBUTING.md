@@ -144,6 +144,23 @@ read it.
   (`docs:`, `feat:`, `fix:`, `chore:`). Explain the _why_ in the body.
 - **Branches**: work on a topic branch off `main`; open a PR.
 
+## Repository hygiene
+
+These are strict, not aspirational.
+
+- **Single author identity.** Every commit is authored and committed by the
+  repository owner, `damiro <hello.damiro@gmail.com>` — no secondary identities,
+  no aliases. History is kept that way with `git filter-repo --mailmap`; a
+  machine committing under a different name or email is misconfigured. Prefer
+  merging PRs locally (`git merge --ff-only` then `git push`) so the merge
+  commit carries the same identity.
+- **No trailers.** Commits carry no `Co-authored-by`, `Signed-off-by`, or any
+  tooling or attribution trailer.
+- **Editor and workspace tooling is never committed.** Local editor and
+  workspace configuration is `.gitignore`d here and, machine-wide, through
+  `core.excludesFile` (`~/.gitignore_global`). The repository ships only its
+  own source, docs, and build configuration.
+
 ## Commands
 
 Vite in library mode; TypeScript emits the declarations.
