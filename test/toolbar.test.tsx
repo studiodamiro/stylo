@@ -688,10 +688,24 @@ test("toolbar={{ sticky: 'top' }} pins to the top instead", () => {
   expect(bar.classList.contains(stylo.toolbarSticky!)).toBe(true)
   expect(bar.classList.contains(stylo.toolbarStickyTop!)).toBe(true)
   expect(bar.classList.contains(stylo.toolbarStickyBottom!)).toBe(false)
-  expect(bar.getAttribute("style")).toBeNull() // no keyboard offset needed at the top
+  // No inline style yet: React never sets one for "top", and the rAF
+  // watchdog (see next test) hasn't ticked in this same synchronous pass.
+  expect(bar.getAttribute("style")).toBeNull()
   const root = container.querySelector(`.${stylo.root}`)!
   expect(root.classList.contains(stylo.stickyToolbarRootTop!)).toBe(true)
   expect(root.classList.contains(stylo.stickyToolbarRootBottom!)).toBe(false)
+})
+
+test("sticky: 'top' re-asserts its transform via a rAF watchdog, not a one-time style", async () => {
+  const { container } = render(
+    <Stylo value="x" onChange={() => {}} mode="source" toolbar={{ sticky: "top" }} />,
+  )
+  const bar = container.querySelector('[role="toolbar"]')!
+  await vi.waitFor(() => expect(bar.getAttribute("style")).toContain("translate3d"))
+  const first = bar.getAttribute("style")
+  // The jitter alternates every frame — wait for it to actually change, not
+  // just remain set once.
+  await vi.waitFor(() => expect(bar.getAttribute("style")).not.toBe(first))
 })
 
 test("stickyVisibility defaults to 'consistent' — no fade", () => {

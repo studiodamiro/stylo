@@ -27,18 +27,17 @@ Notable changes to Stylo. The format follows
   is still pending. ADR-007 rollout log.
 - `toolbar={{ sticky: "bottom" | "top" | true }}` — pins the formatting bar to
   an edge instead of wherever `<Stylo>` sits on the page (`true` is an alias
-  for `"bottom"`). `"bottom"` is `position: fixed`, riding above the
+  for `"bottom"`). Both are `position: fixed`. `"bottom"` rides above the
   on-screen keyboard (the Obsidian / iA Writer mobile pattern) — pair it with
   `interactive-widget=resizes-content` on your page's `<meta name="viewport">`
   for the most reliable tracking, and note it can render behind a platform's
   own keyboard accessory bar (native chrome, outside any web z-index). `"top"`
-  is real `position: sticky`, not `fixed` — nothing eats into the top of the
-  screen, so it can't collide with a keyboard or its accessory bar, and
-  `sticky` never fights the browser's own chrome the way `fixed` window-pinning
-  can. It does need `<Stylo>`'s root `overflow: hidden` relaxed to `visible`
-  while active, and it only tracks scrolling of an ancestor it shares with the
-  editing surface — a `<Stylo>` given a bounded height (content scrolling in
-  its own internal pane) should use `"bottom"` instead. Off by default;
+  needs neither: nothing eats into the top of the screen, so it can't collide
+  with a keyboard or its accessory bar. Keeping it visible on iOS Safari took
+  several rounds of fixes for it disappearing during scroll or around the
+  keyboard opening — it now runs a `requestAnimationFrame` loop that
+  re-asserts its position every frame instead of trusting the browser to
+  remember it correctly across whatever triggered the drift. Off by default;
   combine with your own responsive check if you only want it below a
   breakpoint. New `stickyVisibility` prop (`"consistent"`, the default, or
   `"dynamic"`) fades the bar out while the editing surface is unfocused.

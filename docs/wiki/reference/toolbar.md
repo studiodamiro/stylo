@@ -147,35 +147,29 @@ chrome, not part of the page — no `z-index` on a web element can render above
 it. There is no fix for this from Stylo's side; if it matters for your layout,
 use `"top"` instead.
 
-### `"top"` — real CSS sticky, not a fixed window pin
+### `"top"` — always pinned, self-correcting
 
-Pins to the top edge with `position: sticky`, not `position: fixed`. Nothing
-ever eats into the top of the screen the way a keyboard eats the bottom, so
-this needs no `visualViewport` tracking, no meta tag pairing, and can't
-collide with a platform's accessory bar. Prefer it over `"bottom"` unless you
-specifically want the bar to travel with the keyboard.
+Pins to the top edge with `position: fixed`, from the first frame — it
+doesn't wait for you to scroll past it the way `"bottom"` does. The editing
+surface gets a matching top padding so it doesn't sit over the document's
+first line. Nothing ever eats into the top of the screen the way a keyboard
+eats the bottom, so this needs no `visualViewport` tracking, no meta tag
+pairing, and can't collide with a platform's accessory bar. Prefer it over
+`"bottom"` unless you specifically want the bar to travel with the keyboard.
 
-`sticky`, not `fixed`, is a deliberate choice: an earlier `position: fixed`
-implementation of `"top"` went through several rounds of on-device fixes for
-iOS Safari losing track of it during scroll, none of which held up reliably —
-`fixed` window-pinning works by fighting the browser's own chrome (the address
-bar collapsing, its own compositing timing), and each fix was that fight going
-wrong in a slightly different way. `position: sticky` sidesteps the fight
-entirely: it never leaves normal page flow, so there's no browser chrome to
-lose track of it against. It's the same mechanism virtually every reliable
-sticky header on the web already uses.
-
-One requirement worth knowing: `sticky` only tracks scrolling of an ancestor
-it shares with the content underneath it. `<Stylo>`'s own root normally
-carries `overflow: hidden` (for rounded-corner clipping) — with `sticky: "top"`
-active, that's relaxed to `overflow: visible`, because a non-`visible`
-`overflow` on the sticky element's parent makes browsers treat that parent as
-the sticky boundary instead of the real page (a known, Safari-specific-ish
-cross-browser gotcha). The corollary: if you give `<Stylo>` a **bounded**
-height so its content scrolls in its own internal pane rather than the whole
-page scrolling, `"top"` won't follow that internal scroll — the toolbar sits
-beside `.source`/`.inplace`, not inside their scrolling box. Use `"bottom"`,
-or your own header, for that layout instead.
+The CSS is the easy part; keeping it visible on iOS Safari was not. This mode
+went through several rounds of on-device fixes — a static compositing hint,
+then real `position: sticky` — for the bar disappearing during scroll or
+around the keyboard opening, and each one held up for one trigger and not the
+next. The common thread: every one of those relied on the browser correctly
+remembering the bar's position across some event it didn't directly cause
+(the address bar's own collapse animation, a resize landing next to a
+script-driven scroll). So `"top"` no longer asks the browser to remember
+anything: a `requestAnimationFrame` loop re-asserts its `transform` on every
+frame, alternating an imperceptible `0.01px` jitter so the value always
+counts as "changed" and the compositor always has something to recompute. A
+wrong position can't survive more than one frame before it's corrected,
+regardless of what caused it — the loop doesn't need to know.
 
 ### `stickyVisibility` — fade it out when nothing is focused
 

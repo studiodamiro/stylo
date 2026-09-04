@@ -112,10 +112,9 @@
   scrollbar-width: none;
   transition: opacity 0.15s ease;
   /* The base `.toolbar` deliberately leaves font-family to inherit from
-     wherever the host mounts `<Stylo>`. `"bottom"` is `position: fixed`
-     against the window edge — it can land far from that mount point in the
-     DOM's rendered position, so it can't safely lean on inheritance either.
-     Explicit stack for both, rather than the browser's serif default. */
+     wherever the host mounts `<Stylo>`. Both sticky edges are
+     `position: fixed` against the window, so neither can safely lean on
+     that — an explicit stack instead of the browser's serif default. */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -143,17 +142,20 @@
   box-shadow: 0 -2px 8px color-mix(in srgb, var(--stylo-text) 10%, transparent);
 }
 
-/* `"top"` — real `position: sticky`, not `fixed`. Nothing ever eats into the
-   top of the screen, so there's no keyboard to react to and no accessory bar
-   to collide with — the two problems `"bottom"` has. `sticky` also sidesteps
-   every `position: fixed` / native-chrome interaction the top bar hit across
-   several rounds of on-device testing (translateZ(0), a portal to
-   `document.body`, ...) none of which reliably held up: `fixed` fights the
-   browser's own chrome, `sticky` just participates in normal page scroll,
-   which is why it's the standard mechanism for a reliable sticky header.
-   Needs `.root`'s `overflow: hidden` relaxed — see `.stickyToolbarRootTop`. */
+/* `"top"` — `position: fixed`, always pinned rather than waiting for a scroll
+   threshold like `"bottom"`. Nothing ever eats into the top of the screen, so
+   there's no keyboard to react to and no accessory bar to collide with — the
+   two problems `"bottom"` has. `Toolbar.tsx`'s `useFloatingWatchdog` (a
+   `requestAnimationFrame` loop, not CSS) is what actually keeps it visible on
+   iOS Safari: earlier rounds tried a static `translateZ(0)`, then real
+   `position: sticky`, and the disappear-on-scroll bug outlived both — a value
+   that's set once and never re-touched gives the browser's compositor nothing
+   to recompute if it drifts, so the watchdog re-asserts a `transform` every
+   frame instead of trusting a one-time fix to hold. */
 .toolbarStickyTop {
-  position: sticky;
+  position: fixed;
+  left: 0;
+  right: 0;
   top: 0;
   box-shadow: 0 2px 8px color-mix(in srgb, var(--stylo-text) 10%, transparent);
 }
@@ -175,15 +177,9 @@
   padding-bottom: 52px;
 }
 
-/* `"top"` is `position: sticky`, still in flow — it already reserves its own
-   space above `.source`/`.inplace`, no padding needed. What it does need:
-   `.root`'s default `overflow: hidden` (rounded-corner clipping) turned back
-   to `visible` here, or Safari (and, less consistently, other engines) treats
-   `.root` itself as the sticky bar's scroll boundary instead of the real
-   page — the well-known "any non-visible-overflow ancestor can break
-   `position: sticky`" gotcha, confirmed against this codebase earlier. */
-.stickyToolbarRootTop {
-  overflow: visible;
+.stickyToolbarRootTop .source,
+.stickyToolbarRootTop .inplace {
+  padding-top: 52px;
 }
 
 .inplace :global(.cm-editor) {

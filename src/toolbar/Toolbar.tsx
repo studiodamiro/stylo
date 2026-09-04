@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState } from "react"
+import { useEffect, useReducer, useRef, useState } from "react"
 import type { ReactNode } from "react"
 import type { EditorState } from "@codemirror/state"
 import type { EditorView } from "@codemirror/view"
@@ -6,6 +6,7 @@ import styles from "../styles/stylo.module.css"
 import type { ToolbarCommandId } from "../types"
 import { BUILTIN_BY_ID } from "./commands"
 import type { ToolbarItem } from "./config"
+import { useFloatingWatchdog } from "./floating-watchdog"
 import { DEFAULT_ICONS } from "./icons"
 import { useKeyboardInset } from "./keyboard-inset"
 
@@ -66,6 +67,8 @@ export function Toolbar({ view, items, icons, disabled, sticky, stickyVisibility
   // Only "bottom" needs keyboard tracking — nothing eats into the top of the
   // screen the way a keyboard eats the bottom.
   const keyboardInset = useKeyboardInset(sticky === "bottom")
+  const barRef = useRef<HTMLDivElement>(null)
+  useFloatingWatchdog(barRef, sticky === "top")
 
   useEffect(() => {
     if (!view) return
@@ -114,6 +117,7 @@ export function Toolbar({ view, items, icons, disabled, sticky, stickyVisibility
 
   return (
     <div
+      ref={barRef}
       className={className}
       role="toolbar"
       aria-label="Formatting"

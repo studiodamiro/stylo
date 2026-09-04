@@ -297,6 +297,50 @@ untouched, and must not gate v1.
   > internal scroll — `"bottom"`, or the host's own header, fits that layout
   > instead. The rollout's actual use case, and every screenshot it was
   > diagnosed from, is the whole page scrolling, which this fixes correctly.
+  >
+  > **A sixth on-device round: `sticky` outlived the portal, and disappeared
+  > for a third trigger.** The two screenshots that surfaced it were telling:
+  > one, scrolled deep into the document with no keyboard open, showed the
+  > bar correctly pinned — `sticky` genuinely fixed the plain-scroll case. The
+  > other, taken moments after tapping into a heading near the top of the
+  > document to edit it (keyboard open, caret mid-word), showed no bar at
+  > all. A scripted reproduction of a keyboard-style viewport shrink — the
+  > exact resize `interactive-widget=resizes-content` causes — held up fine
+  > in both Chromium and real WebKit on an already-stuck bar, so it isn't
+  > simply "any resize breaks `sticky`"; the likelier culprit is CodeMirror's
+  > own scroll-into-view (which repositions the page to keep a newly-placed
+  > caret visible) landing at the same moment as the keyboard's resize, in a
+  > combination no engine harness can reproduce without a real keyboard.
+  >
+  > At three triggers deep (plain scroll, then the keyboard, on two different
+  > CSS mechanisms), the pattern across this whole rollout is that **any
+  > technique which asks the browser to remember a position across an event
+  > it didn't directly cause** — `fixed` across the address bar's own
+  > animation, `sticky` across a resize plus a script-driven scroll — is
+  > where these bugs live. So `"top"` moves off both `fixed` and `sticky`
+  > bookkeeping and onto a `requestAnimationFrame` loop
+  > (`useFloatingWatchdog`) that re-asserts the bar's `transform` on every
+  > frame, alternating an imperceptible `0.01px` jitter so the value always
+  > counts as "changed" and the compositor always has something to
+  > recompute — a stale, wrong position can't survive more than one frame
+  > (~16ms) before self-correcting, regardless of what caused the drift.
+  > `position: fixed` comes back as the CSS base (no longer waiting for a
+  > scroll threshold the way `sticky` did — the bar is always visually
+  > pinned from the first frame), and `.root`'s `overflow: hidden` no longer
+  > needs relaxing, since `fixed` never had an issue with it in the first
+  > place — only `sticky` did.
+  >
+  > Verified the same way as the `sticky` round: Chromium and real WebKit via
+  > Playwright, transform genuinely alternating frame to frame, position held
+  > at `y: 0` through both a deep scroll and a simulated keyboard resize. The
+  > same honest caveat applies as before — this proves the mechanism does
+  > what it's designed to do, not that it survives the exact combination of
+  > real touch input, a real keyboard, and CodeMirror's own scroll-into-view
+  > on the user's actual phone, which no harness available here can
+  > reproduce. A playground-only diagnostic overlay (`StickyDebug`, not part
+  > of the library) now shows the bar's live position and viewport numbers
+  > in a corner readout, so the next occurrence — if there is one — gives a
+  > real answer instead of another screenshot to pattern-match from.
 
 #### 3. Styling: CSS Modules + a small custom-property token set
 
