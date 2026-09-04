@@ -17,13 +17,16 @@ const BUDGETS = {
   "stylo.js": 4_000, // entry, always loaded — keep it tiny
   InPlaceView: 22_000, // in-place canvas glue
   Preview: 4_000, // preview glue
-  codemirror: 210_000, // CM6 + Lezer — in-place / source / split
   katex: 95_000, // math rendering
   markdown: 70_000, // remark / rehype / react-markdown — preview only
   "icon-paths": 13_000, // shared toolbar glyphs + internal helpers
   wikilink: 2_000,
   callout: 2_000,
 }
+
+// CodeMirror and Lezer are peer dependencies (ADR-008) — externalised from the
+// bundle, so there is no CM chunk to budget here. A regression to that shows up
+// as a new unbudgeted chunk, which this script already fails on.
 
 const files = (await readdir(dist)).filter((f) => f.endsWith(".js"))
 const rows = []

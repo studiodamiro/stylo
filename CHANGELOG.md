@@ -4,6 +4,19 @@ Notable changes to Stylo. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project follows
 [Semantic Versioning](https://semver.org/) from 1.0.0 onward.
 
+## [Unreleased]
+
+### Changed
+
+- **BREAKING:** `@codemirror/*` and `@lezer/common` / `@lezer/highlight` are now
+  `peerDependencies` rather than bundled dependencies, and are externalised from
+  the build (ADR-008). The host installs one copy of CodeMirror and Stylo shares
+  it, so `EditorState`, facets, and the syntax tree keep a single identity
+  across the host and the editor — `getView()`, extra extensions, and host-side
+  `syntaxTree` reads all line up. Install the packages alongside Stylo; see the
+  README. Drops roughly 190&nbsp;kB gzipped from the bundle, and the `dist/`
+  `codemirror` chunk with it.
+
 ## [0.1.0] - 2026-09-04
 
 First versioned, installable release. Marks the point the library became

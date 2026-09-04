@@ -17,6 +17,7 @@ milestones and Architectural Decision Records, newest first.
 
 | ADR                                                                            | Title                                                                 | Status   | Date       |
 | ------------------------------------------------------------------------------ | --------------------------------------------------------------------- | -------- | ---------- |
+| [ADR-008](./journal/2026-09/2026-09-04_adr-008-codemirror-peer-dependency.md)  | CodeMirror and Lezer as peer dependencies                             | Accepted | 2026-09-04 |
 | [ADR-007](./journal/2026-09/2026-09-03_adr-007-seamless-in-place.md)           | Seamless in-place: Markdown markers never shown                       | Accepted | 2026-09-03 |
 | [ADR-006](./journal/2026-09/2026-09-02_adr-006-interactive-table-editing.md)   | Interactive rendered-table editing                                    | Accepted | 2026-09-02 |
 | [ADR-005](./journal/2026-09/2026-09-01_adr-005-in-place-decoration-toggles.md) | In-place decoration toggles                                           | Accepted | 2026-09-01 |
