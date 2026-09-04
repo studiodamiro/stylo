@@ -96,29 +96,35 @@ pressed-state updates.
 ## On touch
 
 ```tsx
-<Stylo value={doc} onChange={setDoc} toolbar={{ sticky: true }} />
+<Stylo value={doc} onChange={setDoc} toolbar={{ sticky: "bottom" }} />
+<Stylo value={doc} onChange={setDoc} toolbar={{ sticky: "top" }} />
 ```
 
-`sticky` fixes the bar to the bottom of the **window** — not to wherever
-`<Stylo>` sits on the page — and rides it up above the on-screen keyboard as
-one opens, using the `visualViewport` API. Off by default: window-relative
-positioning is right for a full-screen editor and wrong for a small embedded
-field (a comment box, a form), so turn it on deliberately rather than it
-firing from a device check. Combine it with your own responsive check
-(`toolbar={{ sticky: isMobileViewport }}`) if you only want it below a
-breakpoint.
+`sticky` fixes the bar to an edge of the **window** — not to wherever
+`<Stylo>` sits on the page. `true` is an alias for `"bottom"`. Off by default:
+window-relative positioning is right for a full-screen editor and wrong for a
+small embedded field (a comment box, a form), so turn it on deliberately
+rather than it firing from a device check. Combine it with your own
+responsive check (`toolbar={{ sticky: isMobileViewport && "bottom" }}`) if you
+only want it below a breakpoint.
 
-Sticky mode also drops from wrapping to a single horizontally-scrolling row
-and grows each button to a 40px touch target. The editing surface gets a
-matching bottom padding so the bar's resting height doesn't sit over the last
-line of the document. Only one sticky instance is meant to be on screen at
-once — two `<Stylo>` editors both set to `sticky` would stack their bars at
-the same window edge.
+Both positions drop the bar from wrapping to a single horizontally-scrolling
+row and grow each button to a 40px touch target. The editing surface gets a
+matching padding on that edge so the bar's resting height doesn't sit over the
+document's first or last line. Only one sticky instance is meant to be on
+screen at once — two `<Stylo>` editors both set to `sticky` would stack their
+bars at the same window edge.
+
+### `"bottom"` — above the keyboard
+
+Rides up above the on-screen keyboard as one opens, using the
+`visualViewport` API (`useKeyboardInset`). Two things to know before you rely
+on it:
 
 **Pair it with a viewport meta tag.** By default, a mobile browser shrinks
 only the _visual_ viewport for the keyboard, not the _layout_ viewport a plain
-`position: fixed` bottom offset is computed against — `sticky` compensates for
-that with a `visualViewport`-driven `transform`, but the more reliable fix is
+`position: fixed` bottom offset is computed against — `sticky` compensates
+with a `visualViewport`-driven `transform`, but the more reliable fix is
 telling the browser to shrink the layout viewport too:
 
 ```html
@@ -129,10 +135,25 @@ telling the browser to shrink the layout viewport too:
 ```
 
 Stylo cannot add this to your page itself — it's your `<meta>` tag, not
-Stylo's — so add it yourself alongside `sticky: true`. Without it, the bar
+Stylo's — so add it yourself alongside `sticky: "bottom"`. Without it, the bar
 still tracks the keyboard through `useKeyboardInset`, just with an extra layer
 of browser-timing between the keyboard opening and the bar's repaint that the
 meta tag sidesteps entirely.
+
+**It can render behind a platform's own keyboard accessory bar.** iOS docks
+an input accessory bar (field-navigation arrows, a Done button) directly above
+the keyboard for any focused editable element. That bar is native browser
+chrome, not part of the page — no `z-index` on a web element can render above
+it. There is no fix for this from Stylo's side; if it matters for your layout,
+use `"top"` instead.
+
+### `"top"` — no keyboard involved at all
+
+Pins to the top edge instead. Nothing ever eats into the top of the screen the
+way a keyboard eats the bottom, so this needs no `visualViewport` tracking, no
+meta tag pairing, and can't collide with a platform's accessory bar — it's a
+plain `position: fixed; top: 0`. Prefer it over `"bottom"` unless you
+specifically want the bar to travel with the keyboard.
 
 The context menu and the table's structural menu are reachable on touch too —
 a long-press opens them, the same as a right-click. See

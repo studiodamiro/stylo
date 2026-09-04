@@ -663,17 +663,35 @@ test("toolbar.sticky is off by default — no sticky class, no root modifier", (
   const bar = container.querySelector('[role="toolbar"]')!
   expect(bar.classList.contains(stylo.toolbarSticky!)).toBe(false)
   const root = container.querySelector(`.${stylo.root}`)!
-  expect(root.classList.contains(stylo.stickyToolbarRoot!)).toBe(false)
+  expect(root.classList.contains(stylo.stickyToolbarRootBottom!)).toBe(false)
+  expect(root.classList.contains(stylo.stickyToolbarRootTop!)).toBe(false)
 })
 
-test("toolbar={{ sticky: true }} adds the sticky class to the bar and the root", () => {
+test("toolbar={{ sticky: true }} is an alias for bottom", () => {
   const { container } = render(
     <Stylo value="x" onChange={() => {}} mode="source" toolbar={{ sticky: true }} />,
   )
   const bar = container.querySelector('[role="toolbar"]')!
   expect(bar.classList.contains(stylo.toolbarSticky!)).toBe(true)
+  expect(bar.classList.contains(stylo.toolbarStickyBottom!)).toBe(true)
+  expect(bar.classList.contains(stylo.toolbarStickyTop!)).toBe(false)
+  expect(bar.getAttribute("style")).toContain("translate") // nudged by useKeyboardInset
   const root = container.querySelector(`.${stylo.root}`)!
-  expect(root.classList.contains(stylo.stickyToolbarRoot!)).toBe(true)
+  expect(root.classList.contains(stylo.stickyToolbarRootBottom!)).toBe(true)
+})
+
+test("toolbar={{ sticky: 'top' }} pins to the top instead", () => {
+  const { container } = render(
+    <Stylo value="x" onChange={() => {}} mode="source" toolbar={{ sticky: "top" }} />,
+  )
+  const bar = container.querySelector('[role="toolbar"]')!
+  expect(bar.classList.contains(stylo.toolbarSticky!)).toBe(true)
+  expect(bar.classList.contains(stylo.toolbarStickyTop!)).toBe(true)
+  expect(bar.classList.contains(stylo.toolbarStickyBottom!)).toBe(false)
+  expect(bar.getAttribute("style")).toBeNull() // no keyboard offset needed at the top
+  const root = container.querySelector(`.${stylo.root}`)!
+  expect(root.classList.contains(stylo.stickyToolbarRootTop!)).toBe(true)
+  expect(root.classList.contains(stylo.stickyToolbarRootBottom!)).toBe(false)
 })
 
 test("a sticky bar still renders its buttons and runs commands", async () => {

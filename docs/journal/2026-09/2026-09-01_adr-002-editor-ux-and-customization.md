@@ -147,25 +147,42 @@ untouched, and must not gate v1.
   >    repaint in step with the keyboard's open animation on iOS Safari;
   >    `translateY` forces a compositor update on every `visualViewport` event
   >    instead.
-  > 2. The real fix lives on the **host's** side: adding `interactive-widget=
-resizes-content` to its own `<meta name="viewport">` makes the _layout_
-  >    viewport shrink for the keyboard too — Safari's default,
-  >    `resizes-visual`, only shrinks the _visual_ one, which is the gap
-  >    `useKeyboardInset` exists to paper over. With it set, `bottom: 0` rides
-  >    above the keyboard with no JS help at all; `useKeyboardInset` becomes a
-  >    fallback rather than the only mechanism. Stylo cannot set this itself —
-  >    a library does not rewrite its host page's viewport meta tag — so it is
-  >    a documented pairing, not automatic. The playground's own `index.html`
-  >    sets it, since that page is Stylo's to control.
+  > 2. The real fix lives on the **host's** side: adding
+  >    `interactive-widget=resizes-content` to its own viewport meta tag
+  >    makes the _layout_ viewport shrink for the keyboard too — Safari's
+  >    default, `resizes-visual`, only shrinks the _visual_ one, which is the
+  >    gap `useKeyboardInset` exists to paper over. With it set, `bottom: 0`
+  >    rides above the keyboard with no JS help at all; `useKeyboardInset`
+  >    becomes a fallback rather than the only mechanism. Stylo cannot set
+  >    this itself — a library does not rewrite its host page's viewport meta
+  >    tag — so it is a documented pairing, not automatic. The playground's
+  >    own `index.html` sets it, since that page is Stylo's to control.
   >
   > Verified in Chromium and WebKit with a scripted `visualViewport` resize
   > (headless browsers have no real software keyboard to trigger one
-  > organically) — the bar's computed position tracks the shrunk viewport
-  > correctly in both. What that cannot confirm is repaint timing against a
-  > live iOS keyboard animation; that piece is still a real-device call, the
-  > same class of caveat as the long-press work. Covered by
-  > `keyboard-inset.test.ts` (the hook, with a `visualViewport` stand-in jsdom
-  > doesn't provide) and sticky-specific cases in `toolbar.test.tsx`.
+  > organically) — the bar's computed position tracked the shrunk viewport
+  > correctly in both.
+  >
+  > **A second on-device round found a ceiling `useKeyboardInset` cannot fix
+  > at all:** with `sticky: "bottom"`, iOS's own input accessory bar (the
+  > up/down field-navigation arrows and a Done checkmark, which iOS docks
+  > above the keyboard for any focused editable element) rendered _in front
+  > of_ the sticky bar — a web page has no API to out-layer native browser
+  > chrome, at any `z-index`, because that chrome isn't part of the page's own
+  > stacking context. `sticky` therefore gained a second position,
+  > `"top"` (`sticky?: boolean | "top" | "bottom"`, `true` an alias for
+  > `"bottom"`), which sidesteps the whole problem rather than solving it:
+  > nothing ever eats into the top edge of the screen the way a keyboard and
+  > its accessory bar eat the bottom, so `"top"` is a plain, static
+  > `position: fixed` pinned to `top: 0` — no `visualViewport` involvement, no
+  > compositor-timing risk, and no accessory-bar collision — verified pinned
+  > through a full-page scroll in Chromium. `"bottom"`'s accessory-bar ceiling
+  > is now documented as a known, unfixable-from-the-web limitation of that
+  > mode, not a bug to keep chasing.
+  >
+  > Covered by `keyboard-inset.test.ts` (the hook, with a `visualViewport`
+  > stand-in jsdom doesn't provide) and sticky-specific cases in
+  > `toolbar.test.tsx`, for both positions.
 
 #### 3. Styling: CSS Modules + a small custom-property token set
 

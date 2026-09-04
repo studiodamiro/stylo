@@ -25,10 +25,12 @@ const TOOLBARS: Record<string, boolean | ToolbarConfig> = {
   hidden: false,
 }
 
-/** Merge the "sticky (touch)" checkbox into whichever toolbar preset is picked. */
-function withSticky(cfg: boolean | ToolbarConfig, sticky: boolean): boolean | ToolbarConfig {
-  if (!sticky || cfg === false) return cfg
-  return cfg === true ? { sticky: true } : { ...cfg, sticky: true }
+type StickyPick = "off" | "top" | "bottom"
+
+/** Merge the sticky position picker into whichever toolbar preset is chosen. */
+function withSticky(cfg: boolean | ToolbarConfig, sticky: StickyPick): boolean | ToolbarConfig {
+  if (sticky === "off" || cfg === false) return cfg
+  return cfg === true ? { sticky } : { ...cfg, sticky }
 }
 
 type SaveStatus = "idle" | "saving" | "saved" | "error"
@@ -139,7 +141,7 @@ function App() {
   }, [theme])
 
   const [toolbar, setToolbar] = useState<keyof typeof TOOLBARS>("default")
-  const [stickyToolbar, setStickyToolbar] = useState(false)
+  const [stickyToolbar, setStickyToolbar] = useState<StickyPick>("off")
   const [frontmatter, setFrontmatter] = useState<"hidden" | "code">("hidden")
   const [tableEdit, setTableEdit] = useState<TableEditing>("cells")
   const [reveal, setReveal] = useState<RevealMode>("never")
@@ -231,17 +233,21 @@ function App() {
               </option>
             ))}
           </select>
-          <span
-            style={{ marginLeft: "0.75rem", display: "flex", alignItems: "center", gap: "0.35rem" }}
+          <span style={{ marginLeft: "0.75rem" }}>sticky (touch)</span>
+          <select
+            value={stickyToolbar}
+            disabled={toolbar === "hidden"}
+            onChange={(e) => setStickyToolbar(e.target.value as StickyPick)}
+            style={{
+              padding: "0.2rem 0.4rem",
+              borderRadius: 6,
+              border: "1px solid var(--pg-border)",
+            }}
           >
-            <input
-              type="checkbox"
-              checked={stickyToolbar}
-              disabled={toolbar === "hidden"}
-              onChange={(e) => setStickyToolbar(e.target.checked)}
-            />
-            sticky (touch)
-          </span>
+            <option value="off">off</option>
+            <option value="top">top</option>
+            <option value="bottom">bottom</option>
+          </select>
         </label>
       )}
 

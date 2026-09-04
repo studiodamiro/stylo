@@ -89,14 +89,15 @@ export interface ToolbarConfig {
    */
   render?: (bar: ReactNode, ctx: { view: EditorView | null }) => ReactNode
   /**
-   * Fix the bar to the bottom of the **window**, riding above the on-screen
-   * keyboard (tracked via the `visualViewport` API) instead of hiding behind
-   * it. Off by default: pinning to the window rather than to wherever
-   * `<Stylo>` sits on the page is right for a full-screen editor and wrong
-   * for a small embedded field, so a host opts in deliberately. See the
-   * toolbar reference's "On touch" section.
+   * Fix the bar to an edge of the **window** instead of wherever `<Stylo>`
+   * sits on the page. `"bottom"` (or `true`) rides above the on-screen
+   * keyboard, tracked via the `visualViewport` API; `"top"` pins to the top
+   * edge, which needs no keyboard tracking and can't be covered by it or by a
+   * platform's own input accessory bar. Off (`false`, the default) is right
+   * for a small embedded field; a host opts in deliberately for a
+   * full-screen editor. See the toolbar reference's "On touch" section.
    */
-  sticky?: boolean
+  sticky?: boolean | "top" | "bottom"
 }
 
 /**

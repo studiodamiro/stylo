@@ -18,8 +18,9 @@ export interface ToolbarProps {
   icons?: Partial<Record<ToolbarCommandId, ReactNode>>
   /** Render every button inert (e.g. a read-only surface). */
   disabled?: boolean
-  /** Fix the bar to the window bottom, above the keyboard (`ToolbarConfig.sticky`). */
-  sticky?: boolean
+  /** Fix the bar to a window edge (normalised from `ToolbarConfig.sticky`; the
+   *  caller resolves `true` to `"bottom"`). */
+  sticky?: "top" | "bottom" | false
 }
 
 /** A button to render, normalised from a built-in id or a custom item. */
@@ -59,7 +60,9 @@ function toButton(item: Exclude<ToolbarItem, "|">, icons: ToolbarProps["icons"])
  */
 export function Toolbar({ view, items, icons, disabled, sticky }: ToolbarProps) {
   const [, refresh] = useReducer((n: number) => n + 1, 0)
-  const keyboardInset = useKeyboardInset(Boolean(sticky))
+  // Only "bottom" needs keyboard tracking — nothing eats into the top of the
+  // screen the way a keyboard eats the bottom.
+  const keyboardInset = useKeyboardInset(sticky === "bottom")
 
   useEffect(() => {
     if (!view) return
@@ -71,13 +74,22 @@ export function Toolbar({ view, items, icons, disabled, sticky }: ToolbarProps) 
     }
   }, [view])
 
-  const className = sticky ? `${styles.toolbar} ${styles.toolbarSticky}` : styles.toolbar
+  const className = [
+    styles.toolbar,
+    sticky && styles.toolbarSticky,
+    sticky === "top" && styles.toolbarStickyTop,
+    sticky === "bottom" && styles.toolbarStickyBottom,
+  ]
+    .filter(Boolean)
+    .join(" ")
   // `transform`, not `bottom` — a `position: fixed` element repositioned via
   // `bottom` doesn't reliably repaint in step with the keyboard animation on
   // iOS Safari; `translateY` forces a compositor update on every
   // `visualViewport` event instead. The bar's resting position (keyboard
-  // closed) is `bottom: 0` in CSS; this only nudges it up.
-  const stickyStyle = sticky ? { transform: `translateY(-${keyboardInset}px)` } : undefined
+  // closed) is `bottom: 0` in CSS; this only nudges it up. `"top"` needs no
+  // offset at all.
+  const stickyStyle =
+    sticky === "bottom" ? { transform: `translateY(-${keyboardInset}px)` } : undefined
 
   return (
     <div className={className} role="toolbar" aria-label="Formatting" style={stickyStyle}>
