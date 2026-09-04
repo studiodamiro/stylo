@@ -28,6 +28,7 @@ pnpm-debug.log*
 *.swo
 .cursor/
 .agents/
+.claude/
 CLAUDE.md
 
 # test / coverage
