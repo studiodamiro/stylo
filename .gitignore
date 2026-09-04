@@ -32,3 +32,6 @@ CLAUDE.md
 
 # test / coverage
 coverage/
+
+# playground scratch doc (seeded from sample.template.md)
+playground/content/sample.md

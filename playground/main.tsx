@@ -13,53 +13,7 @@ import {
 import "katex/dist/katex.min.css"
 import "./styles.css"
 
-const DEMO = `---
-title: Welcome to Stylo
-tags: [demo, markdown]
----
-
-# Stylo playground
-
-A plain-text editor where the Markdown string is the source of truth, built on
-[CodeMirror 6](https://codemirror.net). Text can be **bold**, *italic*,
-~~struck through~~, or \`inline code\` — the markers hide in the in-place canvas
-until the caret lands on the line.
-
-## What works **today**
-
-- **Source** mode — a real CodeMirror 6 surface.
-- **Preview** mode — GFM tables, math, and wikilinks.
-- [x] in-place canvas
-- [ ] toggle me in the in-place canvas
-
-| Feature      |   Status |
-| ------------ | -------: |
-| Source mode  |     done |
-| Preview mode |     done |
-| In-place     |     done |
-
-Inline math: $e^{i\\pi} + 1 = 0$. And a display block:
-
-$$
-\\int_0^1 x^2 \\, dx = \\frac{1}{3}
-$$
-
-Jump to another note with [[Getting Started]], or a labelled one:
-[[api/reference|the API reference]].
-
----
-
-> The YAML frontmatter above is kept out of the rendered preview.
-
-\`\`\`ts
-const greet = (name: string) => \`hello, \${name}\`
-\`\`\`
-
-\`\`\`python
-def greet(name: str) -> str:
-    return f"hello, {name}"
-\`\`\`
-`
+const DOC_URL = "/api/doc" // dev middleware in vite.config.ts — reads/writes playground/content/sample.md
 
 const MODES: StyloMode[] = ["in-place", "source", "preview", "split"]
 
@@ -71,32 +25,59 @@ const TOOLBARS: Record<string, boolean | ToolbarConfig> = {
   hidden: false,
 }
 
+type SaveStatus = "idle" | "saving" | "saved" | "error"
+
 /**
- * Trimmed `useAutosave` — debounce `onChange`, report status, expose `saveNow`
- * for `Mod-s`. The full version (blur / pagehide flush, error state) is in
- * `docs/wiki/guides/autosave.md`.
+ * `useAutosave` from `docs/wiki/guides/autosave.md`: debounce `onChange`, skip a
+ * save when nothing changed since `baseline` (the loaded / last-persisted text),
+ * flush on tab hide, and expose `saveNow` for `Mod-s`.
  */
-function useAutosave(value: string, save: (v: string) => void, delay = 600) {
-  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle")
-  const saved = useRef(value)
+function useAutosave(
+  value: string,
+  baseline: string,
+  save: (v: string) => Promise<void>,
+  delay = 600,
+) {
+  const [status, setStatus] = useState<SaveStatus>("idle")
+  const saved = useRef(baseline)
   const latest = useRef(value)
   latest.current = value
   const saveRef = useRef(save)
   saveRef.current = save
 
-  const flush = useRef(() => {
+  const flush = useRef(async () => {
     if (latest.current === saved.current) return
+    const pending = latest.current
     setStatus("saving")
-    saveRef.current(latest.current)
-    saved.current = latest.current
-    setStatus("saved")
+    try {
+      await saveRef.current(pending)
+      saved.current = pending
+      setStatus("saved")
+    } catch {
+      setStatus("error")
+    }
   }).current
 
+  // Adopt a new baseline (initial load, external reload) without saving it back.
+  useEffect(() => {
+    saved.current = baseline
+  }, [baseline])
+
+  // Debounce: save `delay` ms after the last change.
   useEffect(() => {
     if (value === saved.current) return
     const id = setTimeout(flush, delay)
     return () => clearTimeout(id)
   }, [value, delay, flush])
+
+  // Data-loss guard: flush when the tab is hidden.
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === "hidden") void flush()
+    }
+    document.addEventListener("visibilitychange", onHide)
+    return () => document.removeEventListener("visibilitychange", onHide)
+  }, [flush])
 
   return { status, saveNow: flush }
 }
@@ -119,9 +100,31 @@ const DECORATION_KEYS: (keyof InPlaceDecorationToggles)[] = [
 type Theme = "light" | "dark"
 
 function App() {
-  const [doc, setDoc] = useState(DEMO)
+  const [doc, setDoc] = useState("")
+  const [baseline, setBaseline] = useState("")
+  const [load, setLoad] = useState<"loading" | "ready" | "error">("loading")
   const [mode, setMode] = useState<StyloMode>("in-place")
   const [theme, setTheme] = useState<Theme>("light")
+
+  // Load the document from the file, the way a real app would.
+  useEffect(() => {
+    let alive = true
+    fetch(DOC_URL)
+      .then((r) => {
+        if (!r.ok) throw new Error(String(r.status))
+        return r.text()
+      })
+      .then((text) => {
+        if (!alive) return
+        setDoc(text)
+        setBaseline(text)
+        setLoad("ready")
+      })
+      .catch(() => alive && setLoad("error"))
+    return () => {
+      alive = false
+    }
+  }, [])
 
   // Stylo's dark palette activates under a `.dark` / `[data-theme="dark"]`
   // ancestor — here, on <html>, the way next-themes / shadcn drive it.
@@ -135,12 +138,9 @@ function App() {
   const [reveal, setReveal] = useState<RevealMode>("never")
   const [selectionUI, setSelectionUI] = useState<SelectionUI>("menu")
   const [lastLink, setLastLink] = useState<string | null>(null)
-  const { status: saveStatus, saveNow } = useAutosave(doc, (md) => {
-    try {
-      localStorage.setItem("stylo:playground", md)
-    } catch {
-      /* private mode, quota, etc. */
-    }
+  const { status: saveStatus, saveNow } = useAutosave(doc, baseline, async (md) => {
+    const r = await fetch(DOC_URL, { method: "PUT", body: md })
+    if (!r.ok) throw new Error(String(r.status))
   })
   // ADR-005: inPlace config is read once at mount, so a changed toggle remounts
   // the canvas via `key` below — a deliberate demo of that construction-time rule.
@@ -335,37 +335,50 @@ function App() {
         </details>
       )}
 
-      <Stylo
-        key={
-          mode === "in-place"
-            ? `${JSON.stringify(decorations)}:${tableEdit}:${reveal}:${selectionUI}`
-            : "static"
-        }
-        value={doc}
-        onChange={setDoc}
-        mode={mode}
-        onSave={() => saveNow()}
-        onWikiLinkClick={setLastLink}
-        onLinkClick={(href) => window.open(href, "_blank", "noopener")}
-        inPlace={{ decorations, table: tableEdit, reveal, selectionUI }}
-        toolbar={TOOLBARS[toolbar]}
-        frontmatter={frontmatter}
-        codeLanguages={languages}
-        className={mode === "split" ? "playground-editor is-split" : "playground-editor"}
-      />
+      {load === "loading" && <p style={{ color: "var(--pg-muted)" }}>Loading sample.md…</p>}
+
+      {load === "error" && (
+        <p style={{ color: "var(--pg-muted)" }}>
+          Couldn’t reach <code>{DOC_URL}</code>. Start the playground with <code>npm run dev</code>{" "}
+          so the file middleware is active.
+        </p>
+      )}
+
+      {load === "ready" && (
+        <Stylo
+          key={
+            mode === "in-place"
+              ? `${JSON.stringify(decorations)}:${tableEdit}:${reveal}:${selectionUI}`
+              : "static"
+          }
+          value={doc}
+          onChange={setDoc}
+          mode={mode}
+          onSave={() => saveNow()}
+          onWikiLinkClick={setLastLink}
+          onLinkClick={(href) => window.open(href, "_blank", "noopener")}
+          inPlace={{ decorations, table: tableEdit, reveal, selectionUI }}
+          toolbar={TOOLBARS[toolbar]}
+          frontmatter={frontmatter}
+          codeLanguages={languages}
+          className={mode === "split" ? "playground-editor is-split" : "playground-editor"}
+        />
+      )}
 
       <p style={{ color: "var(--pg-muted)", fontSize: "0.85rem", marginTop: "1rem" }}>
         {lastLink ? `Wikilink clicked: ${lastLink}` : "Switch to preview and click a [[wikilink]]."}
         {" · "}
         {doc.length} characters
         {" · "}
-        autosave:{" "}
-        {saveStatus === "saving"
-          ? "saving…"
-          : saveStatus === "saved"
-            ? "saved to localStorage"
-            : "idle"}{" "}
-        (⌘/Ctrl-S or the compact toolbar to save now)
+        {
+          {
+            idle: "no changes saved yet",
+            saving: "saving to sample.md…",
+            saved: "saved to sample.md",
+            error: "save failed — is the dev server up?",
+          }[saveStatus]
+        }{" "}
+        (⌘/Ctrl-S saves now)
       </p>
     </main>
   )
