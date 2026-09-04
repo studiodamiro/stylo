@@ -30,11 +30,15 @@ export interface NodeCtx {
   toggles: ResolvedToggles
   /** End of the frontmatter block, or -1. Nodes within are left to `frontmatterField`. */
   fmEnd: number
+  /** Lines of a blockquote / callout whose block the caret is in — its `> ` and
+   *  `[!type]` markers show raw, like a fenced code / `$$` block. Filled by the
+   *  `Blockquote` handler before its `QuoteMark` children are visited. */
+  quoteRevealed: Set<number>
 }
 
 /** Decorate one syntax node. Returns `false` to stop descent, `undefined` to continue. */
 export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undefined {
-  const { doc, revealed, caretRevealed, out, toggles, fmEnd } = ctx
+  const { doc, revealed, caretRevealed, out, toggles, fmEnd, quoteRevealed } = ctx
   if (node.to <= fmEnd) return false
 
   const heading = HEADING.exec(node.name)
@@ -115,6 +119,17 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
     if (before === "[" && after === "]") return false // inner of a [[wikilink]]
     if (!toggles.links) return false
 
+    // `[!type]` in a callout head parses as a shortcut Link — it belongs to the
+    // Blockquote / QuoteMark handling, so don't hide its brackets here.
+    const linkLine = doc.lineAt(node.from)
+    const calloutHead = CALLOUT_HEAD_LINE.exec(linkLine.text)
+    if (
+      calloutHead &&
+      node.from - linkLine.from < calloutHead[1]!.length + calloutHead[2]!.length
+    ) {
+      return false
+    }
+
     const marks = node.node.getChildren("LinkMark")
     if (marks.length >= 2) {
       const open = marks[0]!
@@ -155,15 +170,24 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
       // place), the rest of the head line read as the title.
       const head = CALLOUT_HEAD_LINE.exec(headLine.text)
       const kind = head ? calloutBucket(head[3]!) : null
+
+      // Caret anywhere in the block → show every `> ` and the `[!type]` token
+      // raw for the whole block, the way a fenced code / `$$` block reveals its
+      // delimiters. Recorded for the `QuoteMark` children visited next.
+      let blockRevealed = false
+      for (let n = first; n <= last; n++) if (caretRevealed.has(n)) blockRevealed = true
+      if (blockRevealed) for (let n = first; n <= last; n++) quoteRevealed.add(n)
+
       for (let n = first; n <= last; n++) {
-        const base = kind ? `cm-inplace-callout cm-inplace-callout-${kind}` : "cm-inplace-quote"
-        const cls = kind && n === first ? `${base} cm-inplace-callout-head` : base
-        const spec = kind
-          ? { class: cls, attributes: { "data-callout": head![3]!.toLowerCase() } }
-          : { class: cls }
-        out.push(Decoration.line(spec).range(doc.line(n).from))
+        let cls = kind ? `cm-inplace-callout cm-inplace-callout-${kind}` : "cm-inplace-quote"
+        if (kind && n === first) cls += " cm-inplace-callout-head"
+        if (kind && n === last) cls += " cm-inplace-callout-foot"
+        const attributes: Record<string, string> = {}
+        if (kind) attributes["data-callout"] = head![3]!.toLowerCase()
+        if (kind && blockRevealed) attributes["data-revealed"] = ""
+        out.push(Decoration.line({ class: cls, attributes }).range(doc.line(n).from))
       }
-      if (kind && !revealed.has(first)) {
+      if (kind && !blockRevealed && !revealed.has(first)) {
         const tokenFrom = headLine.from + head![1]!.length
         out.push(Decoration.replace({}).range(tokenFrom, tokenFrom + head![2]!.length))
       }
@@ -174,8 +198,17 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
   if (node.name === "QuoteMark") {
     if (!toggles.blockquote) return false
     const line = doc.lineAt(node.from)
-    if (!revealed.has(line.number)) {
-      out.push(Decoration.replace({}).range(node.from, Math.min(node.to + 1, line.to)))
+    if (!revealed.has(line.number) && !quoteRevealed.has(line.number)) {
+      // Hide `> ` including its trailing space — unless nothing else on the line
+      // is visible (an empty quote line, or a callout head with no title). Then
+      // hide only `>`, leaving the space as a landable caret home: a fully
+      // hidden line has no spot to click or land a vertical arrow on.
+      const withSpace = Math.min(node.to + 1, line.to)
+      const head = CALLOUT_HEAD_LINE.exec(line.text)
+      const rest = head
+        ? line.text.slice(head[1]!.length + head[2]!.length)
+        : line.text.slice(withSpace - line.from)
+      out.push(Decoration.replace({}).range(node.from, rest.trim() === "" ? node.to : withSpace))
     }
     return false
   }

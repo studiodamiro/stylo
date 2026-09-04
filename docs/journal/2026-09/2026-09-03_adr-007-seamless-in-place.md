@@ -410,6 +410,36 @@ n }` to the line decoration they already emit. No new dependency; `role` +
   which CodeMirror's line rendering will not let us emit. Covered by two tests
   in `inplace.test.tsx`.
 
+- **2026-09-04 — Blockquotes and callouts reveal their markers on caret entry,
+  like a fenced block.** Under `reveal: "never"` a blockquote's `> ` and a
+  callout's `[!type]` token stayed hidden and atomic with no way to edit them —
+  the gap fenced code and `$` math already close by showing their delimiters
+  whenever the caret is in the block. `nodes.ts` now tracks a `quoteRevealed`
+  line set: with the caret on any line of a blockquote / callout, every line of
+  that block shows its raw `> ` and `[!type]` markers, and a `data-revealed`
+  attribute drops the rendered callout label so the source reads plainly.
+  `decorate.ts` also stops making a whole-line marker replacement atomic — a
+  bare `>` line otherwise gave the caret nowhere to land. Alignment was squared
+  up in the same pass: a quote and a callout share a `1rem` content inset, and
+  the callout's vertical spacing moved off `margin` onto `padding` on the head /
+  foot lines — `margin` on a `.cm-line` escapes CodeMirror's height map and
+  every click below it lands a row low (the 2026-09-02 click-mapping note
+  again). Covered by `inplace-atomic-ranges.test.ts`.
+
+- **2026-09-04 — Arrow keys move into and through a table.** A GFM table renders
+  as one block widget over every table line and registers as a single atomic
+  range, so stock vertical motion skipped the whole construct — ArrowDown from
+  the line above dropped the caret below the table, with no keyboard path into
+  it. New `table-enter.ts` (a `Prec.high` ArrowDown / ArrowUp keymap): on the
+  line directly above a table, ArrowDown steps in — in `table: "source"` it
+  lands the caret on the table's first source line, which reveals the raw pipes
+  the way a blockquote now does; in `table: "cells"` it focuses the first cell.
+  ArrowUp from the line below is the mirror. Inside a `"cells"` table the
+  widget's key handler grew full arrow navigation: Up / Down walk the column and
+  step out past the first / last row, Left / Right cross to the neighbouring
+  cell only from the text edge (mid-text the browser moves within the cell).
+  Covered by `table-enter.ts` and `table-interactive.test.tsx`.
+
 ## Consequences
 
 ### Positive
