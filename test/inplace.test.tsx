@@ -86,6 +86,32 @@ test("a heading carries a display-size line decoration", async () => {
   expect(hasClass(view, "cm-inplace-h1")).toBe(true)
 })
 
+test("a heading line exposes ARIA heading semantics", async () => {
+  const { view } = await mount("# One\n\n### Three\n\nbody")
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+
+  const h1 = view.contentDOM.querySelector<HTMLElement>(".cm-inplace-h1")
+  expect(h1?.getAttribute("role")).toBe("heading")
+  expect(h1?.getAttribute("aria-level")).toBe("1")
+
+  const h3 = view.contentDOM.querySelector<HTMLElement>(".cm-inplace-h3")
+  expect(h3?.getAttribute("aria-level")).toBe("3")
+
+  const lines = [...view.contentDOM.querySelectorAll<HTMLElement>(".cm-line")]
+  const body = lines.find((l) => l.textContent === "body")
+  expect(body?.hasAttribute("role")).toBe(false)
+})
+
+test("a Setext heading line exposes ARIA heading semantics too", async () => {
+  const { view } = await mount("My Title\n===\n\nbody")
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+
+  const h1 = view.contentDOM.querySelector<HTMLElement>(".cm-inplace-h1")
+  expect(h1?.textContent).toBe("My Title")
+  expect(h1?.getAttribute("role")).toBe("heading")
+  expect(h1?.getAttribute("aria-level")).toBe("1")
+})
+
 test("the # marker is hidden off the heading line and revealed on it", async () => {
   const { view } = await mount("# Title\n\nbody")
 
