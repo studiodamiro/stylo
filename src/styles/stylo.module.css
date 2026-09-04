@@ -113,6 +113,7 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  transition: opacity 0.15s ease;
 }
 
 .toolbarSticky::-webkit-scrollbar {
@@ -137,10 +138,21 @@
 /* `"top"` — nothing ever eats into the top of the screen, so this needs no
    JS at all: no keyboard tracking, and a platform's own input accessory bar
    (docked above the keyboard, in its own layer no page content can reach)
-   can never cover it either. */
+   can never cover it either. `translateZ(0)` promotes it to its own
+   compositing layer — `"bottom"` gets this for free from its `translateY()`
+   inline style, but nothing here otherwise touches `transform`, and iOS
+   Safari has a known history of losing track of a plain `top: 0` fixed
+   element across its own address-bar show/hide animation on scroll. */
 .toolbarStickyTop {
   top: 0;
+  transform: translateZ(0);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--stylo-text) 10%, transparent);
+}
+
+/* `stickyVisibility: "dynamic"` — faded out while nothing is focused. */
+.toolbarStickyHidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Reserve the sticky bar's resting height so it doesn't sit over the

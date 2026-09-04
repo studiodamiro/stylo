@@ -33,9 +33,13 @@ Notable changes to Stylo. The format follows
   for the most reliable tracking, and note it can render behind a platform's
   own keyboard accessory bar (native chrome, outside any web z-index). `"top"`
   needs neither: nothing eats into the top of the screen, so it can't collide
-  with a keyboard or its accessory bar. Off by default; combine with your own
-  responsive check if you only want it below a breakpoint. ADR-002 §2
-  amendment.
+  with a keyboard or its accessory bar; it also carries a `translateZ(0)`
+  compositing-layer fix for a WebKit quirk where a plain fixed element can
+  disappear across the browser's own address-bar show/hide animation on
+  scroll. Off by default; combine with your own responsive check if you only
+  want it below a breakpoint. New `stickyVisibility` prop (`"consistent"`,
+  the default, or `"dynamic"`) fades the bar out while the editing surface is
+  unfocused. ADR-002 §2 amendment.
 
 ### Documentation
 

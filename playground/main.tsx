@@ -26,11 +26,17 @@ const TOOLBARS: Record<string, boolean | ToolbarConfig> = {
 }
 
 type StickyPick = "off" | "top" | "bottom"
+type StickyVisibilityPick = "consistent" | "dynamic"
 
-/** Merge the sticky position picker into whichever toolbar preset is chosen. */
-function withSticky(cfg: boolean | ToolbarConfig, sticky: StickyPick): boolean | ToolbarConfig {
+/** Merge the sticky position + visibility pickers into whichever toolbar preset is chosen. */
+function withSticky(
+  cfg: boolean | ToolbarConfig,
+  sticky: StickyPick,
+  stickyVisibility: StickyVisibilityPick,
+): boolean | ToolbarConfig {
   if (sticky === "off" || cfg === false) return cfg
-  return cfg === true ? { sticky } : { ...cfg, sticky }
+  const base = cfg === true ? {} : cfg
+  return { ...base, sticky, stickyVisibility }
 }
 
 type SaveStatus = "idle" | "saving" | "saved" | "error"
@@ -142,6 +148,7 @@ function App() {
 
   const [toolbar, setToolbar] = useState<keyof typeof TOOLBARS>("default")
   const [stickyToolbar, setStickyToolbar] = useState<StickyPick>("off")
+  const [stickyVisibility, setStickyVisibility] = useState<StickyVisibilityPick>("consistent")
   const [frontmatter, setFrontmatter] = useState<"hidden" | "code">("hidden")
   const [tableEdit, setTableEdit] = useState<TableEditing>("cells")
   const [reveal, setReveal] = useState<RevealMode>("never")
@@ -247,6 +254,19 @@ function App() {
             <option value="off">off</option>
             <option value="top">top</option>
             <option value="bottom">bottom</option>
+          </select>
+          <select
+            value={stickyVisibility}
+            disabled={stickyToolbar === "off" || toolbar === "hidden"}
+            onChange={(e) => setStickyVisibility(e.target.value as StickyVisibilityPick)}
+            style={{
+              padding: "0.2rem 0.4rem",
+              borderRadius: 6,
+              border: "1px solid var(--pg-border)",
+            }}
+          >
+            <option value="consistent">consistent</option>
+            <option value="dynamic">dynamic</option>
           </select>
         </label>
       )}
@@ -382,7 +402,7 @@ function App() {
           onWikiLinkClick={setLastLink}
           onLinkClick={(href) => window.open(href, "_blank", "noopener")}
           inPlace={{ decorations, table: tableEdit, reveal, selectionUI }}
-          toolbar={withSticky(TOOLBARS[toolbar]!, stickyToolbar)}
+          toolbar={withSticky(TOOLBARS[toolbar]!, stickyToolbar, stickyVisibility)}
           frontmatter={frontmatter}
           codeLanguages={languages}
           className={mode === "split" ? "playground-editor is-split" : "playground-editor"}

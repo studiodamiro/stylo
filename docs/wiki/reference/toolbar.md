@@ -151,9 +151,38 @@ use `"top"` instead.
 
 Pins to the top edge instead. Nothing ever eats into the top of the screen the
 way a keyboard eats the bottom, so this needs no `visualViewport` tracking, no
-meta tag pairing, and can't collide with a platform's accessory bar — it's a
-plain `position: fixed; top: 0`. Prefer it over `"bottom"` unless you
-specifically want the bar to travel with the keyboard.
+meta tag pairing, and can't collide with a platform's accessory bar. Prefer it
+over `"bottom"` unless you specifically want the bar to travel with the
+keyboard.
+
+It has its own on-device finding: a plain `position: fixed; top: 0` element
+can disappear and fail to reliably reappear while scrolling on iOS Safari —
+WebKit has a long-documented history of losing track of a fixed element across
+its own address-bar show/hide animation (separate from the keyboard). Fixed
+with the standard mitigation, a static `transform: translateZ(0)` forcing the
+bar onto its own compositing layer. `"bottom"` never showed this, because its
+keyboard-tracking `translateY()` gives it the same layer promotion as a side
+effect.
+
+Between the selection callout racing a long-press, the input accessory bar
+out-layering `"bottom"`, and this, three distinct native-chrome interactions
+turned up in one day of hands-on testing — none reproducible from a headless
+browser. Treat `position: fixed` pinned to the real window as powerful but
+squarely in the path of whatever quirks the host browser's own chrome has;
+budget for a real device pass, not just the test suite, before shipping a
+sticky change.
+
+### `stickyVisibility` — fade it out when nothing is focused
+
+```tsx
+<Stylo value={doc} onChange={setDoc} toolbar={{ sticky: "top", stickyVisibility: "dynamic" }} />
+```
+
+Optional, defaults to `"consistent"` (always visible whenever `sticky` is
+set). `"dynamic"` fades the bar out — `opacity`, not removed from the DOM —
+while the editing surface is unfocused, and back in the moment it gains focus,
+so it doesn't sit over the content while you're scrolling to read rather than
+edit. Ignored when `sticky` is off.
 
 The context menu and the table's structural menu are reachable on touch too —
 a long-press opens them, the same as a right-click. See

@@ -694,6 +694,38 @@ test("toolbar={{ sticky: 'top' }} pins to the top instead", () => {
   expect(root.classList.contains(stylo.stickyToolbarRootBottom!)).toBe(false)
 })
 
+test("stickyVisibility defaults to 'consistent' — no fade", () => {
+  const { container } = render(
+    <Stylo value="x" onChange={() => {}} mode="source" toolbar={{ sticky: "top" }} />,
+  )
+  const bar = container.querySelector('[role="toolbar"]')!
+  expect(bar.classList.contains(stylo.toolbarStickyHidden!)).toBe(false)
+  expect(bar.getAttribute("aria-hidden")).toBeNull()
+})
+
+test("stickyVisibility: 'dynamic' fades the bar out until the surface is focused", async () => {
+  const { container } = render(
+    <Stylo
+      value="x"
+      onChange={() => {}}
+      mode="source"
+      toolbar={{ sticky: "top", stickyVisibility: "dynamic" }}
+    />,
+  )
+  const bar = container.querySelector('[role="toolbar"]')!
+  const view = EditorView.findFromDOM(container.querySelector(".cm-editor")!)!
+
+  expect(bar.classList.contains(stylo.toolbarStickyHidden!)).toBe(true)
+  expect(bar.getAttribute("aria-hidden")).toBe("true")
+
+  view.contentDOM.dispatchEvent(new FocusEvent("focus"))
+  await vi.waitFor(() => expect(bar.classList.contains(stylo.toolbarStickyHidden!)).toBe(false))
+  expect(bar.getAttribute("aria-hidden")).toBeNull()
+
+  view.contentDOM.dispatchEvent(new FocusEvent("blur"))
+  await vi.waitFor(() => expect(bar.classList.contains(stylo.toolbarStickyHidden!)).toBe(true))
+})
+
 test("a sticky bar still renders its buttons and runs commands", async () => {
   function Host() {
     const [v, setV] = useState("hi")

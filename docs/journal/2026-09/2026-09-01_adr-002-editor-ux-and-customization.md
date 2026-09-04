@@ -184,6 +184,34 @@ untouched, and must not gate v1.
   > stand-in jsdom doesn't provide) and sticky-specific cases in
   > `toolbar.test.tsx`, for both positions.
 
+  > **A third on-device round, same day:** even `"top"` had a real bug — it
+  > would disappear while scrolling and not reliably reappear. This is a
+  > long-documented iOS Safari quirk: WebKit can lose track of a plain
+  > `position: fixed` element across its own address-bar show/hide animation
+  > (distinct from the keyboard; this is the browser's own chrome collapsing
+  > on scroll). `"bottom"` never showed this because its `translateY()` inline
+  > style incidentally already promotes it to its own GPU compositing layer;
+  > `"top"` had no transform at all. Fix: `.toolbarStickyTop` now carries a
+  > static `transform: translateZ(0)`, the standard mitigation for this class
+  > of bug. This is the **third** distinct native-chrome interaction found by
+  > hands-on testing in one day (iOS's selection callout racing long-press,
+  > the input accessory bar out-layering `"bottom"`, and now this) — a
+  > pattern, not a fluke: `position: fixed` pinned to the real window is
+  > powerful but sits directly in the path of every quirk a mobile browser's
+  > own chrome has, and none of the three could have been caught without a
+  > real device. Unlike the first two, this fix has a well-established
+  > mechanism (forcing compositing is a widely-documented WebKit workaround)
+  > but is still only confirmed by report, not by a device re-test here.
+  >
+  > **Also added: `stickyVisibility?: "consistent" | "dynamic"`.** `"dynamic"`
+  > fades the bar out (`opacity`, `pointer-events: none`, `aria-hidden`) while
+  > the editing surface is unfocused — so it doesn't sit over content while
+  > scrolling to read rather than edit — and back in on focus. Tracked off the
+  > same `contentDOM` focus/blur listeners the toolbar already used to refresh
+  > pressed states. Deterministic JS, no native-chrome dependency, and unlike
+  > the position work above, verified end-to-end (focus, blur, initial state)
+  > without a device-only caveat.
+
 #### 3. Styling: CSS Modules + a small custom-property token set
 
 - Internal UI (toolbar, menus, drawer) is styled with **CSS Modules**, compiled

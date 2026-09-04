@@ -50,6 +50,8 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
   const stickyConfig = toolbar && typeof toolbar === "object" ? toolbar.sticky : undefined
   const stickyToolbar: "top" | "bottom" | false =
     stickyConfig === "top" ? "top" : stickyConfig ? "bottom" : false
+  const stickyVisibility =
+    toolbar && typeof toolbar === "object" ? toolbar.stickyVisibility : undefined
 
   // Report the raw frontmatter block on mount and whenever it changes. Stylo
   // does not parse it — the host passes `raw` to its own YAML parser.
@@ -116,6 +118,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
               icons={icons}
               disabled={readOnly}
               sticky={stickyToolbar}
+              stickyVisibility={stickyVisibility}
             />
           )
           return toolbarRender ? toolbarRender(bar, { view }) : bar

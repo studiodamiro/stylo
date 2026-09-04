@@ -98,6 +98,13 @@ export interface ToolbarConfig {
    * full-screen editor. See the toolbar reference's "On touch" section.
    */
   sticky?: boolean | "top" | "bottom"
+  /**
+   * When `sticky` is set, whether the bar stays on screen the whole time
+   * (`"consistent"`, the default) or only while the editing surface actually
+   * has focus (`"dynamic"`) — faded out otherwise, so it doesn't sit over the
+   * content while the caret is elsewhere. Ignored when `sticky` is off.
+   */
+  stickyVisibility?: "consistent" | "dynamic"
 }
 
 /**

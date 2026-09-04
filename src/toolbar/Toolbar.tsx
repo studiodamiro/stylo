@@ -1,4 +1,4 @@
-import { useEffect, useReducer } from "react"
+import { useEffect, useReducer, useState } from "react"
 import type { ReactNode } from "react"
 import type { EditorState } from "@codemirror/state"
 import type { EditorView } from "@codemirror/view"
@@ -21,6 +21,8 @@ export interface ToolbarProps {
   /** Fix the bar to a window edge (normalised from `ToolbarConfig.sticky`; the
    *  caller resolves `true` to `"bottom"`). */
   sticky?: "top" | "bottom" | false
+  /** Fade the bar out while the editing surface is unfocused (`ToolbarConfig.stickyVisibility`). */
+  stickyVisibility?: "consistent" | "dynamic"
 }
 
 /** A button to render, normalised from a built-in id or a custom item. */
@@ -58,8 +60,9 @@ function toButton(item: Exclude<ToolbarItem, "|">, icons: ToolbarProps["icons"])
  * ids and consumer-supplied {@link ToolbarCustomItem}s render through the same
  * button path.
  */
-export function Toolbar({ view, items, icons, disabled, sticky }: ToolbarProps) {
+export function Toolbar({ view, items, icons, disabled, sticky, stickyVisibility }: ToolbarProps) {
   const [, refresh] = useReducer((n: number) => n + 1, 0)
+  const [focused, setFocused] = useState(false)
   // Only "bottom" needs keyboard tracking — nothing eats into the top of the
   // screen the way a keyboard eats the bottom.
   const keyboardInset = useKeyboardInset(sticky === "bottom")
@@ -67,18 +70,36 @@ export function Toolbar({ view, items, icons, disabled, sticky }: ToolbarProps) 
   useEffect(() => {
     if (!view) return
     const el = view.contentDOM
-    const events = ["keyup", "mouseup", "input", "focus", "blur"] as const
+    setFocused(view.hasFocus)
+    const onFocus = () => {
+      setFocused(true)
+      refresh()
+    }
+    const onBlur = () => {
+      setFocused(false)
+      refresh()
+    }
+    const events = ["keyup", "mouseup", "input"] as const
     for (const ev of events) el.addEventListener(ev, refresh)
+    el.addEventListener("focus", onFocus)
+    el.addEventListener("blur", onBlur)
     return () => {
       for (const ev of events) el.removeEventListener(ev, refresh)
+      el.removeEventListener("focus", onFocus)
+      el.removeEventListener("blur", onBlur)
     }
   }, [view])
+
+  // "dynamic" fades the bar out while nothing is focused, so it doesn't sit
+  // over the content while the caret is elsewhere (e.g. scrolling to read).
+  const dynamicHidden = Boolean(sticky) && stickyVisibility === "dynamic" && !focused
 
   const className = [
     styles.toolbar,
     sticky && styles.toolbarSticky,
     sticky === "top" && styles.toolbarStickyTop,
     sticky === "bottom" && styles.toolbarStickyBottom,
+    dynamicHidden && styles.toolbarStickyHidden,
   ]
     .filter(Boolean)
     .join(" ")
@@ -92,7 +113,13 @@ export function Toolbar({ view, items, icons, disabled, sticky }: ToolbarProps) 
     sticky === "bottom" ? { transform: `translateY(-${keyboardInset}px)` } : undefined
 
   return (
-    <div className={className} role="toolbar" aria-label="Formatting" style={stickyStyle}>
+    <div
+      className={className}
+      role="toolbar"
+      aria-label="Formatting"
+      aria-hidden={dynamicHidden || undefined}
+      style={stickyStyle}
+    >
       {items.map((item, i) => {
         if (item === "|") {
           return <span key={`sep-${i}`} className={styles.toolbarSep} aria-hidden="true" />
