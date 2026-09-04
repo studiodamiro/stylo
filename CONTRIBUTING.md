@@ -38,8 +38,8 @@ install, so every change is weighed against the cost it imposes on consumers.
 - Touch only the lines and files necessary for the change at hand.
 - Discuss scope before large or architectural changes — open an issue or a draft
   ADR first.
-- Verify before opening a PR: `npm run typecheck`, `npm run build`, and
-  `npm run test` must all pass.
+- Verify before opening a PR: `npm run format:check`, `npm run typecheck`,
+  `npm run build`, and `npm run test` must all pass. CI runs the same set.
 - If something fails or stalls, find the root cause rather than working around
   it.
 
@@ -139,12 +139,13 @@ read it.
 
 ## Commands
 
-> The build is not scaffolded yet; these are the intended scripts (Vite library
-> mode + TypeScript).
+Vite in library mode; TypeScript emits the declarations.
 
-| Task                 | Command             |
-| -------------------- | ------------------- |
-| Dev / playground     | `npm run dev`       |
-| Typecheck            | `npm run typecheck` |
-| Build library bundle | `npm run build`     |
-| Run tests            | `npm run test`      |
+| Task                 | Command                |
+| -------------------- | ---------------------- |
+| Dev / playground     | `npm run dev`          |
+| Format               | `npm run format`       |
+| Check formatting     | `npm run format:check` |
+| Typecheck            | `npm run typecheck`    |
+| Build library bundle | `npm run build`        |
+| Run tests            | `npm run test`         |
