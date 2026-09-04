@@ -545,3 +545,114 @@ test("every default item resolves to a built-in command or a separator", () => {
     expect(BUILTIN_BY_ID[item], item).toBeDefined()
   }
 })
+
+test("a custom item renders between built-ins and runs against the live view", () => {
+  const run = vi.fn()
+  const { container } = render(
+    <Stylo
+      value="hello"
+      onChange={() => {}}
+      mode="source"
+      toolbar={{
+        items: ["bold", "|", { id: "shout", title: "Shout", icon: <span>!</span>, run }, "italic"],
+      }}
+    />,
+  )
+  const labels = [...container.querySelectorAll('[role="toolbar"] button')].map((b) =>
+    b.getAttribute("aria-label"),
+  )
+  expect(labels).toEqual(["Bold", "Shout", "Italic"])
+
+  const btn = container.querySelector<HTMLButtonElement>('button[data-command="shout"]')!
+  const view = EditorView.findFromDOM(container.querySelector(".cm-editor")!)!
+  btn.click()
+  expect(run).toHaveBeenCalledTimes(1)
+  expect(run.mock.calls[0]?.[0]).toBe(view)
+})
+
+test("a custom item reflects isActive and disabled from the state", async () => {
+  const { container } = render(
+    <Stylo
+      value="abc"
+      onChange={() => {}}
+      mode="source"
+      toolbar={{
+        items: [
+          {
+            id: "at-start",
+            title: "At start",
+            icon: <span>s</span>,
+            run: () => {},
+            isActive: (state) => state.selection.main.head === 0,
+            disabled: (state) => state.doc.length === 0,
+          },
+        ],
+      }}
+    />,
+  )
+  const btn = container.querySelector<HTMLButtonElement>('button[data-command="at-start"]')!
+  const view = EditorView.findFromDOM(container.querySelector(".cm-editor")!)!
+
+  view.dispatch({ selection: EditorSelection.single(0) })
+  view.contentDOM.dispatchEvent(new Event("keyup"))
+  await vi.waitFor(() => expect(btn.getAttribute("aria-pressed")).toBe("true"))
+  expect(btn.disabled).toBe(false)
+
+  view.dispatch({ selection: EditorSelection.single(2) })
+  view.contentDOM.dispatchEvent(new Event("keyup"))
+  await vi.waitFor(() => expect(btn.getAttribute("aria-pressed")).toBe("false"))
+})
+
+test("built-in buttons also carry data-command", () => {
+  const { container } = render(
+    <Stylo value="x" onChange={() => {}} mode="source" toolbar={{ items: ["bold", "italic"] }} />,
+  )
+  expect(container.querySelector('button[data-command="bold"]')).not.toBeNull()
+  expect(container.querySelector('button[data-command="italic"]')).not.toBeNull()
+})
+
+test("toolbar.render wraps the built-in bar", () => {
+  const { container } = render(
+    <Stylo
+      value="x"
+      onChange={() => {}}
+      mode="source"
+      toolbar={{
+        items: ["bold"],
+        render: (bar) => (
+          <div data-testid="wrapper">
+            {bar}
+            <button type="button" data-command="external">
+              ext
+            </button>
+          </div>
+        ),
+      }}
+    />,
+  )
+  const wrapper = container.querySelector('[data-testid="wrapper"]')!
+  expect(wrapper).not.toBeNull()
+  expect(wrapper.querySelector('[role="toolbar"] button[data-command="bold"]')).not.toBeNull()
+  // the extra control sits outside the role="toolbar" element
+  expect(wrapper.querySelector(':scope > button[data-command="external"]')).not.toBeNull()
+})
+
+test("toolbar.render receives the view once the surface mounts", async () => {
+  const seen: (EditorView | null)[] = []
+  render(
+    <Stylo
+      value="x"
+      onChange={() => {}}
+      mode="source"
+      toolbar={{
+        items: ["bold"],
+        render: (bar, { view }) => {
+          seen.push(view)
+          return bar
+        },
+      }}
+    />,
+  )
+  await vi.waitFor(() => expect(seen.at(-1)).toBeInstanceOf(EditorView))
+  expect(seen[0]).toBeNull() // first render, before the lazy view is ready
+})

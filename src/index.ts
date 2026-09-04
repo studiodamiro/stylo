@@ -14,4 +14,6 @@ export type {
   TableEditing,
   ToolbarCommandId,
   ToolbarConfig,
+  ToolbarCustomItem,
+  ToolbarItem,
 } from "./types"

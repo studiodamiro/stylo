@@ -1,5 +1,6 @@
 import { useEffect, useReducer } from "react"
 import type { ReactNode } from "react"
+import type { EditorState } from "@codemirror/state"
 import type { EditorView } from "@codemirror/view"
 import styles from "../styles/stylo.module.css"
 import type { ToolbarCommandId } from "../types"
@@ -18,10 +19,40 @@ export interface ToolbarProps {
   disabled?: boolean
 }
 
+/** A button to render, normalised from a built-in id or a custom item. */
+interface Btn {
+  key: string
+  icon: ReactNode
+  title: string
+  run: (view: EditorView) => unknown
+  isActive?: (state: EditorState) => boolean
+  disabled?: (state: EditorState) => boolean
+}
+
+/** Resolve one non-separator item to a renderable button, or `null` to skip it. */
+function toButton(item: Exclude<ToolbarItem, "|">, icons: ToolbarProps["icons"]): Btn | null {
+  if (typeof item !== "string") {
+    const { id, icon, title, run, isActive, disabled } = item
+    return { key: id, icon, title, run, isActive, disabled }
+  }
+  const cmd = BUILTIN_BY_ID[item]
+  if (!cmd) return null
+  return {
+    key: item,
+    icon: icons?.[item] ?? DEFAULT_ICONS[item],
+    title: cmd.title,
+    run: cmd.run,
+    isActive: cmd.isActive,
+    disabled: cmd.disabled,
+  }
+}
+
 /**
  * Formatting bar above the editing surface. It holds no document state — each
  * button runs a command against the live `EditorView`. Pressed states are read
- * back from the view whenever the selection, keys, or pointer move.
+ * back from the view whenever the selection, keys, or pointer move. Built-in
+ * ids and consumer-supplied {@link ToolbarCustomItem}s render through the same
+ * button path.
  */
 export function Toolbar({ view, items, icons, disabled }: ToolbarProps) {
   const [, refresh] = useReducer((n: number) => n + 1, 0)
@@ -42,28 +73,29 @@ export function Toolbar({ view, items, icons, disabled }: ToolbarProps) {
         if (item === "|") {
           return <span key={`sep-${i}`} className={styles.toolbarSep} aria-hidden="true" />
         }
-        const cmd = BUILTIN_BY_ID[item]
-        if (!cmd) return null
-        const off = disabled || !view || Boolean(cmd.disabled?.(view.state))
-        const active = Boolean(!off && view && cmd.isActive?.(view.state))
+        const btn = toButton(item, icons)
+        if (!btn) return null
+        const off = disabled || !view || Boolean(btn.disabled?.(view.state))
+        const active = Boolean(!off && view && btn.isActive?.(view.state))
         return (
           <button
-            key={item}
+            key={btn.key}
             type="button"
             className={styles.toolbarButton}
-            title={cmd.title}
-            aria-label={cmd.title}
-            aria-pressed={cmd.isActive ? active : undefined}
+            data-command={btn.key}
+            title={btn.title}
+            aria-label={btn.title}
+            aria-pressed={btn.isActive ? active : undefined}
             data-active={active ? "" : undefined}
             disabled={off}
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => {
               if (!view) return
-              cmd.run(view)
+              btn.run(view)
               refresh()
             }}
           >
-            {icons?.[item] ?? DEFAULT_ICONS[item]}
+            {btn.icon}
           </button>
         )
       })}

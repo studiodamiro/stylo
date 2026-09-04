@@ -46,6 +46,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
 
   const [view, setView] = useState<EditorView | null>(null)
   const toolbarItems = resolved === "preview" ? null : resolveToolbarItems(toolbar)
+  const toolbarRender = toolbar && typeof toolbar === "object" ? toolbar.render : undefined
 
   // Report the raw frontmatter block on mount and whenever it changes. Stylo
   // does not parse it — the host passes `raw` to its own YAML parser.
@@ -95,9 +96,11 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
 
   return (
     <div className={rootClass} data-stylo-mode={resolved}>
-      {toolbarItems && (
-        <Toolbar view={view} items={toolbarItems} icons={icons} disabled={readOnly} />
-      )}
+      {toolbarItems &&
+        (() => {
+          const bar = <Toolbar view={view} items={toolbarItems} icons={icons} disabled={readOnly} />
+          return toolbarRender ? toolbarRender(bar, { view }) : bar
+        })()}
 
       {resolved === "source" && (
         <SourceView

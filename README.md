@@ -103,6 +103,10 @@ function Editor() {
 `ref` gives an imperative handle: `focus()`, `scrollToHeading(text)`,
 `insertAtCursor(md)`, and `getView()` for the raw CodeMirror `EditorView`.
 
+`toolbar` trims, reorders, or extends the formatting bar — built-in command ids,
+your own `ToolbarCustomItem` buttons, and a `render` slot to wrap it. See the
+[toolbar reference](./docs/wiki/reference/toolbar.md).
+
 ### Theming
 
 Every colour is a `--stylo-*` custom property; override any of them on `.stylo`

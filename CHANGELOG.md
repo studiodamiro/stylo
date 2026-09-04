@@ -6,6 +6,16 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Toolbar extensibility. `toolbar.items` now accepts `ToolbarCustomItem` objects
+  (`{ id, title, icon, run, isActive?, disabled? }`) mixed in with the built-in
+  ids — a consumer's own button, run against the live view, refreshed on the
+  same events as the built-ins. New `toolbar.render` slot wraps or replaces the
+  rendered bar. Every toolbar button now carries a `data-command="<id>"`
+  attribute. Custom items have no keyboard-shortcut field yet — bind against
+  `getView()`. ADR-002 §2 amendment.
+
 ### Changed
 
 - **BREAKING:** `@codemirror/*` and `@lezer/common` / `@lezer/highlight` are now

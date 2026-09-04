@@ -1,14 +1,19 @@
-import type { ToolbarCommandId, ToolbarConfig } from "../types"
+import type { ToolbarCommandId, ToolbarConfig, ToolbarItem } from "../types"
 
-/** An entry in the rendered bar: a command id, or `"|"` for a separator. */
-export type ToolbarItem = ToolbarCommandId | "|"
+/**
+ * An entry in the rendered bar: a built-in command id, `"|"` for a separator,
+ * or a consumer-supplied {@link ToolbarCustomItem}. Defined in `types.ts`;
+ * re-exported here because the toolbar internals are the main consumers.
+ */
+export type { ToolbarItem }
 
 /**
  * The full built-in bar, in display order. Grouped by kind: history, headings,
  * inline text (+ link), the three list markers, block structure, then code and
- * math together.
+ * math together. Built-in ids only — a consumer adds custom items through the
+ * `toolbar` prop.
  */
-export const DEFAULT_TOOLBAR_ITEMS: ToolbarItem[] = [
+export const DEFAULT_TOOLBAR_ITEMS: (ToolbarCommandId | "|")[] = [
   "undo",
   "redo",
   "|",
