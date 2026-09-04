@@ -440,6 +440,27 @@ n }` to the line decoration they already emit. No new dependency; `role` +
   cell only from the text edge (mid-text the browser moves within the cell).
   Covered by `table-enter.ts` and `table-interactive.test.tsx`.
 
+- **2026-09-04 — Long-press opens the context menu on touch.** The canvas menu
+  and the editable table's structural menu both listened only for `contextmenu`.
+  The code assumed a long-press would synthesise one; Android Chrome does, but
+  iOS Safari does not do it dependably over `contenteditable` — it races its own
+  selection callout and usually wins — so touch users had no route to either
+  menu, and the edge `+` gizmos are hover-only so they never appeared. New
+  `long-press.ts` — a small timer helper (500 ms hold, 10 px movement slop,
+  mouse pointers ignored) that both `menu-plugin.ts` and `table-widget.ts` route
+  through the same `openMenuAt` the right-click path uses. A `contextmenu` that
+  the browser fires from the same gesture is cancelled or, if it lands after the
+  menu is already open, swallowed (a 700 ms window keyed off the long-press), so
+  the two paths never double-open; a plain right-click is never debounced.
+  `context-menu.ts` now also dismisses on `pointerdown`, not just `mousedown`,
+  so a tap outside closes the menu on touch. `theme.ts` keeps the edge strips
+  faintly visible under `@media (hover: none)`. The timer logic and the
+  single-open guarantee are covered by `long-press.test.ts`,
+  `context-menu.test.tsx`, and `table-interactive.test.tsx` (synthetic
+  `PointerEvent`s under fake timers); real long-press feel on iOS and Android —
+  and whether the iOS selection callout still shows through — is a device pass
+  that has not been run. No `-webkit-touch-callout` suppression was added.
+
 ## Consequences
 
 ### Positive

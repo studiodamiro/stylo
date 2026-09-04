@@ -283,6 +283,11 @@ export const inPlaceTheme = EditorView.theme({
     pointerEvents: "none",
   },
   ".cm-inplace-tg-edge:hover .cm-inplace-tg-plus": { color: "var(--stylo-text)" },
+  // No hover on a touch device — keep the strips faintly visible so "add row" /
+  // "add column" stays discoverable. A tap still runs them at full opacity.
+  "@media (hover: none)": {
+    ".cm-inplace-tg-edge": { opacity: "0.5" },
+  },
 
   // --- Right-click menu (menu-plugin.ts / context-menu.ts) ---
   // Also the editable table's structural menu (table-gizmos.ts) — same shell.

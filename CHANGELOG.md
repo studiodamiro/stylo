@@ -19,6 +19,12 @@ Notable changes to Stylo. The format follows
   pair (Markdown has no underline), bound to `Mod-u`. Not in the default bar;
   add `"underline"` to `toolbar.items` to show the button. Renders underlined
   wherever the host renders inline HTML; Stylo's bundled `preview` does not.
+- Touch support for the in-place context menu. A long-press (≈500 ms) opens the
+  canvas menu and the editable table's structural menu where a mouse would
+  right-click; a tap outside dismisses it. The table's edge `+` add-row /
+  add-column strips stay visible on touch devices instead of only on hover. The
+  gesture logic is unit-tested; a hands-on pass on real iOS / Android hardware
+  is still pending. ADR-007 rollout log.
 
 ### Documentation
 

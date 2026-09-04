@@ -239,10 +239,14 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
     const onScroll = (e: Event) => {
       if (outside(e)) hide()
     }
+    // `pointerdown` as well as `mousedown` — a touch tap outside fires only the
+    // former, and without it the menu could not be dismissed on a touch device.
+    doc.addEventListener("pointerdown", onDown, true)
     doc.addEventListener("mousedown", onDown, true)
     doc.addEventListener("keydown", onKey, true)
     doc.addEventListener("scroll", onScroll, true)
     unbind = () => {
+      doc.removeEventListener("pointerdown", onDown, true)
       doc.removeEventListener("mousedown", onDown, true)
       doc.removeEventListener("keydown", onKey, true)
       doc.removeEventListener("scroll", onScroll, true)

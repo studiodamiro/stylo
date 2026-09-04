@@ -13,6 +13,7 @@ import {
   trimGrid,
   unescapePipe,
 } from "./table-cell-dom"
+import { attachLongPress, type LongPressHandle } from "./long-press"
 import { createTableGizmos, type StructOp, type TableGizmos } from "./table-gizmos"
 import {
   deleteColumn,
@@ -54,6 +55,11 @@ export class EditableTableWidget extends WidgetType {
   private pendingOffset: number | null = null
   private current: string[][]
   private gizmos: TableGizmos | null = null
+  private longPress: LongPressHandle | null = null
+  /** When a long-press last opened the structural menu; a `contextmenu` the
+   *  browser synthesises from the same gesture and lands within the window is
+   *  swallowed rather than re-opening it. */
+  private longPressAt = 0
 
   constructor(readonly data: ParsedTable) {
     super()
@@ -352,6 +358,23 @@ export class EditableTableWidget extends WidgetType {
     return true
   }
 
+  /** Open the structural menu for the cell at a screen point, from a right-click
+   *  or a long-press. */
+  private openCellMenuAt(
+    view: EditorView,
+    clientX: number,
+    clientY: number,
+    target: HTMLElement | null,
+  ) {
+    const cell = target?.closest<HTMLTableCellElement>("td, th")
+    if (!cell) return
+    if (this.editing === cell && !cellHasSelection(view)) {
+      selectWordAtPoint(cell, clientX, clientY)
+    }
+    const extra = cellHasSelection(view) ? cellSelectionRows(view) : undefined
+    this.gizmos?.openFor(cell, clientX, clientY, extra)
+  }
+
   toDOM(view: EditorView) {
     const wrap = document.createElement("div")
     wrap.className = "cm-inplace-table-wrap"
@@ -393,8 +416,8 @@ export class EditableTableWidget extends WidgetType {
       const text = (e.clipboardData?.getData("text/plain") ?? "").replace(/\r?\n/g, " ")
       document.execCommand("insertText", false, text)
     })
-    // Right-click (and long-press on touch) opens the structural menu for the
-    // cell under the pointer. In the cell being edited, a right-click with no
+    // Right-click, or a long-press on touch, opens the structural menu for the
+    // cell under the pointer. In the cell being edited, a press with no
     // selection first selects the word under the pointer — the same affordance
     // the canvas menu gives — so the Format group (and clipboard) can be
     // appended below the row / column / align actions and one menu covers both
@@ -404,11 +427,15 @@ export class EditableTableWidget extends WidgetType {
       if (!cell) return
       e.preventDefault()
       e.stopPropagation()
-      if (this.editing === cell && !cellHasSelection(view)) {
-        selectWordAtPoint(cell, e.clientX, e.clientY)
-      }
-      const extra = cellHasSelection(view) ? cellSelectionRows(view) : undefined
-      this.gizmos?.openFor(cell, e.clientX, e.clientY, extra)
+      this.longPress?.cancel()
+      if (Date.now() - this.longPressAt < 700) return
+      this.openCellMenuAt(view, e.clientX, e.clientY, e.target as HTMLElement | null)
+    })
+    this.longPress = attachLongPress(table, {
+      onLongPress: (x, y, t) => {
+        this.longPressAt = Date.now()
+        this.openCellMenuAt(view, x, y, t as HTMLElement | null)
+      },
     })
 
     this.gizmos = createTableGizmos(document, {
@@ -426,6 +453,8 @@ export class EditableTableWidget extends WidgetType {
   }
 
   override destroy() {
+    this.longPress?.dispose()
+    this.longPress = null
     this.gizmos?.destroy()
     this.gizmos = null
     this.table = null

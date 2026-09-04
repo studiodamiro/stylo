@@ -5,6 +5,7 @@ import { Stylo } from "../src/Stylo"
 import type { InPlaceConfig } from "../src/types"
 
 afterEach(() => {
+  vi.useRealTimers()
   cleanup()
   document.querySelectorAll(".cm-inplace-menu, .cm-inplace-selbar").forEach((n) => n.remove())
 })
@@ -30,6 +31,21 @@ function rightClick(view: EditorView): MouseEvent {
   })
   view.contentDOM.dispatchEvent(e)
   return e
+}
+
+/** A touch long-press: hold for the 500 ms the canvas waits, no `contextmenu`.
+ *  Leaves fake timers installed; the file's `afterEach` restores them. */
+function longPress(view: EditorView, x = 20, y = 20) {
+  vi.useFakeTimers()
+  view.contentDOM.dispatchEvent(
+    new PointerEvent("pointerdown", {
+      bubbles: true,
+      clientX: x,
+      clientY: y,
+      pointerType: "touch",
+    }),
+  )
+  vi.advanceTimersByTime(500)
 }
 
 test("right-click in the canvas opens the Stylo menu and suppresses the native one", async () => {
@@ -89,6 +105,29 @@ test("inPlace.contextMenu = false leaves the browser menu alone", async () => {
   const { view } = await mount("a plain paragraph", { contextMenu: false })
   const e = rightClick(view)
   expect(e.defaultPrevented).toBe(false)
+  expect(document.querySelector(".cm-inplace-menu-panel")).toBeNull()
+})
+
+test("a long-press opens the canvas menu on touch and selects the word", async () => {
+  const { view } = await mount("Heading here")
+  longPress(view)
+  expect(document.querySelector(".cm-inplace-menu-panel")).not.toBeNull()
+  expect(view.state.selection.main.empty, "word under the finger got selected").toBe(false)
+})
+
+test("a long-press then the browser's synthesised contextmenu open one menu", async () => {
+  const { view } = await mount("a plain paragraph")
+  longPress(view)
+  // Android also fires `contextmenu` off the same gesture; it must not re-open.
+  view.contentDOM.dispatchEvent(
+    new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }),
+  )
+  expect(document.querySelectorAll(".cm-inplace-menu-panel")).toHaveLength(1)
+})
+
+test("inPlace.contextMenu = false ignores a long-press too", async () => {
+  const { view } = await mount("a plain paragraph", { contextMenu: false })
+  longPress(view)
   expect(document.querySelector(".cm-inplace-menu-panel")).toBeNull()
 })
 

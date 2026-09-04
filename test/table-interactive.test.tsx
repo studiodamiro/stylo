@@ -6,7 +6,10 @@ import { tableField } from "../src/inplace/tables"
 import { BUILTIN_BY_ID } from "../src/toolbar/commands"
 import type { InPlaceConfig } from "../src/types"
 
-afterEach(cleanup)
+afterEach(() => {
+  vi.useRealTimers()
+  cleanup()
+})
 
 async function mount(value: string, inPlace?: InPlaceConfig) {
   let latest = value
@@ -534,4 +537,54 @@ test("ArrowLeft from the start of the first cell leaves the table above", async 
   selectText(cell, 0, 0)
   cell.dispatchEvent(arrow("ArrowLeft"))
   expect(caretCell(view)).toBeNull()
+})
+
+test("a long-press on a cell opens the structural menu (touch)", async () => {
+  const { view } = await mount(T, { table: "cells" })
+  const table = await editCells(view)
+  const cell = table.querySelector<HTMLTableCellElement>("tbody td")!
+
+  vi.useFakeTimers()
+  cell.dispatchEvent(
+    new PointerEvent("pointerdown", {
+      bubbles: true,
+      clientX: 5,
+      clientY: 5,
+      pointerType: "touch",
+    }),
+  )
+  vi.advanceTimersByTime(500)
+  vi.useRealTimers()
+
+  const panel = view.contentDOM.querySelector(".cm-inplace-menu-panel")
+  expect(panel, "the widget's structural menu opened").not.toBeNull()
+  expect(panel?.textContent).toContain("Insert row above")
+})
+
+test("a long-press that drifts past the slop does not open the menu", async () => {
+  const { view } = await mount(T, { table: "cells" })
+  const table = await editCells(view)
+  const cell = table.querySelector<HTMLTableCellElement>("tbody td")!
+
+  vi.useFakeTimers()
+  cell.dispatchEvent(
+    new PointerEvent("pointerdown", {
+      bubbles: true,
+      clientX: 5,
+      clientY: 5,
+      pointerType: "touch",
+    }),
+  )
+  cell.dispatchEvent(
+    new PointerEvent("pointermove", {
+      bubbles: true,
+      clientX: 5,
+      clientY: 40,
+      pointerType: "touch",
+    }),
+  )
+  vi.advanceTimersByTime(500)
+  vi.useRealTimers()
+
+  expect(view.contentDOM.querySelector(".cm-inplace-menu-panel")).toBeNull()
 })

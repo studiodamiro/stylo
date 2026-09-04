@@ -131,6 +131,19 @@ it for all five in the default order. `link` and `format` still yield to
 toolbar. The table-cell and fenced-code contexts honour `format` / `clipboard`
 from the list but are otherwise fixed.
 
+### On touch
+
+A right-click has no touch equivalent, so a **long-press** (roughly half a
+second, holding still) opens the same menu — both the canvas menu and the
+editable table's structural menu. A tap outside closes it. On a coarse-pointer
+device the table's edge `+` "add row" / "add column" strips, hover-only on a
+mouse, stay faintly visible so they can be tapped.
+
+The long-press path is unit-tested; the gesture has not yet been through a
+hands-on pass on real iOS / Android hardware. On iOS in particular the system's
+own text-selection callout may still appear alongside Stylo's menu — Stylo does
+not suppress it (that would also remove the native paste bubble).
+
 ## `inPlace.selectionUI`
 
 Optional, defaults to `"menu"`. Picks the affordance a non-empty text selection
