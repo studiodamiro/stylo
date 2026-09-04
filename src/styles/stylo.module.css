@@ -99,15 +99,12 @@
   background: var(--stylo-border);
 }
 
-/* `toolbar={{ sticky: "top" | "bottom" | true }}` — fixed to a window edge
+/* `toolbar={{ sticky: "top" | "bottom" | true }}` — pins the bar to an edge
    instead of wherever `<Stylo>` sits on the page. One row, no wrapping: it
    scrolls horizontally instead, and its buttons grow to a comfortable touch
    size. Shared by both edges; `.toolbarStickyTop` / `.toolbarStickyBottom`
-   below add the edge itself. */
+   below pick the positioning mechanism and the edge itself. */
 .toolbarSticky {
-  position: fixed;
-  left: 0;
-  right: 0;
   z-index: 50;
   flex-wrap: nowrap;
   overflow-x: auto;
@@ -115,10 +112,10 @@
   scrollbar-width: none;
   transition: opacity 0.15s ease;
   /* The base `.toolbar` deliberately leaves font-family to inherit from
-     wherever the host mounts `<Stylo>`. A sticky bar can't rely on that: it's
-     portalled to `document.body` (see Stylo.tsx), so "wherever it's mounted"
-     is no longer where it's drawn. Set an explicit stack rather than
-     inherit the browser's serif default. */
+     wherever the host mounts `<Stylo>`. `"bottom"` is `position: fixed`
+     against the window edge — it can land far from that mount point in the
+     DOM's rendered position, so it can't safely lean on inheritance either.
+     Explicit stack for both, rather than the browser's serif default. */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -132,26 +129,32 @@
   flex: 0 0 auto;
 }
 
-/* `"bottom"` (or `true`) — Toolbar.tsx nudges it up from here with
+/* `"bottom"` (or `true`) — has to be `position: fixed`: nothing about a
+   mobile keyboard opening is a "scroll", so `position: sticky` has nothing to
+   react to. Toolbar.tsx nudges it up from `bottom: 0` with
    `transform: translateY()`, tracking `useKeyboardInset`. */
 .toolbarStickyBottom {
+  position: fixed;
+  left: 0;
+  right: 0;
   bottom: 0;
   border-bottom: none;
   border-top: 1px solid var(--stylo-border);
   box-shadow: 0 -2px 8px color-mix(in srgb, var(--stylo-text) 10%, transparent);
 }
 
-/* `"top"` — nothing ever eats into the top of the screen, so this needs no
-   JS at all: no keyboard tracking, and a platform's own input accessory bar
-   (docked above the keyboard, in its own layer no page content can reach)
-   can never cover it either. `translateZ(0)` promotes it to its own
-   compositing layer — `"bottom"` gets this for free from its `translateY()`
-   inline style, but nothing here otherwise touches `transform`, and iOS
-   Safari has a known history of losing track of a plain `top: 0` fixed
-   element across its own address-bar show/hide animation on scroll. */
+/* `"top"` — real `position: sticky`, not `fixed`. Nothing ever eats into the
+   top of the screen, so there's no keyboard to react to and no accessory bar
+   to collide with — the two problems `"bottom"` has. `sticky` also sidesteps
+   every `position: fixed` / native-chrome interaction the top bar hit across
+   several rounds of on-device testing (translateZ(0), a portal to
+   `document.body`, ...) none of which reliably held up: `fixed` fights the
+   browser's own chrome, `sticky` just participates in normal page scroll,
+   which is why it's the standard mechanism for a reliable sticky header.
+   Needs `.root`'s `overflow: hidden` relaxed — see `.stickyToolbarRootTop`. */
 .toolbarStickyTop {
+  position: sticky;
   top: 0;
-  transform: translateZ(0);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--stylo-text) 10%, transparent);
 }
 
@@ -161,9 +164,9 @@
   pointer-events: none;
 }
 
-/* Reserve the sticky bar's resting height so it doesn't sit over the
-   document's first or last line. Static, not keyboard-aware: for `"bottom"`
-   while the keyboard is open the bar rides up to meet it (see
+/* `"bottom"` is `position: fixed`, out of flow entirely — reserve its resting
+   height so it doesn't sit over the document's last line. Static, not
+   keyboard-aware: while the keyboard is open the bar rides up to meet it (see
    `useKeyboardInset`), but the browser's own scroll-into-view around the
    caret is what keeps typing visible above both — this padding only covers
    the keyboard-closed resting state. */
@@ -172,9 +175,15 @@
   padding-bottom: 52px;
 }
 
-.stickyToolbarRootTop .source,
-.stickyToolbarRootTop .inplace {
-  padding-top: 52px;
+/* `"top"` is `position: sticky`, still in flow — it already reserves its own
+   space above `.source`/`.inplace`, no padding needed. What it does need:
+   `.root`'s default `overflow: hidden` (rounded-corner clipping) turned back
+   to `visible` here, or Safari (and, less consistently, other engines) treats
+   `.root` itself as the sticky bar's scroll boundary instead of the real
+   page — the well-known "any non-visible-overflow ancestor can break
+   `position: sticky`" gotcha, confirmed against this codebase earlier. */
+.stickyToolbarRootTop {
+  overflow: visible;
 }
 
 .inplace :global(.cm-editor) {

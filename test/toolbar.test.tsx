@@ -671,10 +671,7 @@ test("toolbar={{ sticky: true }} is an alias for bottom", () => {
   const { container } = render(
     <Stylo value="x" onChange={() => {}} mode="source" toolbar={{ sticky: true }} />,
   )
-  // Sticky bars portal to `document.body` (see Stylo.tsx) so a WebKit
-  // ancestor-overflow quirk can't reach them — they're no longer inside
-  // `container`.
-  const bar = document.body.querySelector('[role="toolbar"]')!
+  const bar = container.querySelector('[role="toolbar"]')!
   expect(bar.classList.contains(stylo.toolbarSticky!)).toBe(true)
   expect(bar.classList.contains(stylo.toolbarStickyBottom!)).toBe(true)
   expect(bar.classList.contains(stylo.toolbarStickyTop!)).toBe(false)
@@ -687,7 +684,7 @@ test("toolbar={{ sticky: 'top' }} pins to the top instead", () => {
   const { container } = render(
     <Stylo value="x" onChange={() => {}} mode="source" toolbar={{ sticky: "top" }} />,
   )
-  const bar = document.body.querySelector('[role="toolbar"]')!
+  const bar = container.querySelector('[role="toolbar"]')!
   expect(bar.classList.contains(stylo.toolbarSticky!)).toBe(true)
   expect(bar.classList.contains(stylo.toolbarStickyTop!)).toBe(true)
   expect(bar.classList.contains(stylo.toolbarStickyBottom!)).toBe(false)
@@ -698,8 +695,10 @@ test("toolbar={{ sticky: 'top' }} pins to the top instead", () => {
 })
 
 test("stickyVisibility defaults to 'consistent' — no fade", () => {
-  render(<Stylo value="x" onChange={() => {}} mode="source" toolbar={{ sticky: "top" }} />)
-  const bar = document.body.querySelector('[role="toolbar"]')!
+  const { container } = render(
+    <Stylo value="x" onChange={() => {}} mode="source" toolbar={{ sticky: "top" }} />,
+  )
+  const bar = container.querySelector('[role="toolbar"]')!
   expect(bar.classList.contains(stylo.toolbarStickyHidden!)).toBe(false)
   expect(bar.getAttribute("aria-hidden")).toBeNull()
 })
@@ -713,7 +712,7 @@ test("stickyVisibility: 'dynamic' fades the bar out until the surface is focused
       toolbar={{ sticky: "top", stickyVisibility: "dynamic" }}
     />,
   )
-  const bar = document.body.querySelector('[role="toolbar"]')!
+  const bar = container.querySelector('[role="toolbar"]')!
   const view = EditorView.findFromDOM(container.querySelector(".cm-editor")!)!
 
   expect(bar.classList.contains(stylo.toolbarStickyHidden!)).toBe(true)
@@ -733,7 +732,7 @@ test("a sticky bar still renders its buttons and runs commands", async () => {
     return <Stylo value={v} onChange={setV} mode="source" toolbar={{ sticky: true }} />
   }
   const { container } = render(<Host />)
-  const bold = document.body.querySelector<HTMLButtonElement>('button[data-command="bold"]')!
+  const bold = container.querySelector<HTMLButtonElement>('button[data-command="bold"]')!
   const view = EditorView.findFromDOM(container.querySelector(".cm-editor")!)!
   view.dispatch({ selection: EditorSelection.single(0, 2) })
   bold.click()

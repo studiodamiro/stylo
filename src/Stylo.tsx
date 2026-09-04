@@ -1,5 +1,4 @@
 import { forwardRef, Suspense, useEffect, useImperativeHandle, useRef, useState } from "react"
-import { createPortal } from "react-dom"
 import { EditorView } from "@codemirror/view"
 import { SourceView } from "./editor/SourceView"
 import { LazyInPlaceView } from "./inplace/lazyInPlace"
@@ -122,29 +121,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
               stickyVisibility={stickyVisibility}
             />
           )
-          const rendered = toolbarRender ? toolbarRender(bar, { view }) : bar
-          // Sticky bars are `position: fixed`, so their place in the DOM tree
-          // only matters for CSS containment: an ancestor `.root` never sets
-          // `transform`/`filter`/etc. itself, but WebKit has a long history of
-          // still mispositioning a fixed descendant nested inside *any*
-          // `overflow: hidden` ancestor during its own scroll/address-bar
-          // animation, `.root`'s own included. Portalling straight to `<body>`
-          // sidesteps the ancestor chain entirely instead of chasing which
-          // property triggers it.
-          //
-          // Every `--stylo-*` token is only *defined* on `.stylo` (see
-          // tokens.css) — it reaches descendants by ordinary CSS inheritance,
-          // which a portal breaks along with everything else about the DOM
-          // position. Re-declaring the bare `stylo` class (no layout, just the
-          // custom-property block) on the portal's own wrapper puts the
-          // tokens back in scope without dragging `.root`'s box model
-          // (border, `overflow: hidden`) along with them.
-          return stickyToolbar && typeof document !== "undefined"
-            ? createPortal(
-                <div className={["stylo", className].filter(Boolean).join(" ")}>{rendered}</div>,
-                document.body,
-              )
-            : rendered
+          return toolbarRender ? toolbarRender(bar, { view }) : bar
         })()}
 
       {resolved === "source" && (

@@ -249,6 +249,54 @@ untouched, and must not gate v1.
   > `document.body` doesn't just escape unwanted ancestors, it also escapes
   > every wanted one — anything the component was relying on inheriting has to
   > be re-declared at the new mount point.
+  >
+  > **A fifth on-device round: the bug outlived the portal too.** With
+  > theming restored, `"top"` still disappeared and failed to reliably
+  > reappear on scroll — the same symptom after two independent, well-
+  > documented mitigations (compositing promotion, then removing the ancestor
+  > chain entirely) had already been applied. At that point the diagnosis
+  > shifted from "which WebKit code path is still tripping" to "the mechanism
+  > itself is the wrong bet": `position: fixed` window-pinning works by
+  > fighting the browser's own chrome — the address bar, its own compositing
+  > timing — and every one of the four prior on-device findings on this
+  > feature was exactly that fight going wrong in a different way. `"top"` is
+  > rebuilt on real `position: sticky` instead, which never leaves normal
+  > page flow and has nothing to do with browser chrome at all — the same
+  > mechanism virtually every reliable sticky header on the web already uses.
+  > `translateZ(0)` and the `document.body` portal both come off; neither
+  > applies to `sticky`.
+  >
+  > The one piece that does carry over: `.root`'s `overflow: hidden`
+  > (rounded-corner clipping) has to relax to `visible` specifically when
+  > `sticky: "top"` is active. A non-`visible` `overflow` on the sticky
+  > element's own parent makes browsers treat that parent as the sticky
+  > boundary instead of the real page — confirmed against this exact `.root`
+  > earlier in this same rollout, and a well-known cross-browser gotcha, worse
+  > on Safari specifically. `"bottom"` needed none of this: it was never the
+  > one disappearing, and `sticky` can't ride a keyboard opening anyway
+  > (nothing about that is a "scroll"), so it stays plain `position: fixed`,
+  > un-portalled.
+  >
+  > Verified this time in **both** Chromium and real WebKit via Playwright —
+  > `position: sticky`, pinned at `y: 0` through a deep scroll, back to its
+  > natural in-flow position on scroll-back, `.root`'s `overflow: visible`
+  > confirmed applied, in both engines. This carries more weight than the
+  > earlier "verified in Chromium" notes on this feature: every prior bug was
+  > iOS's own OS-level chrome-collapse animation, which no engine test can
+  > reproduce regardless of which engine; sticky positioning is pure CSS
+  > engine logic, which Playwright's WebKit build faithfully shares with an
+  > iPhone's. Still an on-device confirmation from the user, not a substitute
+  > for one — but a materially stronger signal than the four attempts before
+  > it.
+  >
+  > One real trade-off, documented rather than hidden: `sticky` only tracks
+  > scrolling of an ancestor it shares with the content underneath it. The
+  > toolbar sits beside `.source`/`.inplace`, not inside their own scrolling
+  > pane, so if a host gives `<Stylo>` a bounded height (its content scrolls
+  > internally rather than the whole page), `"top"` will not follow that
+  > internal scroll — `"bottom"`, or the host's own header, fits that layout
+  > instead. The rollout's actual use case, and every screenshot it was
+  > diagnosed from, is the whole page scrolling, which this fixes correctly.
 
 #### 3. Styling: CSS Modules + a small custom-property token set
 

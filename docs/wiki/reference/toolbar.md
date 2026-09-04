@@ -100,26 +100,26 @@ pressed-state updates.
 <Stylo value={doc} onChange={setDoc} toolbar={{ sticky: "top" }} />
 ```
 
-`sticky` fixes the bar to an edge of the **window** — not to wherever
-`<Stylo>` sits on the page. `true` is an alias for `"bottom"`. Off by default:
-window-relative positioning is right for a full-screen editor and wrong for a
+`sticky` pins the bar to an edge instead of wherever `<Stylo>` sits in the
+document flow. `true` is an alias for `"bottom"`. Off by default:
+edge-relative positioning is right for a full-screen editor and wrong for a
 small embedded field (a comment box, a form), so turn it on deliberately
 rather than it firing from a device check. Combine it with your own
 responsive check (`toolbar={{ sticky: isMobileViewport && "bottom" }}`) if you
 only want it below a breakpoint.
 
 Both positions drop the bar from wrapping to a single horizontally-scrolling
-row and grow each button to a 40px touch target. The editing surface gets a
-matching padding on that edge so the bar's resting height doesn't sit over the
-document's first or last line. Only one sticky instance is meant to be on
-screen at once — two `<Stylo>` editors both set to `sticky` would stack their
-bars at the same window edge.
+row and grow each button to a 40px touch target. Only one sticky instance is
+meant to be on screen at once — two `<Stylo>` editors both set to `sticky`
+would stack their bars at the same edge.
 
 ### `"bottom"` — above the keyboard
 
-Rides up above the on-screen keyboard as one opens, using the
-`visualViewport` API (`useKeyboardInset`). Two things to know before you rely
-on it:
+`position: fixed` to the window edge, riding up above the on-screen keyboard
+as one opens, using the `visualViewport` API (`useKeyboardInset`). The editing
+surface gets a matching bottom padding so the bar's resting height (keyboard
+closed) doesn't sit over the document's last line. Two things to know before
+you rely on it:
 
 **Pair it with a viewport meta tag.** By default, a mobile browser shrinks
 only the _visual_ viewport for the keyboard, not the _layout_ viewport a plain
@@ -147,48 +147,35 @@ chrome, not part of the page — no `z-index` on a web element can render above
 it. There is no fix for this from Stylo's side; if it matters for your layout,
 use `"top"` instead.
 
-### `"top"` — no keyboard involved at all
+### `"top"` — real CSS sticky, not a fixed window pin
 
-Pins to the top edge instead. Nothing ever eats into the top of the screen the
-way a keyboard eats the bottom, so this needs no `visualViewport` tracking, no
-meta tag pairing, and can't collide with a platform's accessory bar. Prefer it
-over `"bottom"` unless you specifically want the bar to travel with the
-keyboard.
+Pins to the top edge with `position: sticky`, not `position: fixed`. Nothing
+ever eats into the top of the screen the way a keyboard eats the bottom, so
+this needs no `visualViewport` tracking, no meta tag pairing, and can't
+collide with a platform's accessory bar. Prefer it over `"bottom"` unless you
+specifically want the bar to travel with the keyboard.
 
-It has its own on-device finding: a plain `position: fixed; top: 0` element
-can disappear and fail to reliably reappear while scrolling on iOS Safari —
-WebKit has a long-documented history of losing track of a fixed element across
-its own address-bar show/hide animation (separate from the keyboard), and
-separately across a nested `overflow: hidden` ancestor, which `<Stylo>`'s own
-root element carries. A static `transform: translateZ(0)` on the bar (forcing
-its own compositing layer — the fix `"bottom"` already gets for free from its
-keyboard-tracking `translateY()`) closes the first cause but was reported
-insufficient on its own. Any `sticky` bar is now also rendered through a React
-portal straight onto `document.body`, so it is never a descendant of
-`<Stylo>`'s root (or of whatever the host page nests `<Stylo>` inside) in the
-first place — the same technique overlay libraries use for dialogs and toasts,
-for the same reason. `translateZ(0)` stays on as a second, low-cost layer of
-defence.
+`sticky`, not `fixed`, is a deliberate choice: an earlier `position: fixed`
+implementation of `"top"` went through several rounds of on-device fixes for
+iOS Safari losing track of it during scroll, none of which held up reliably —
+`fixed` window-pinning works by fighting the browser's own chrome (the address
+bar collapsing, its own compositing timing), and each fix was that fight going
+wrong in a slightly different way. `position: sticky` sidesteps the fight
+entirely: it never leaves normal page flow, so there's no browser chrome to
+lose track of it against. It's the same mechanism virtually every reliable
+sticky header on the web already uses.
 
-Between the selection callout racing a long-press, the input accessory bar
-out-layering `"bottom"`, and two rounds of this scroll-disappearing bug, four
-distinct native-chrome interactions turned up from one day of hands-on
-testing — none reproducible from a headless browser. Treat `position: fixed`
-pinned to the real window as powerful but squarely in the path of whatever
-quirks the host browser's own chrome has; budget for a real device pass, not
-just the test suite, before shipping a sticky change.
-
-The portal itself briefly broke theming: every `--stylo-*` token is only
-_defined_ on the `.stylo` class, reaching the bar by ordinary CSS inheritance,
-and a portal breaks that chain exactly like it breaks the ancestor chain the
-fix targets. The bar showed a transparent background and its `H1`/`H2`/`H3`
-glyphs fell back to the browser default serif font (the base toolbar has
-never set its own `font-family`, only ever inherited whatever the host's page
-sets). Fixed by wrapping the portalled content in a bare `<div
-className="stylo">` — the token-defining class only, none of `.root`'s
-border/`overflow` — and giving `.toolbarSticky` its own explicit font stack.
-Portalling a themed element escapes every ancestor, wanted or not; anything it
-was relying on inheriting has to be re-declared at the new mount point.
+One requirement worth knowing: `sticky` only tracks scrolling of an ancestor
+it shares with the content underneath it. `<Stylo>`'s own root normally
+carries `overflow: hidden` (for rounded-corner clipping) — with `sticky: "top"`
+active, that's relaxed to `overflow: visible`, because a non-`visible`
+`overflow` on the sticky element's parent makes browsers treat that parent as
+the sticky boundary instead of the real page (a known, Safari-specific-ish
+cross-browser gotcha). The corollary: if you give `<Stylo>` a **bounded**
+height so its content scrolls in its own internal pane rather than the whole
+page scrolling, `"top"` won't follow that internal scroll — the toolbar sits
+beside `.source`/`.inplace`, not inside their scrolling box. Use `"bottom"`,
+or your own header, for that layout instead.
 
 ### `stickyVisibility` — fade it out when nothing is focused
 
