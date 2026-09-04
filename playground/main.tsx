@@ -10,6 +10,7 @@ import {
   type TableEditing,
   type ToolbarConfig,
 } from "../src/index"
+import { StickyDebug } from "./StickyDebug"
 import "katex/dist/katex.min.css"
 import "./styles.css"
 
@@ -408,6 +409,8 @@ function App() {
           className={mode === "split" ? "playground-editor is-split" : "playground-editor"}
         />
       )}
+
+      {stickyToolbar !== "off" && <StickyDebug />}
 
       <p style={{ color: "var(--pg-muted)", fontSize: "0.85rem", marginTop: "1rem" }}>
         {lastLink ? `Wikilink clicked: ${lastLink}` : "Switch to preview and click a [[wikilink]]."}
