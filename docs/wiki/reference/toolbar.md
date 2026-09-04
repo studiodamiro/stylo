@@ -111,11 +111,28 @@ breakpoint.
 Sticky mode also drops from wrapping to a single horizontally-scrolling row
 and grows each button to a 40px touch target. The editing surface gets a
 matching bottom padding so the bar's resting height doesn't sit over the last
-line of the document — a static amount, not keyboard-aware, so it covers the
-keyboard-closed state; while a keyboard is open, keeping the caret clear of
-both it and the bar is not separately guaranteed. Only one sticky instance is
-meant to be on screen at once — two `<Stylo>` editors both set to `sticky`
-would stack their bars at the same window edge.
+line of the document. Only one sticky instance is meant to be on screen at
+once — two `<Stylo>` editors both set to `sticky` would stack their bars at
+the same window edge.
+
+**Pair it with a viewport meta tag.** By default, a mobile browser shrinks
+only the _visual_ viewport for the keyboard, not the _layout_ viewport a plain
+`position: fixed` bottom offset is computed against — `sticky` compensates for
+that with a `visualViewport`-driven `transform`, but the more reliable fix is
+telling the browser to shrink the layout viewport too:
+
+```html
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1, interactive-widget=resizes-content"
+/>
+```
+
+Stylo cannot add this to your page itself — it's your `<meta>` tag, not
+Stylo's — so add it yourself alongside `sticky: true`. Without it, the bar
+still tracks the keyboard through `useKeyboardInset`, just with an extra layer
+of browser-timing between the keyboard opening and the bar's repaint that the
+meta tag sidesteps entirely.
 
 The context menu and the table's structural menu are reachable on touch too —
 a long-press opens them, the same as a right-click. See

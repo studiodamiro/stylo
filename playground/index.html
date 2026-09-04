@@ -2,7 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--
+      interactive-widget=resizes-content: the layout viewport shrinks along
+      with the visual one when the on-screen keyboard opens, so `toolbar.sticky`
+      (position: fixed; bottom: 0) rides above the keyboard on its own — needed
+      to actually exercise/verify that mode here. A host embedding Stylo with
+      `sticky: true` should add this to its own page; see the toolbar reference.
+    -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, interactive-widget=resizes-content"
+    />
     <title>Stylo — playground</title>
   </head>
   <body>

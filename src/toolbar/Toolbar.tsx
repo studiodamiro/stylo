@@ -72,14 +72,15 @@ export function Toolbar({ view, items, icons, disabled, sticky }: ToolbarProps) 
   }, [view])
 
   const className = sticky ? `${styles.toolbar} ${styles.toolbarSticky}` : styles.toolbar
+  // `transform`, not `bottom` — a `position: fixed` element repositioned via
+  // `bottom` doesn't reliably repaint in step with the keyboard animation on
+  // iOS Safari; `translateY` forces a compositor update on every
+  // `visualViewport` event instead. The bar's resting position (keyboard
+  // closed) is `bottom: 0` in CSS; this only nudges it up.
+  const stickyStyle = sticky ? { transform: `translateY(-${keyboardInset}px)` } : undefined
 
   return (
-    <div
-      className={className}
-      role="toolbar"
-      aria-label="Formatting"
-      style={sticky ? { bottom: keyboardInset } : undefined}
-    >
+    <div className={className} role="toolbar" aria-label="Formatting" style={stickyStyle}>
       {items.map((item, i) => {
         if (item === "|") {
           return <span key={`sep-${i}`} className={styles.toolbarSep} aria-hidden="true" />
