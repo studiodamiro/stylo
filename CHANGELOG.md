@@ -33,15 +33,13 @@ Notable changes to Stylo. The format follows
   for the most reliable tracking, and note it can render behind a platform's
   own keyboard accessory bar (native chrome, outside any web z-index). `"top"`
   needs neither: nothing eats into the top of the screen, so it can't collide
-  with a keyboard or its accessory bar. Keeping it visible on iOS Safari took
-  several rounds of fixes for it disappearing during scroll or around the
-  keyboard opening — it now runs a `requestAnimationFrame` loop that
-  re-asserts its position every frame instead of trusting the browser to
-  remember it correctly across whatever triggered the drift. Off by default;
-  combine with your own responsive check if you only want it below a
-  breakpoint. New `stickyVisibility` prop (`"consistent"`, the default, or
-  `"dynamic"`) fades the bar out while the editing surface is unfocused.
-  ADR-002 §2 amendment.
+  with a keyboard or its accessory bar. It runs a `requestAnimationFrame` loop
+  that continuously re-asserts its position rather than setting it once — see
+  **Known limitations** below for what that does and doesn't cover on iOS
+  Safari. Off by default; combine with your own responsive check if you only
+  want it below a breakpoint. New `stickyVisibility` prop (`"consistent"`, the
+  default, or `"dynamic"`) fades the bar out while the editing surface is
+  unfocused. ADR-002 §2 amendment.
 
 ### Documentation
 
@@ -60,6 +58,22 @@ Notable changes to Stylo. The format follows
   `syntaxTree` reads all line up. Install the packages alongside Stylo; see the
   README. Drops roughly 190&nbsp;kB gzipped from the bundle, and the `dist/`
   `codemirror` chunk with it.
+
+### Known limitations
+
+- `toolbar.sticky` (`"top"` and `"bottom"`) can disappear for the duration of
+  an active scroll gesture on iOS Safari, reappearing once scrolling settles.
+  Investigated at length — a compositing hint, real `position: sticky`, and a
+  `requestAnimationFrame` watchdog each closed one trigger and left this one
+  standing, including against a bare, unrelated element given the same
+  watchdog as a control. iOS Safari is known to drop `position: fixed` layers
+  from active compositing during a scroll gesture as a performance
+  optimisation, independent of any page CSS or JS — there is no available
+  fix from web content, the same class of limitation as `"bottom"`'s
+  accessory-bar collision. For a formatting surface that must survive being
+  actively scrolled, `inPlace.selectionUI: "bar"` positions relative to the
+  selection instead of the window and doesn't have this problem. ADR-002 §2
+  amendment.
 
 ## [0.1.0] - 2026-09-04
 

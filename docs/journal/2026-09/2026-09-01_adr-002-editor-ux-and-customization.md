@@ -341,6 +341,43 @@ untouched, and must not gate v1.
   > of the library) now shows the bar's live position and viewport numbers
   > in a corner readout, so the next occurrence — if there is one — gives a
   > real answer instead of another screenshot to pattern-match from.
+  >
+  > **The control-group result: a bare, watchdog-protected div disappeared
+  > too — this closes the investigation, not another round of it.** The
+  > debug readout itself was given the identical `useFloatingWatchdog`
+  > treatment as the toolbar, specifically so a future report could tell
+  > "the toolbar's code is still wrong" apart from "no `position: fixed`
+  > element survives this on this device." The report that came back: both
+  > disappeared together, mid-scroll, and only became visible again once
+  > scrolling stopped at a new position. That is the conclusive result. A
+  > `requestAnimationFrame` loop re-asserting a transform every 16ms can only
+  > fix a _mispositioned_ element; it cannot help if the browser has
+  > stopped compositing the layer at all for the duration of the gesture — a
+  > long-documented iOS Safari behavior where `position: fixed` layers are
+  > dropped from the active render pass during active/momentum scrolling as
+  > a performance optimisation, independent of any page-side CSS or JS.
+  > There is no known web-side fix for that; forcing a value to "change"
+  > every frame does nothing if the compositor isn't drawing the layer at
+  > all.
+  >
+  > Six rounds targeted `"top"` specifically: a static compositing hint, a
+  > `document.body` portal (plus the theming regression it caused), real
+  > `position: sticky`, and finally the rAF watchdog — each fixed the one
+  > trigger it targeted and left this one standing, because this one isn't a
+  > positioning bug to fix. **`sticky: "top"` and `"bottom"` are now
+  > documented as reliable while the page is at rest, and liable to
+  > disappear for the duration of an active scroll gesture on iOS Safari,
+  > full stop** — the same class of "native chrome outside any web z-index"
+  > limitation already accepted for `"bottom"`'s accessory-bar collision,
+  > not a defect to keep chasing with a seventh mechanism. The reliable
+  > alternative for anything that must survive a scroll gesture is not a
+  > window-pinned bar at all: the existing selection bar
+  > (`inPlace.selectionUI: "bar"`, ADR-002 §2 "Deferred" → shipped, see the
+  > [context-menu-and-selection-bar note](./2026-09-03_context-menu-and-selection-bar.md))
+  > positions relative to the selection using CodeMirror's own coordinate
+  > system rather than the window, and already hides deliberately on scroll
+  > and reappears on the next selection — the same behaviour this
+  > investigation arrived at by necessity, already shipped and stable.
 
 #### 3. Styling: CSS Modules + a small custom-property token set
 

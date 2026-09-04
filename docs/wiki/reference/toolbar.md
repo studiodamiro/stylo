@@ -113,6 +113,26 @@ row and grow each button to a 40px touch target. Only one sticky instance is
 meant to be on screen at once — two `<Stylo>` editors both set to `sticky`
 would stack their bars at the same edge.
 
+> **Known limitation, both positions: a `sticky` bar can disappear for the
+> duration of an active scroll gesture on iOS Safari, reappearing once
+> scrolling settles.** This was investigated at length — a static compositing
+> hint, real `position: sticky`, and finally a `requestAnimationFrame` loop
+> re-asserting the bar's position every frame all fixed the specific trigger
+> each one targeted, and a bare, unrelated `position: fixed` element given
+> the same rAF treatment as a control group disappeared the same way. That
+> result is conclusive, not inconclusive: iOS Safari is known to drop
+> `position: fixed` layers from active compositing during a scroll gesture as
+> a performance optimisation, independent of any page CSS or JS — no amount
+> of re-asserting a value fixes an element the browser isn't drawing at all
+> for that moment. It's the same category of "native behaviour outside any
+> web `z-index`" as `"bottom"`'s accessory-bar collision below, not a defect
+> still being chased. If a formatting surface needs to survive being actively
+> scrolled, the [selection bar](in-place-config.md#inplaceselectionui)
+> (`inPlace={{ selectionUI: "bar" }}`) is the more reliable shape for that:
+> it positions relative to the selection using CodeMirror's own coordinates
+> rather than the window, and already hides on scroll by design, reappearing
+> on the next selection rather than promising to survive one.
+
 ### `"bottom"` — above the keyboard
 
 `position: fixed` to the window edge, riding up above the on-screen keyboard
@@ -147,7 +167,7 @@ chrome, not part of the page — no `z-index` on a web element can render above
 it. There is no fix for this from Stylo's side; if it matters for your layout,
 use `"top"` instead.
 
-### `"top"` — always pinned, self-correcting
+### `"top"` — always pinned
 
 Pins to the top edge with `position: fixed`, from the first frame — it
 doesn't wait for you to scroll past it the way `"bottom"` does. The editing
@@ -157,19 +177,15 @@ eats the bottom, so this needs no `visualViewport` tracking, no meta tag
 pairing, and can't collide with a platform's accessory bar. Prefer it over
 `"bottom"` unless you specifically want the bar to travel with the keyboard.
 
-The CSS is the easy part; keeping it visible on iOS Safari was not. This mode
-went through several rounds of on-device fixes — a static compositing hint,
-then real `position: sticky` — for the bar disappearing during scroll or
-around the keyboard opening, and each one held up for one trigger and not the
-next. The common thread: every one of those relied on the browser correctly
-remembering the bar's position across some event it didn't directly cause
-(the address bar's own collapse animation, a resize landing next to a
-script-driven scroll). So `"top"` no longer asks the browser to remember
-anything: a `requestAnimationFrame` loop re-asserts its `transform` on every
-frame, alternating an imperceptible `0.01px` jitter so the value always
-counts as "changed" and the compositor always has something to recompute. A
-wrong position can't survive more than one frame before it's corrected,
-regardless of what caused it — the loop doesn't need to know.
+It also runs a `requestAnimationFrame` loop that continuously re-asserts its
+`transform`, rather than setting a position once and trusting the browser to
+keep it — this closes out most causes of it drifting after some external
+event (a resize, a script-driven scroll). It does **not** close the
+known limitation above: iOS Safari can stop compositing a `position: fixed`
+layer altogether for the duration of an active scroll gesture, and nothing
+running in the page can force a browser to draw a layer it has decided not to
+draw. See the note above the `"bottom"` section for what to reach for instead
+if that matters for your layout.
 
 ### `stickyVisibility` — fade it out when nothing is focused
 
