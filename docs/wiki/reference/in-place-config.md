@@ -218,16 +218,34 @@ single-character typing.
 
 ## Applied at mount
 
-The config is read once, when the in-place canvas is constructed. Changing
-`inPlace` on an already-mounted `<Stylo>` has no effect until the component
-remounts — give it a `key` derived from the config if you need it to react to
-a toggle change live.
+The **entire `inPlace` object** — `decorations`, `table`, `reveal`,
+`contextMenu`, `selectionUI`, `selectionBarItems` — is read once, when the
+in-place canvas is constructed. Changing it on an already-mounted `<Stylo>` has
+no effect. This is a deliberate contract, not a gap: it is applied through the
+CodeMirror extension configuration, the same way `codeLanguages` and the
+toolbar shortcuts are, and a live-reconfiguration path was evaluated and
+rejected in the
+[ADR-005 config-lifecycle amendment](../../journal/2026-09/2026-09-01_adr-005-in-place-decoration-toggles.md).
+
+To apply a change, remount the component with a `key` derived from the config:
+
+```tsx
+<Stylo
+  key={inPlace.table} // or a hash of the whole config
+  value={doc}
+  onChange={setDoc}
+  inPlace={inPlace}
+/>
+```
+
+`value`, `onChange`, the callback props, `readOnly`, `placeholder`, `toolbar`,
+and `icons` are all fully reactive — only `inPlace` and `codeLanguages` need
+the remount.
 
 ## Not in this pass
 
 Deferred, each its own later decision:
 
-- `inPlace.reveal` — `"line" | "node"` cursor-reveal granularity.
 - `inPlace.frontmatter` — a `source` / `inline` / `properties` display mode; the
   `properties` panel needs YAML parsing and its own dependency.
 - Drag-to-reorder rows / columns and multi-cell selection on the `"cells"` widget.

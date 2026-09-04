@@ -20,6 +20,13 @@ Notable changes to Stylo. The format follows
   add `"underline"` to `toolbar.items` to show the button. Renders underlined
   wherever the host renders inline HTML; Stylo's bundled `preview` does not.
 
+### Documentation
+
+- The `inPlace` and `codeLanguages` props are now specified as **applied at
+  mount** — a deliberate contract, with the `key`-to-remount recipe and the
+  reasons a live-reconfiguration path was rejected. ADR-005 config-lifecycle
+  amendment; props and in-place-config references.
+
 ### Changed
 
 - **BREAKING:** `@codemirror/*` and `@lezer/common` / `@lezer/highlight` are now
@@ -75,6 +82,7 @@ consumable from git.
   over the raw block and the host parses it.
 - `@codemirror/*` are regular dependencies, not peer dependencies.
 - The test suite runs in jsdom only.
-- `inPlace` config is read once at mount; changing it needs a remount.
+- `inPlace` config is read once at mount; changing it needs a remount. (Now
+  documented as an intentional contract — see `[Unreleased]`.)
 
 [0.1.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.1.0

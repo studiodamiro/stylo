@@ -39,6 +39,23 @@ import "@damiro/stylo/katex.css" // only if you use math in preview
 | `placeholder`     | `string`                                                                                        | —            | Shown when the document is empty (source surface).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `className`       | `string`                                                                                        | —            | Added to the root element alongside the internal classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
+## Config applied at mount
+
+Two props feed the CodeMirror extension configuration and are read **once**, when
+the editing surface is constructed: **`inPlace`** and **`codeLanguages`**.
+Changing either on a live `<Stylo>` has no effect. To apply a change, give the
+component a `key` derived from the config so React remounts it:
+
+```tsx
+<Stylo key={mode + JSON.stringify(inPlace)} value={doc} onChange={setDoc} inPlace={inPlace} />
+```
+
+Everything else — `value`, `onChange`, every callback, `readOnly`,
+`placeholder`, `toolbar`, `icons`, `className` — is fully reactive and needs no
+remount. The rationale for keeping `inPlace` mount-time (rather than a
+live-reconfiguration path) is in the
+[ADR-005 config-lifecycle amendment](../../journal/2026-09/2026-09-01_adr-005-in-place-decoration-toggles.md).
+
 ## Ref — imperative handle
 
 `<Stylo>` forwards a `ref` to a small imperative handle (`StyloHandle`, exported)

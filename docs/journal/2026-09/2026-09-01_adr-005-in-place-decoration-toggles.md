@@ -124,6 +124,41 @@ runtime toggling appears.
 > unconditionally at creation and only reveals in response to an actual
 > selection change, not the construction-time default.
 
+> **Amended 2026-09-04 (config lifecycle):** §4 was written for
+> `inPlace.decorations` alone. The `inPlace` namespace has since grown —
+> `table` (ADR-006), `reveal` (ADR-007), `contextMenu` / `contextMenu.groups`,
+> `selectionUI`, `selectionBarItems`, and the internal `onLinkClick` facet.
+> Every one is seeded into a `Facet` by `inPlaceExtension` at construction and
+> read, never rewritten. §4 now covers **the whole `inPlace` prop**: it is
+> applied when the in-place canvas mounts, and changing it on a live `<Stylo>`
+> does nothing until the component is recreated.
+>
+> The Sympose integration review asked whether this should become reactive. A
+> `Compartment` + `reconfigure`-on-prop-change path was evaluated and
+> **rejected**, for the same reason the original "Live reconfiguration"
+> alternative was:
+>
+> - The four decoration producers (`inPlacePlugin`, `blockMathField`,
+>   `frontmatterField`, `tableField`) only re-derive their output on
+>   `docChanged` / `selectionSet` / `viewportChanged`. A bare `reconfigure`
+>   transaction carries none of those, so nothing would actually rebuild
+>   without also adding a `startState.facet(F) !== state.facet(F)` guard to all
+>   four update paths — new branches on the hottest code in the canvas, to
+>   serve a prop that is set once in every known integration.
+> - Swapping `table: "source" ↔ "cells"` while a table widget holds an
+>   editing caret would tear a focused `contentEditable` cell out of the DOM
+>   mid-keystroke. Making that safe is its own body of work.
+>
+> **The contract:** to apply an `inPlace` change, give `<Stylo>` a React `key`
+> derived from the config so it remounts. This is the same rule that already
+> governs `codeLanguages` and the toolbar keymap — both compiled into the
+> CodeMirror configuration at construction. `value`, `onChange`, the callback
+> props, `readOnly`, `placeholder`, `toolbar`, and `icons` stay fully
+> reactive; only the two CodeMirror-extension inputs (`inPlace`,
+> `codeLanguages`) are mount-time. Revisit if an integration genuinely needs
+> to toggle one of these at runtime — the guarded-`reconfigure` design above
+> is the starting point.
+
 ## Consequences
 
 **Positive**

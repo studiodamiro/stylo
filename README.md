@@ -107,6 +107,11 @@ function Editor() {
 your own `ToolbarCustomItem` buttons, and a `render` slot to wrap it. See the
 [toolbar reference](./docs/wiki/reference/toolbar.md).
 
+`inPlace` and `codeLanguages` are read once, when the editing surface mounts —
+give `<Stylo>` a `key` derived from the config to apply a change. Every other
+prop is fully reactive. See
+[props · applied at mount](./docs/wiki/reference/props.md#config-applied-at-mount).
+
 ### Theming
 
 Every colour is a `--stylo-*` custom property; override any of them on `.stylo`
