@@ -99,6 +99,44 @@
   background: var(--stylo-border);
 }
 
+/* `toolbar={{ sticky: true }}` — fixed to the window bottom, above the
+   on-screen keyboard (Toolbar.tsx sets `bottom` from `useKeyboardInset`). One
+   row, no wrapping: it scrolls horizontally instead, and its buttons grow to
+   a comfortable touch size. */
+.toolbarSticky {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  border-bottom: none;
+  border-top: 1px solid var(--stylo-border);
+  box-shadow: 0 -2px 8px color-mix(in srgb, var(--stylo-text) 10%, transparent);
+}
+
+.toolbarSticky::-webkit-scrollbar {
+  display: none;
+}
+
+.toolbarSticky .toolbarButton {
+  min-width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+}
+
+/* Reserve the sticky bar's resting height so it doesn't sit over the last
+   line of the document. Static, not keyboard-aware: while the keyboard is
+   open the bar rides up to meet it (see `useKeyboardInset`), but the browser's
+   own scroll-into-view around the caret is what keeps typing visible above
+   both — this padding only covers the keyboard-closed resting state. */
+.stickyToolbarRoot .source,
+.stickyToolbarRoot .inplace {
+  padding-bottom: 52px;
+}
+
 .inplace :global(.cm-editor) {
   height: 100%;
 }

@@ -25,6 +25,11 @@ Notable changes to Stylo. The format follows
   add-column strips stay visible on touch devices instead of only on hover. The
   gesture logic is unit-tested; a hands-on pass on real iOS / Android hardware
   is still pending. ADR-007 rollout log.
+- `toolbar={{ sticky: true }}` — fixes the formatting bar to the bottom of the
+  window, riding above the on-screen keyboard instead of hiding behind it (the
+  Obsidian / iA Writer mobile pattern). Off by default; combine with your own
+  responsive check if you only want it below a breakpoint. ADR-002 §2
+  amendment.
 
 ### Documentation
 

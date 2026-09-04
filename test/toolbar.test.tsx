@@ -5,6 +5,7 @@ import { EditorSelection, EditorState } from "@codemirror/state"
 import { EditorView } from "@codemirror/view"
 import { markdownLanguage } from "@codemirror/lang-markdown"
 import { Stylo } from "../src/Stylo"
+import stylo from "../src/styles/stylo.module.css"
 import { BUILTIN_BY_ID, BUILTIN_COMMANDS } from "../src/toolbar/commands"
 import { DEFAULT_TOOLBAR_ITEMS, resolveToolbarItems } from "../src/toolbar/config"
 
@@ -655,6 +656,37 @@ test("toolbar.render receives the view once the surface mounts", async () => {
   )
   await vi.waitFor(() => expect(seen.at(-1)).toBeInstanceOf(EditorView))
   expect(seen[0]).toBeNull() // first render, before the lazy view is ready
+})
+
+test("toolbar.sticky is off by default — no sticky class, no root modifier", () => {
+  const { container } = render(<Stylo value="x" onChange={() => {}} mode="source" />)
+  const bar = container.querySelector('[role="toolbar"]')!
+  expect(bar.classList.contains(stylo.toolbarSticky!)).toBe(false)
+  const root = container.querySelector(`.${stylo.root}`)!
+  expect(root.classList.contains(stylo.stickyToolbarRoot!)).toBe(false)
+})
+
+test("toolbar={{ sticky: true }} adds the sticky class to the bar and the root", () => {
+  const { container } = render(
+    <Stylo value="x" onChange={() => {}} mode="source" toolbar={{ sticky: true }} />,
+  )
+  const bar = container.querySelector('[role="toolbar"]')!
+  expect(bar.classList.contains(stylo.toolbarSticky!)).toBe(true)
+  const root = container.querySelector(`.${stylo.root}`)!
+  expect(root.classList.contains(stylo.stickyToolbarRoot!)).toBe(true)
+})
+
+test("a sticky bar still renders its buttons and runs commands", async () => {
+  function Host() {
+    const [v, setV] = useState("hi")
+    return <Stylo value={v} onChange={setV} mode="source" toolbar={{ sticky: true }} />
+  }
+  const { container } = render(<Host />)
+  const bold = container.querySelector<HTMLButtonElement>('button[data-command="bold"]')!
+  const view = EditorView.findFromDOM(container.querySelector(".cm-editor")!)!
+  view.dispatch({ selection: EditorSelection.single(0, 2) })
+  bold.click()
+  await vi.waitFor(() => expect(view.state.doc.toString()).toBe("**hi**"))
 })
 
 test("underline wraps the selection in <u>…</u> and toggles back off", () => {

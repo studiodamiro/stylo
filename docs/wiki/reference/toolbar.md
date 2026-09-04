@@ -27,12 +27,13 @@ pressed state is read back from the document around the selection.
 
 ## The `toolbar` prop
 
-| Value               | Result                                       |
-| ------------------- | -------------------------------------------- |
-| omitted / `true`    | The full default bar, in the built-in order. |
-| `false`             | No bar.                                      |
-| `{ items: [...] }`  | Exactly those items, in that order.          |
-| `{ items, render }` | …with the rendered bar wrapped or replaced.  |
+| Value               | Result                                                                      |
+| ------------------- | --------------------------------------------------------------------------- |
+| omitted / `true`    | The full default bar, in the built-in order.                                |
+| `false`             | No bar.                                                                     |
+| `{ items: [...] }`  | Exactly those items, in that order.                                         |
+| `{ items, render }` | …with the rendered bar wrapped or replaced.                                 |
+| `{ items, sticky }` | …fixed to the window bottom, above the keyboard. See [On touch](#on-touch). |
 
 `items` is a list of built-in command ids with `"|"` for a separator, and — mixed
 in anywhere — [custom item](#custom-items) objects. Unknown ids are skipped.
@@ -91,6 +92,34 @@ your own chrome next to it, or ignore it and return something else entirely.
 editing surface mounts. `render` is called when `<Stylo>` itself re-renders — on
 mount, when the view arrives, and on any prop change — not on the bar's internal
 pressed-state updates.
+
+## On touch
+
+```tsx
+<Stylo value={doc} onChange={setDoc} toolbar={{ sticky: true }} />
+```
+
+`sticky` fixes the bar to the bottom of the **window** — not to wherever
+`<Stylo>` sits on the page — and rides it up above the on-screen keyboard as
+one opens, using the `visualViewport` API. Off by default: window-relative
+positioning is right for a full-screen editor and wrong for a small embedded
+field (a comment box, a form), so turn it on deliberately rather than it
+firing from a device check. Combine it with your own responsive check
+(`toolbar={{ sticky: isMobileViewport }}`) if you only want it below a
+breakpoint.
+
+Sticky mode also drops from wrapping to a single horizontally-scrolling row
+and grows each button to a 40px touch target. The editing surface gets a
+matching bottom padding so the bar's resting height doesn't sit over the last
+line of the document — a static amount, not keyboard-aware, so it covers the
+keyboard-closed state; while a keyboard is open, keeping the caret clear of
+both it and the bar is not separately guaranteed. Only one sticky instance is
+meant to be on screen at once — two `<Stylo>` editors both set to `sticky`
+would stack their bars at the same window edge.
+
+The context menu and the table's structural menu are reachable on touch too —
+a long-press opens them, the same as a right-click. See
+[in-place config · On touch](./in-place-config.md#on-touch).
 
 ## Command ids
 
@@ -253,6 +282,7 @@ The bar is structural CSS driven by the `--stylo-*` tokens (see
 
 The declarative-toolbar decision is
 [ADR-002 §2](../../journal/2026-09/2026-09-01_adr-002-editor-ux-and-customization.md),
-amended 2026-09-02 to the single-`items`-list shape and 2026-09-04 to allow
-custom item objects in that list plus a `render` slot. Build notes:
+amended 2026-09-02 to the single-`items`-list shape, 2026-09-04 to allow custom
+item objects in that list plus a `render` slot, and 2026-09-04 again for the
+`sticky` touch mode. Build notes:
 [toolbar milestone](../../journal/2026-09/2026-09-02_toolbar.md).

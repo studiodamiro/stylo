@@ -116,6 +116,33 @@ untouched, and must not gate v1.
   > `<StyloToolbarSettings />` visual customizer and the `left` / `right` /
   > `overflow` / `headings` sub-configs.
 
+  > **Amended 2026-09-04 (sticky toolbar):** a first touch pass surfaced that
+  > the top-docked bar is a real reach on a phone, and that a right-click-only
+  > context menu has no touch equivalent (see the
+  > [ADR-007 rollout log](./2026-09-03_adr-007-seamless-in-place.md)). Rather
+  > than fight the platform, `toolbar` gained a third knob, `sticky?: boolean`
+  > (default `false`), that relocates the same bar to the bottom of the
+  > **window**, riding above the on-screen keyboard instead of hiding behind
+  > it — the pattern Obsidian, iA Writer, and Ulysses use on mobile.
+  >
+  > It is opt-in, deliberately: fixing to the window rather than to wherever
+  > `<Stylo>` sits on the page is correct for a full-screen editor and wrong
+  > for a small embedded field, so a host turns it on rather than it firing
+  > from a `pointer: coarse` media query. Mechanically, a new
+  > `useKeyboardInset` hook reads the `visualViewport` API — the _layout_
+  > viewport a plain `position: fixed` bottom offset is computed against does
+  > not shrink when a mobile keyboard opens, only the _visual_ one does, which
+  > is the whole reason that API exists. `sticky` also drops the bar's wrap
+  > behaviour for a single horizontally-scrolling row and grows its buttons to
+  > a 40px touch target. The editing surface gets a static bottom padding so
+  > the bar's resting height (keyboard closed) doesn't sit over the last line
+  > of text; the padding is not keyboard-aware, so precisely how the caret
+  > stays clear of the bar while the keyboard is actually open, on real
+  > hardware, is unverified — the same class of caveat as the long-press work.
+  > Covered by `keyboard-inset.test.ts` (the hook, with a `visualViewport`
+  > stand-in jsdom doesn't provide) and sticky-specific cases in
+  > `toolbar.test.tsx`.
+
 #### 3. Styling: CSS Modules + a small custom-property token set
 
 - Internal UI (toolbar, menus, drawer) is styled with **CSS Modules**, compiled

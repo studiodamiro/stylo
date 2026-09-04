@@ -7,6 +7,7 @@ import type { ToolbarCommandId } from "../types"
 import { BUILTIN_BY_ID } from "./commands"
 import type { ToolbarItem } from "./config"
 import { DEFAULT_ICONS } from "./icons"
+import { useKeyboardInset } from "./keyboard-inset"
 
 export interface ToolbarProps {
   /** The surface the commands act on. `null` while a lazy view is mounting. */
@@ -17,6 +18,8 @@ export interface ToolbarProps {
   icons?: Partial<Record<ToolbarCommandId, ReactNode>>
   /** Render every button inert (e.g. a read-only surface). */
   disabled?: boolean
+  /** Fix the bar to the window bottom, above the keyboard (`ToolbarConfig.sticky`). */
+  sticky?: boolean
 }
 
 /** A button to render, normalised from a built-in id or a custom item. */
@@ -54,8 +57,9 @@ function toButton(item: Exclude<ToolbarItem, "|">, icons: ToolbarProps["icons"])
  * ids and consumer-supplied {@link ToolbarCustomItem}s render through the same
  * button path.
  */
-export function Toolbar({ view, items, icons, disabled }: ToolbarProps) {
+export function Toolbar({ view, items, icons, disabled, sticky }: ToolbarProps) {
   const [, refresh] = useReducer((n: number) => n + 1, 0)
+  const keyboardInset = useKeyboardInset(Boolean(sticky))
 
   useEffect(() => {
     if (!view) return
@@ -67,8 +71,15 @@ export function Toolbar({ view, items, icons, disabled }: ToolbarProps) {
     }
   }, [view])
 
+  const className = sticky ? `${styles.toolbar} ${styles.toolbarSticky}` : styles.toolbar
+
   return (
-    <div className={styles.toolbar} role="toolbar" aria-label="Formatting">
+    <div
+      className={className}
+      role="toolbar"
+      aria-label="Formatting"
+      style={sticky ? { bottom: keyboardInset } : undefined}
+    >
       {items.map((item, i) => {
         if (item === "|") {
           return <span key={`sep-${i}`} className={styles.toolbarSep} aria-hidden="true" />
