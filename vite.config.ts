@@ -65,16 +65,18 @@ export default defineConfig(({ command }) => ({
     sourcemap: true,
     // Single stylesheet, stable name: consumers import "@damiro/stylo/styles.css".
     rollupOptions: {
-      external: ["react", "react-dom", "react/jsx-runtime"],
+      // CodeMirror and Lezer are peer dependencies (ADR-008) — the host
+      // installs one copy and Stylo shares it, so a single `@codemirror/state`
+      // instance backs both. Keeping them out of the bundle is what makes that
+      // real; `react` is external for the same reason.
+      external: ["react", "react-dom", "react/jsx-runtime", /^@codemirror\//, /^@lezer\//],
       output: {
         assetFileNames: "styles.css",
         // Name the vendor chunks honestly. Without this, Rollup names a shared
-        // chunk after an arbitrary module inside it (CodeMirror landed on
-        // `icon-paths`, the remark pipeline on `callout`).
+        // chunk after an arbitrary module inside it (the remark pipeline landed
+        // on `callout`). Only the preview-side libraries are bundled now.
         manualChunks(id) {
           if (!id.includes("node_modules")) return
-          if (/[\\/](@codemirror|@lezer|crelt|style-mod|w3c-keyname)[\\/]/.test(id))
-            return "codemirror"
           if (/[\\/]katex[\\/]/.test(id)) return "katex"
           return "markdown"
         },

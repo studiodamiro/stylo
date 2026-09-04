@@ -24,7 +24,17 @@ bundle during install, so there is nothing else to wire up:
 npm install github:studiodamiro/stylo
 ```
 
-React 18+ is a peer dependency. Import lines are in [Usage](#usage).
+CodeMirror, Lezer, and React are **peer dependencies** — Stylo shares the host's
+copy rather than bundling its own, so editor state, facets, and the syntax tree
+have a single identity (see [ADR-008](docs/journal/2026-09/2026-09-04_adr-008-codemirror-peer-dependency.md)).
+Add them alongside Stylo if they are not already in your app:
+
+```bash
+npm install @codemirror/state @codemirror/view @codemirror/commands \
+  @codemirror/language @codemirror/lang-markdown @lezer/common @lezer/highlight
+```
+
+React 18+ is also a peer dependency. Import lines are in [Usage](#usage).
 
 ---
 

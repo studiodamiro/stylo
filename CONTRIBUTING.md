@@ -32,6 +32,11 @@ install, so every change is weighed against the cost it imposes on consumers.
 - **Compose from primitives.** CodeMirror 6 for the editing surface;
   `remark` / `rehype` + KaTeX for rendering. Do not adopt a ProseMirror- or
   Lexical-style editor framework.
+- **CodeMirror and Lezer stay peer dependencies.** They are externalised from
+  the bundle so the host's copy is the only copy — a new `@codemirror/*` or
+  `@lezer/*` import must be added to both `peerDependencies` and
+  `devDependencies`, never to `dependencies`. See
+  [ADR-008](./docs/journal/2026-09/2026-09-04_adr-008-codemirror-peer-dependency.md).
 
 ## Making changes
 
