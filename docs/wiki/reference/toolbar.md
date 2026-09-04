@@ -27,14 +27,70 @@ pressed state is read back from the document around the selection.
 
 ## The `toolbar` prop
 
-| Value              | Result                                       |
-| ------------------ | -------------------------------------------- |
-| omitted / `true`   | The full default bar, in the built-in order. |
-| `false`            | No bar.                                      |
-| `{ items: [...] }` | Exactly those items, in that order.          |
+| Value               | Result                                       |
+| ------------------- | -------------------------------------------- |
+| omitted / `true`    | The full default bar, in the built-in order. |
+| `false`             | No bar.                                      |
+| `{ items: [...] }`  | Exactly those items, in that order.          |
+| `{ items, render }` | …with the rendered bar wrapped or replaced.  |
 
-`items` is a list of command ids with `"|"` for a separator. Unknown ids are
-skipped.
+`items` is a list of built-in command ids with `"|"` for a separator, and — mixed
+in anywhere — [custom item](#custom-items) objects. Unknown ids are skipped.
+
+## Custom items
+
+An entry in `items` can be an object instead of a built-in id. It runs against
+the same live `EditorView` the built-ins do and reports its own pressed and
+disabled state:
+
+```tsx
+import type { ToolbarCustomItem } from "@damiro/stylo"
+
+const insertImage: ToolbarCustomItem = {
+  id: "insert-image", // stable, unique — also the React key and `data-command`
+  title: "Insert image", // tooltip + aria-label
+  icon: <ImageIcon size={16} />, // any ReactNode
+  run: (view) => openAssetPicker(view), // return value ignored
+  isActive: (state) => false, // optional — drives aria-pressed / data-active
+  disabled: (state) => false, // optional — renders the button disabled
+}
+
+;<Stylo value={doc} onChange={setDoc} toolbar={{ items: ["bold", "italic", "|", insertImage] }} />
+```
+
+`isActive` and `disabled` are re-read from the state on every selection, key,
+and pointer change, exactly like a built-in's context check. `id` must not
+collide with a built-in id or another custom item — it is used as the React key
+and rendered as `data-command="<id>"` for styling and test hooks (built-in
+buttons carry `data-command` too).
+
+Custom items have **no `keys` field**. Built-in shortcuts are compiled into
+CodeMirror's keymap when the editor is constructed, so a custom binding would
+need its own keymap — bind it yourself against
+[`getView()`](./props.md#imperative-handle) for now.
+
+## The render slot
+
+`toolbar.render` wraps or replaces the rendered bar:
+
+```tsx
+toolbar={{
+  items: ["bold", "italic"],
+  render: (bar, { view }) => (
+    <div className="my-toolbar-row">
+      {bar}
+      <SaveStatus view={view} />
+    </div>
+  ),
+}}
+```
+
+`bar` is the built-in `<div role="toolbar">` element. Return it wrapped, append
+your own chrome next to it, or ignore it and return something else entirely.
+`view` is `null` on the first render and becomes the live `EditorView` once the
+editing surface mounts. `render` is called when `<Stylo>` itself re-renders — on
+mount, when the view arrives, and on any prop change — not on the bar's internal
+pressed-state updates.
 
 ## Command ids
 
@@ -187,5 +243,6 @@ The bar is structural CSS driven by the `--stylo-*` tokens (see
 
 The declarative-toolbar decision is
 [ADR-002 §2](../../journal/2026-09/2026-09-01_adr-002-editor-ux-and-customization.md),
-amended 2026-09-02 to the single-`items`-list shape. Build notes:
+amended 2026-09-02 to the single-`items`-list shape and 2026-09-04 to allow
+custom item objects in that list plus a `render` slot. Build notes:
 [toolbar milestone](../../journal/2026-09/2026-09-02_toolbar.md).

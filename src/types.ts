@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import type { Language, LanguageDescription } from "@codemirror/language"
+import type { EditorState } from "@codemirror/state"
 import type { EditorView } from "@codemirror/view"
 
 export type StyloMode = "in-place" | "source" | "preview" | "split"
@@ -41,12 +42,51 @@ export type ToolbarCommandId =
   | "math"
   | "mathBlock"
 
+/**
+ * A consumer-supplied toolbar button. Mixed into `ToolbarConfig["items"]`
+ * alongside the built-in ids. It runs against the same live `EditorView` the
+ * built-ins do; `isActive` / `disabled` are read back from the state on every
+ * selection, key, and pointer change, exactly like a built-in.
+ *
+ * No `keys` field: built-in shortcuts are compiled into CodeMirror's keymap at
+ * editor construction, so a custom binding would need its own keymap. Bind it
+ * yourself against `getView()` for now.
+ */
+export interface ToolbarCustomItem {
+  /**
+   * Stable identity, also the React key. Must not collide with a built-in id
+   * (`bold`, `h1`, …) or another custom item.
+   */
+  id: string
+  /** Tooltip and accessible label. */
+  title: string
+  /** Button content — an inline SVG, a glyph, a short label. */
+  icon: ReactNode
+  /** Run against the live view. The return value is ignored. */
+  run: (view: EditorView) => void
+  /** Reflected as the button's pressed state (`aria-pressed`, `data-active`). */
+  isActive?: (state: EditorState) => boolean
+  /** When true, the button is rendered `disabled`. */
+  disabled?: (state: EditorState) => boolean
+}
+
+/** One rendered slot: a built-in id, a `"|"` separator, or a custom button. */
+export type ToolbarItem = ToolbarCommandId | "|" | ToolbarCustomItem
+
 export interface ToolbarConfig {
   /**
-   * Ordered toolbar items — any subset of the built-in command ids, in any
-   * order, with `"|"` for a separator. Omit for the full default bar.
+   * Ordered toolbar slots — built-in command ids, `"|"` separators, and
+   * {@link ToolbarCustomItem} objects, in any order. Omit for the full default
+   * bar.
    */
-  items?: (ToolbarCommandId | "|")[]
+  items?: ToolbarItem[]
+  /**
+   * Wrap or replace the rendered bar. `bar` is the built-in
+   * `<div role="toolbar">` element; return it wrapped, with extra chrome
+   * appended, or ignore it entirely and return your own. `view` is `null` until
+   * the surface has mounted.
+   */
+  render?: (bar: ReactNode, ctx: { view: EditorView | null }) => ReactNode
 }
 
 /**

@@ -94,6 +94,22 @@ untouched, and must not gate v1.
   > cell-navigation keymap and live pipe alignment
   > ([note](./2026-09-02_table-editing.md)).
 
+  > **Amended 2026-09-04 (extensibility):** the original "lock it down _or
+  > extend it_" intent lands. An `items` entry can now be a `ToolbarCustomItem`
+  > object instead of a built-in id — a consumer's own `id`, `title`, `icon`,
+  > `run(view)`, and optional `isActive` / `disabled` predicates. It is the
+  > same contract a built-in command satisfies internally, rendered through the
+  > same button path and refreshed on the same selection / key / pointer
+  > events. A `toolbar.render` slot (`(bar, { view }) => ReactNode`) wraps or
+  > replaces the rendered `<div role="toolbar">`. Every button, built-in and
+  > custom, now carries `data-command="<id>"` as a styling and test hook.
+  >
+  > **Still deferred:** keyboard shortcuts for custom items — built-in `keys`
+  > are compiled into CodeMirror's keymap at construction, so a custom binding
+  > needs its own keymap; the consumer uses `getView()` for now. Also the
+  > `<StyloToolbarSettings />` visual customizer and the `left` / `right` /
+  > `overflow` / `headings` sub-configs.
+
 #### 3. Styling: CSS Modules + a small custom-property token set
 
 - Internal UI (toolbar, menus, drawer) is styled with **CSS Modules**, compiled
