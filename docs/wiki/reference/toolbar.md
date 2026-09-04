@@ -94,32 +94,34 @@ pressed-state updates.
 
 ## Command ids
 
-| Id              | Action                                         | Shortcut                |
-| --------------- | ---------------------------------------------- | ----------------------- |
-| `undo` / `redo` | History                                        | `Mod-z` / `Mod-Shift-z` |
-| `save`          | Call the `onSave` prop with the document       | `Mod-s`                 |
-| `h1` `h2` `h3`  | Set / swap / clear an ATX heading              | `Mod-Alt-1..3`          |
-| `body`          | Strip any heading prefix — back to a paragraph | —                       |
-| `bold`          | Wrap in `**…**`                                | `Mod-b`                 |
-| `italic`        | Wrap in `*…*`                                  | `Mod-i`                 |
-| `strike`        | Wrap in `~~…~~`                                | —                       |
-| `code`          | Wrap in `` `…` ``                              | —                       |
-| `codeBlock`     | Fence the selected lines in ` ``` `            | —                       |
-| `link`          | `[text](url)`, or unlink                       | `Mod-k`                 |
-| `wikilink`      | `[[target]]`, or unwrap to the label           | `Mod-Shift-k`           |
-| `quote`         | Toggle a `>` line prefix                       | —                       |
-| `bulletList`    | Toggle a `-` line prefix                       | —                       |
-| `orderedList`   | Toggle a `1.` `2.` `3.` line prefix            | —                       |
-| `task`          | Toggle a `- [ ]` line prefix                   | —                       |
-| `hr`            | Insert / remove a `---` divider                | —                       |
-| `frontmatter`   | Wrap the doc top in `---`, or unwrap           | —                       |
-| `table`         | Insert a starter pipe table                    | —                       |
-| `math`          | Wrap in `$…$`                                  | —                       |
-| `mathBlock`     | Fence the selected lines in `$$`               | —                       |
+| Id              | Action                                                   | Shortcut                |
+| --------------- | -------------------------------------------------------- | ----------------------- |
+| `undo` / `redo` | History                                                  | `Mod-z` / `Mod-Shift-z` |
+| `save`          | Call the `onSave` prop with the document                 | `Mod-s`                 |
+| `h1` `h2` `h3`  | Set / swap / clear an ATX heading                        | `Mod-Alt-1..3`          |
+| `body`          | Strip any heading prefix — back to a paragraph           | —                       |
+| `bold`          | Wrap in `**…**`                                          | `Mod-b`                 |
+| `italic`        | Wrap in `*…*`                                            | `Mod-i`                 |
+| `strike`        | Wrap in `~~…~~`                                          | —                       |
+| `underline`     | Wrap in `<u>…</u>` (raw HTML) — _not in the default bar_ | —                       |
+| `code`          | Wrap in `` `…` ``                                        | —                       |
+| `codeBlock`     | Fence the selected lines in ` ``` `                      | —                       |
+| `link`          | `[text](url)`, or unlink                                 | `Mod-k`                 |
+| `wikilink`      | `[[target]]`, or unwrap to the label                     | `Mod-Shift-k`           |
+| `quote`         | Toggle a `>` line prefix                                 | —                       |
+| `bulletList`    | Toggle a `-` line prefix                                 | —                       |
+| `orderedList`   | Toggle a `1.` `2.` `3.` line prefix                      | —                       |
+| `task`          | Toggle a `- [ ]` line prefix                             | —                       |
+| `hr`            | Insert / remove a `---` divider                          | —                       |
+| `frontmatter`   | Wrap the doc top in `---`, or unwrap                     | —                       |
+| `table`         | Insert a starter pipe table                              | —                       |
+| `math`          | Wrap in `$…$`                                            | —                       |
+| `mathBlock`     | Fence the selected lines in `$$`                         | —                       |
 
-The default bar shows every id above **except `save`**, grouped by kind: history ·
-headings · inline text (with `link` and `wikilink`) · the three list markers ·
-block structure (`quote` `hr` `frontmatter` `table`) · code and math.
+The default bar shows every id above **except `save` and `underline`**, grouped
+by kind: history · headings · inline text (with `link` and `wikilink`) · the
+three list markers · block structure (`quote` `hr` `frontmatter` `table`) · code
+and math.
 
 `save` is opt-in: add it to `items` yourself. It renders **disabled** until an
 [`onSave`](./props.md) prop is wired, so it stays out of the default bar rather
@@ -127,6 +129,14 @@ than sitting there greyed out for every consumer. `Mod-s` triggers the
 same path with or without the button; with no `onSave` handler it does nothing and
 the browser keeps the key. A "saved / saving" status pill is not built in — see
 the [auto-save guide](../guides/autosave.md).
+
+`underline` is opt-in for a different reason: Markdown has no underline, so the
+command writes a raw `<u>…</u>` HTML pair. That renders underlined wherever the
+consuming app renders inline HTML (Obsidian, GitHub, anything running
+`rehype-raw` or similar). Stylo's own bundled `preview` does **not** enable raw
+HTML, so `<u>` tags there show through as text — enable it only if your render
+path handles inline HTML. No default shortcut; bind `Mod-u` yourself against
+`getView()` if you want one.
 
 `Mod` is `Cmd` on macOS and `Ctrl` elsewhere. The shortcuts are bound on the
 CodeMirror surface whether or not the visible bar is mounted; `toolbar={false}`

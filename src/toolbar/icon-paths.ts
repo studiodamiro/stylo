@@ -11,6 +11,7 @@ export const ICON_PATHS: Record<string, string> = {
   bold: "M7 5h6a3.5 3.5 0 0 1 0 7H7z|M7 12h7a3.5 3.5 0 0 1 0 7H7z",
   italic: "M19 5h-7|M12 19H5|M15 5l-4 14",
   strike: "M4 12h16|M8 8a4 3 0 0 1 4-3h1.5|M14 12a3 3 0 0 1 0 6h-2.5",
+  underline: "M6 4v6a6 6 0 0 0 12 0V4|M5 20h14",
   code: "m16 18 6-6-6-6|M8 6l-6 6 6 6",
   codeBlock: "M4 4h16v16H4z|m10 10-2 2 2 2|m14 10 2 2-2 2",
   link: "M10 13a5 5 0 0 0 7.07 0l3-3A5 5 0 0 0 13 3l-1.5 1.5|M14 11a5 5 0 0 0-7.07 0l-3 3A5 5 0 0 0 11 21l1.5-1.5",

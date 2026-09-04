@@ -656,3 +656,32 @@ test("toolbar.render receives the view once the surface mounts", async () => {
   await vi.waitFor(() => expect(seen.at(-1)).toBeInstanceOf(EditorView))
   expect(seen[0]).toBeNull() // first render, before the lazy view is ready
 })
+
+test("underline wraps the selection in <u>…</u> and toggles back off", () => {
+  const view = mkView("hello world", 0, 5)
+  BUILTIN_BY_ID.underline!.run(view)
+  expect(view.state.doc.toString()).toBe("<u>hello</u> world")
+  // caret now sits inside the span; running it again unwraps
+  BUILTIN_BY_ID.underline!.run(view)
+  expect(view.state.doc.toString()).toBe("hello world")
+})
+
+test("underlineActive reports the pressed state", () => {
+  const view = mkView("a <u>marked</u> word", 6) // inside "marked"
+  expect(BUILTIN_BY_ID.underline!.isActive!(view.state)).toBe(true)
+  view.dispatch({ selection: EditorSelection.single(0) })
+  expect(BUILTIN_BY_ID.underline!.isActive!(view.state)).toBe(false)
+})
+
+test("underline is disabled in a fenced code block and inside inline code", () => {
+  const fenced = mkView("```\ncode\n```", 6) // on the "code" line
+  expect(BUILTIN_BY_ID.underline!.disabled!(fenced.state)).toBe(true)
+  const inlineCode = mkView("a `snippet` b", 5) // inside `snippet`
+  expect(BUILTIN_BY_ID.underline!.disabled!(inlineCode.state)).toBe(true)
+  expect(BUILTIN_BY_ID.underline!.disabled!(mkView("plain words", 3).state)).toBe(false)
+})
+
+test("underline ships as a command but is not in the default bar", () => {
+  expect(BUILTIN_BY_ID.underline).toBeDefined()
+  expect(DEFAULT_TOOLBAR_ITEMS).not.toContain("underline")
+})

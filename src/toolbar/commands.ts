@@ -20,12 +20,14 @@ import { fencedCodeActive, mathBlockActive, toggleFencedCode, toggleMathBlock } 
 import {
   linkActive,
   toggleLink,
+  toggleUnderline,
   toggleWikiLink,
   toggleWrap,
+  underlineActive,
   wikiLinkActive,
   wrapActive,
 } from "./inline"
-import { linkString, wikiLinkString, wrapString } from "./inline-ops"
+import { linkString, underlineString, wikiLinkString, wrapString } from "./inline-ops"
 import { insertTable, tableActive } from "./table"
 
 // --- context predicates: where a command can't sensibly apply ---
@@ -192,6 +194,16 @@ export const BUILTIN_COMMANDS: ToolbarCommand[] = [
   wrap("bold", "Bold", "**", ["Mod-b"]),
   wrap("italic", "Italic", "*", ["Mod-i"]),
   wrap("strike", "Strikethrough", "~~"),
+  {
+    // Markdown has no underline. This inserts a raw `<u>…</u>` HTML pair, which
+    // renders wherever the host renders inline HTML. Not in the default bar —
+    // add `"underline"` to `toolbar.items` to show it.
+    id: "underline" as ToolbarCommandId,
+    title: "Underline",
+    run: (view) => runInlineInCell(view, underlineString) || toggleUnderline(view),
+    isActive: underlineActive,
+    disabled: disabledWhen(inLiteral, inOtherInlineLiteral("u"), nothingToWrap),
+  },
   wrap("code", "Inline code", "`"),
   {
     // In a table cell a fenced block has no valid Markdown, so degrade to

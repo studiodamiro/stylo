@@ -15,6 +15,10 @@ Notable changes to Stylo. The format follows
   rendered bar. Every toolbar button now carries a `data-command="<id>"`
   attribute. Custom items have no keyboard-shortcut field yet — bind against
   `getView()`. ADR-002 §2 amendment.
+- `underline` toolbar command — wraps the selection in a raw `<u>…</u>` HTML
+  pair (Markdown has no underline). Not in the default bar and has no default
+  shortcut; add `"underline"` to `toolbar.items` to use it. Renders underlined
+  wherever the host renders inline HTML; Stylo's bundled `preview` does not.
 
 ### Changed
 

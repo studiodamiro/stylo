@@ -28,6 +28,7 @@ export type ToolbarCommandId =
   | "bold"
   | "italic"
   | "strike"
+  | "underline"
   | "code"
   | "codeBlock"
   | "link"

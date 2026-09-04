@@ -1,7 +1,7 @@
 import { EditorSelection } from "@codemirror/state"
 import type { EditorState } from "@codemirror/state"
 import type { EditorView } from "@codemirror/view"
-import { esc, linkAtIn, wikiLinkAtIn, wrapOp } from "./inline-ops"
+import { esc, linkAtIn, underlineAtIn, wikiLinkAtIn, wrapOp } from "./inline-ops"
 
 /**
  * Toggle an inline wrapping mark (`**`, `*`, `~~`, `` ` ``, `$`) around each
@@ -129,4 +129,44 @@ export function toggleWikiLink(view: EditorView): boolean {
 /** True when the primary caret sits inside a `[[…]]` span on its line. */
 export function wikiLinkActive(state: EditorState): boolean {
   return wikiLinkAt(state) !== null
+}
+
+/** The `<u>…</u>` span under the primary caret, in document coordinates. */
+function underlineAt(state: EditorState): { from: number; to: number; inner: string } | null {
+  const { head } = state.selection.main
+  const line = state.doc.lineAt(head)
+  const hit = underlineAtIn(line.text, head - line.from)
+  return hit ? { from: line.from + hit.from, to: line.from + hit.to, inner: hit.inner } : null
+}
+
+/**
+ * Wrap the selection in `<u>…</u>` — a raw HTML tag pair, since Markdown has no
+ * underline. With the caret already inside a `<u>` span, unwrap it: the inner
+ * text stays, the tags go.
+ */
+export function toggleUnderline(view: EditorView): boolean {
+  const existing = underlineAt(view.state)
+  if (existing) {
+    view.dispatch({
+      changes: { from: existing.from, to: existing.to, insert: existing.inner },
+      selection: EditorSelection.range(existing.from, existing.from + existing.inner.length),
+      scrollIntoView: true,
+    })
+    view.focus()
+    return true
+  }
+  const { from, to } = view.state.selection.main
+  const inner = view.state.sliceDoc(from, to) || "text"
+  view.dispatch({
+    changes: { from, to, insert: `<u>${inner}</u>` },
+    selection: EditorSelection.range(from + 3, from + 3 + inner.length),
+    scrollIntoView: true,
+  })
+  view.focus()
+  return true
+}
+
+/** True when the primary caret sits inside a `<u>…</u>` span on its line. */
+export function underlineActive(state: EditorState): boolean {
+  return underlineAt(state) !== null
 }

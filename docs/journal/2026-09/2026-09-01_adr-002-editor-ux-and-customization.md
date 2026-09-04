@@ -104,6 +104,11 @@ untouched, and must not gate v1.
   > replaces the rendered `<div role="toolbar">`. Every button, built-in and
   > custom, now carries `data-command="<id>"` as a styling and test hook.
   >
+  > A built-in `underline` id also ships now. Markdown has no underline, so it
+  > writes a raw `<u>…</u>` pair — correct wherever the host renders inline HTML.
+  > It is kept out of the default bar (like `save`) and carries no shortcut, so a
+  > consumer opts in deliberately.
+  >
   > **Still deferred:** keyboard shortcuts for custom items — built-in `keys`
   > are compiled into CodeMirror's keymap at construction, so a custom binding
   > needs its own keymap; the consumer uses `getView()` for now. Also the

@@ -37,6 +37,7 @@ export const DEFAULT_ICONS: Record<ToolbarCommandId, ReactNode> = {
   bold: <Svg d={ICON_PATHS.bold!} />,
   italic: <Svg d={ICON_PATHS.italic!} />,
   strike: <Svg d={ICON_PATHS.strike!} />,
+  underline: <Svg d={ICON_PATHS.underline!} />,
   code: <Svg d={ICON_PATHS.code!} />,
   codeBlock: <Svg d={ICON_PATHS.codeBlock!} />,
   link: <Svg d={ICON_PATHS.link!} />,
