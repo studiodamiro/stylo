@@ -7,6 +7,7 @@
 export const ICON_PATHS: Record<string, string> = {
   undo: "M9 14 4 9l5-5|M4 9h11a5 5 0 0 1 0 10h-4",
   redo: "m15 14 5-5-5-5|M20 9H9a5 5 0 0 0 0 10h4",
+  save: "M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z|M17 21v-8H7v8|M7 3v5h8",
   bold: "M7 5h6a3.5 3.5 0 0 1 0 7H7z|M7 12h7a3.5 3.5 0 0 1 0 7H7z",
   italic: "M19 5h-7|M12 19H5|M15 5l-4 14",
   strike: "M4 12h16|M8 8a4 3 0 0 1 4-3h1.5|M14 12a3 3 0 0 1 0 6h-2.5",

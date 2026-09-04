@@ -1,4 +1,4 @@
-import { StrictMode, useState } from "react"
+import { StrictMode, useEffect, useRef, useState } from "react"
 import { createRoot } from "react-dom/client"
 import { languages } from "@codemirror/language-data"
 import {
@@ -13,60 +13,73 @@ import {
 import "katex/dist/katex.min.css"
 import "./styles.css"
 
-const DEMO = `---
-title: Welcome to Stylo
-tags: [demo, markdown]
----
-
-# Stylo playground
-
-A plain-text editor where the Markdown string is the source of truth, built on
-[CodeMirror 6](https://codemirror.net). Text can be **bold**, *italic*,
-~~struck through~~, or \`inline code\` — the markers hide in the in-place canvas
-until the caret lands on the line.
-
-## What works **today**
-
-- **Source** mode — a real CodeMirror 6 surface.
-- **Preview** mode — GFM tables, math, and wikilinks.
-- [x] in-place canvas
-- [ ] toggle me in the in-place canvas
-
-| Feature      |   Status |
-| ------------ | -------: |
-| Source mode  |     done |
-| Preview mode |     done |
-| In-place     |     done |
-
-Inline math: $e^{i\\pi} + 1 = 0$. And a display block:
-
-$$
-\\int_0^1 x^2 \\, dx = \\frac{1}{3}
-$$
-
-Jump to another note with [[Getting Started]], or a labelled one:
-[[api/reference|the API reference]].
-
----
-
-> The YAML frontmatter above is kept out of the rendered preview.
-
-\`\`\`ts
-const greet = (name: string) => \`hello, \${name}\`
-\`\`\`
-
-\`\`\`python
-def greet(name: str) -> str:
-    return f"hello, {name}"
-\`\`\`
-`
+const DOC_URL = "/api/doc" // dev middleware in vite.config.ts — reads/writes playground/content/sample.md
 
 const MODES: StyloMode[] = ["in-place", "source", "preview", "split"]
 
 const TOOLBARS: Record<string, boolean | ToolbarConfig> = {
   default: true,
-  compact: { items: ["bold", "italic", "code", "|", "h2", "link", "bulletList", "task"] },
+  compact: {
+    items: ["save", "|", "bold", "italic", "code", "|", "h2", "link", "bulletList", "task"],
+  },
   hidden: false,
+}
+
+type SaveStatus = "idle" | "saving" | "saved" | "error"
+
+/**
+ * `useAutosave` from `docs/wiki/guides/autosave.md`: debounce `onChange`, skip a
+ * save when nothing changed since `baseline` (the loaded / last-persisted text),
+ * flush on tab hide, and expose `saveNow` for `Mod-s`.
+ */
+function useAutosave(
+  value: string,
+  baseline: string,
+  save: (v: string) => Promise<void>,
+  delay = 600,
+) {
+  const [status, setStatus] = useState<SaveStatus>("idle")
+  const saved = useRef(baseline)
+  const latest = useRef(value)
+  latest.current = value
+  const saveRef = useRef(save)
+  saveRef.current = save
+
+  const flush = useRef(async () => {
+    if (latest.current === saved.current) return
+    const pending = latest.current
+    setStatus("saving")
+    try {
+      await saveRef.current(pending)
+      saved.current = pending
+      setStatus("saved")
+    } catch {
+      setStatus("error")
+    }
+  }).current
+
+  // Adopt a new baseline (initial load, external reload) without saving it back.
+  useEffect(() => {
+    saved.current = baseline
+  }, [baseline])
+
+  // Debounce: save `delay` ms after the last change.
+  useEffect(() => {
+    if (value === saved.current) return
+    const id = setTimeout(flush, delay)
+    return () => clearTimeout(id)
+  }, [value, delay, flush])
+
+  // Data-loss guard: flush when the tab is hidden.
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === "hidden") void flush()
+    }
+    document.addEventListener("visibilitychange", onHide)
+    return () => document.removeEventListener("visibilitychange", onHide)
+  }, [flush])
+
+  return { status, saveNow: flush }
 }
 
 const DECORATION_KEYS: (keyof InPlaceDecorationToggles)[] = [
@@ -84,15 +97,51 @@ const DECORATION_KEYS: (keyof InPlaceDecorationToggles)[] = [
   "tables",
 ]
 
+type Theme = "light" | "dark"
+
 function App() {
-  const [doc, setDoc] = useState(DEMO)
+  const [doc, setDoc] = useState("")
+  const [baseline, setBaseline] = useState("")
+  const [load, setLoad] = useState<"loading" | "ready" | "error">("loading")
   const [mode, setMode] = useState<StyloMode>("in-place")
+  const [theme, setTheme] = useState<Theme>("light")
+
+  // Load the document from the file, the way a real app would.
+  useEffect(() => {
+    let alive = true
+    fetch(DOC_URL)
+      .then((r) => {
+        if (!r.ok) throw new Error(String(r.status))
+        return r.text()
+      })
+      .then((text) => {
+        if (!alive) return
+        setDoc(text)
+        setBaseline(text)
+        setLoad("ready")
+      })
+      .catch(() => alive && setLoad("error"))
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  // Stylo's dark palette activates under a `.dark` / `[data-theme="dark"]`
+  // ancestor — here, on <html>, the way next-themes / shadcn drive it.
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+  }, [theme])
+
   const [toolbar, setToolbar] = useState<keyof typeof TOOLBARS>("default")
   const [frontmatter, setFrontmatter] = useState<"hidden" | "code">("hidden")
   const [tableEdit, setTableEdit] = useState<TableEditing>("cells")
   const [reveal, setReveal] = useState<RevealMode>("never")
   const [selectionUI, setSelectionUI] = useState<SelectionUI>("menu")
   const [lastLink, setLastLink] = useState<string | null>(null)
+  const { status: saveStatus, saveNow } = useAutosave(doc, baseline, async (md) => {
+    const r = await fetch(DOC_URL, { method: "PUT", body: md })
+    if (!r.ok) throw new Error(String(r.status))
+  })
   // ADR-005: inPlace config is read once at mount, so a changed toggle remounts
   // the canvas via `key` below — a deliberate demo of that construction-time rule.
   const [decorations, setDecorations] = useState<Required<InPlaceDecorationToggles>>(
@@ -122,15 +171,30 @@ function App() {
             style={{
               padding: "0.35rem 0.8rem",
               borderRadius: 6,
-              border: "1px solid #d4d4d8",
-              background: mode === m ? "#18181b" : "#fff",
-              color: mode === m ? "#fff" : "#18181b",
+              border: "1px solid var(--pg-border)",
+              background: mode === m ? "var(--pg-fg)" : "var(--pg-surface)",
+              color: mode === m ? "var(--pg-surface)" : "var(--pg-fg)",
               cursor: "pointer",
             }}
           >
             {m}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={() => setTheme((t) => (t === "light" ? "dark" : "light"))}
+          style={{
+            marginLeft: "auto",
+            padding: "0.35rem 0.8rem",
+            borderRadius: 6,
+            border: "1px solid var(--pg-border)",
+            background: "var(--pg-surface)",
+            color: "var(--pg-fg)",
+            cursor: "pointer",
+          }}
+        >
+          {theme === "light" ? "◐ dark" : "◑ light"}
+        </button>
       </div>
 
       {mode !== "preview" && (
@@ -141,14 +205,18 @@ function App() {
             gap: "0.5rem",
             margin: "0 0 1rem",
             fontSize: "0.85rem",
-            color: "#71717a",
+            color: "var(--pg-muted)",
           }}
         >
           toolbar
           <select
             value={toolbar}
             onChange={(e) => setToolbar(e.target.value as keyof typeof TOOLBARS)}
-            style={{ padding: "0.2rem 0.4rem", borderRadius: 6, border: "1px solid #d4d4d8" }}
+            style={{
+              padding: "0.2rem 0.4rem",
+              borderRadius: 6,
+              border: "1px solid var(--pg-border)",
+            }}
           >
             {Object.keys(TOOLBARS).map((k) => (
               <option key={k} value={k}>
@@ -167,14 +235,18 @@ function App() {
             gap: "0.5rem",
             margin: "0 0 1rem",
             fontSize: "0.85rem",
-            color: "#71717a",
+            color: "var(--pg-muted)",
           }}
         >
           frontmatter
           <select
             value={frontmatter}
             onChange={(e) => setFrontmatter(e.target.value as "hidden" | "code")}
-            style={{ padding: "0.2rem 0.4rem", borderRadius: 6, border: "1px solid #d4d4d8" }}
+            style={{
+              padding: "0.2rem 0.4rem",
+              borderRadius: 6,
+              border: "1px solid var(--pg-border)",
+            }}
           >
             <option value="hidden">hidden</option>
             <option value="code">code</option>
@@ -190,14 +262,18 @@ function App() {
             gap: "0.5rem",
             margin: "0 0 1rem",
             fontSize: "0.85rem",
-            color: "#71717a",
+            color: "var(--pg-muted)",
           }}
         >
           table editing
           <select
             value={tableEdit}
             onChange={(e) => setTableEdit(e.target.value as TableEditing)}
-            style={{ padding: "0.2rem 0.4rem", borderRadius: 6, border: "1px solid #d4d4d8" }}
+            style={{
+              padding: "0.2rem 0.4rem",
+              borderRadius: 6,
+              border: "1px solid var(--pg-border)",
+            }}
           >
             <option value="source">source</option>
             <option value="cells">cells</option>
@@ -206,7 +282,11 @@ function App() {
           <select
             value={reveal}
             onChange={(e) => setReveal(e.target.value as RevealMode)}
-            style={{ padding: "0.2rem 0.4rem", borderRadius: 6, border: "1px solid #d4d4d8" }}
+            style={{
+              padding: "0.2rem 0.4rem",
+              borderRadius: 6,
+              border: "1px solid var(--pg-border)",
+            }}
           >
             <option value="caret">caret</option>
             <option value="never">never</option>
@@ -215,7 +295,11 @@ function App() {
           <select
             value={selectionUI}
             onChange={(e) => setSelectionUI(e.target.value as SelectionUI)}
-            style={{ padding: "0.2rem 0.4rem", borderRadius: 6, border: "1px solid #d4d4d8" }}
+            style={{
+              padding: "0.2rem 0.4rem",
+              borderRadius: 6,
+              border: "1px solid var(--pg-border)",
+            }}
           >
             <option value="menu">menu</option>
             <option value="bar">bar</option>
@@ -226,7 +310,7 @@ function App() {
 
       {mode === "in-place" && (
         <details style={{ margin: "0 0 1rem", fontSize: "0.85rem" }}>
-          <summary style={{ cursor: "pointer", color: "#71717a" }}>
+          <summary style={{ cursor: "pointer", color: "var(--pg-muted)" }}>
             Customize in-place decorations (ADR-005)
           </summary>
           <div
@@ -251,28 +335,50 @@ function App() {
         </details>
       )}
 
-      <Stylo
-        key={
-          mode === "in-place"
-            ? `${JSON.stringify(decorations)}:${tableEdit}:${reveal}:${selectionUI}`
-            : "static"
-        }
-        value={doc}
-        onChange={setDoc}
-        mode={mode}
-        onWikiLinkClick={setLastLink}
-        onLinkClick={(href) => window.open(href, "_blank", "noopener")}
-        inPlace={{ decorations, table: tableEdit, reveal, selectionUI }}
-        toolbar={TOOLBARS[toolbar]}
-        frontmatter={frontmatter}
-        codeLanguages={languages}
-        className={mode === "split" ? "playground-editor is-split" : "playground-editor"}
-      />
+      {load === "loading" && <p style={{ color: "var(--pg-muted)" }}>Loading sample.md…</p>}
 
-      <p style={{ color: "#71717a", fontSize: "0.85rem", marginTop: "1rem" }}>
+      {load === "error" && (
+        <p style={{ color: "var(--pg-muted)" }}>
+          Couldn’t reach <code>{DOC_URL}</code>. Start the playground with <code>npm run dev</code>{" "}
+          so the file middleware is active.
+        </p>
+      )}
+
+      {load === "ready" && (
+        <Stylo
+          key={
+            mode === "in-place"
+              ? `${JSON.stringify(decorations)}:${tableEdit}:${reveal}:${selectionUI}`
+              : "static"
+          }
+          value={doc}
+          onChange={setDoc}
+          mode={mode}
+          onSave={() => saveNow()}
+          onWikiLinkClick={setLastLink}
+          onLinkClick={(href) => window.open(href, "_blank", "noopener")}
+          inPlace={{ decorations, table: tableEdit, reveal, selectionUI }}
+          toolbar={TOOLBARS[toolbar]}
+          frontmatter={frontmatter}
+          codeLanguages={languages}
+          className={mode === "split" ? "playground-editor is-split" : "playground-editor"}
+        />
+      )}
+
+      <p style={{ color: "var(--pg-muted)", fontSize: "0.85rem", marginTop: "1rem" }}>
         {lastLink ? `Wikilink clicked: ${lastLink}` : "Switch to preview and click a [[wikilink]]."}
         {" · "}
         {doc.length} characters
+        {" · "}
+        {
+          {
+            idle: "no changes saved yet",
+            saving: "saving to sample.md…",
+            saved: "saved to sample.md",
+            error: "save failed — is the dev server up?",
+          }[saveStatus]
+        }{" "}
+        (⌘/Ctrl-S saves now)
       </p>
     </main>
   )

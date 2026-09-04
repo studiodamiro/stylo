@@ -1,6 +1,6 @@
 {
   "name": "@damiro/stylo",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A plain-text-first Markdown editor for React, with first-class LaTeX (KaTeX) support.",
   "type": "module",
   "license": "MIT",
@@ -41,9 +41,12 @@
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc --noEmit",
+    "check:theme": "node scripts/check-theme-tokens.mjs",
+    "check:size": "node scripts/check-bundle-size.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "vite build && tsc -p tsconfig.build.json && cp katex.css dist/katex.css",
+    "prepare": "npm run build",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

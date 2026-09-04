@@ -285,20 +285,71 @@ export class EditableTableWidget extends WidgetType {
       this.sync(view)
       return
     }
-    if (event.key === "ArrowDown" && r === lastRow) {
-      event.preventDefault()
-      event.stopPropagation()
+    const cols = this.cols()
+    const exitBelow = () => {
       const { to } = this.bounds(view)
       view.focus()
       view.dispatch({ selection: { anchor: Math.min(to + 1, view.state.doc.length) } })
     }
-    if (event.key === "ArrowUp" && r === 0) {
-      event.preventDefault()
-      event.stopPropagation()
+    const exitAbove = () => {
       const { from } = this.bounds(view)
       view.focus()
       view.dispatch({ selection: { anchor: Math.max(from - 1, 0) } })
     }
+    const enterCell = (flat: number, offset: number) => {
+      const target = this.cellAt(Math.floor(flat / cols), flat % cols)
+      if (!target) return
+      this.pendingOffset = offset
+      target.focus()
+    }
+
+    // Vertical arrows walk the column; past the first / last row they leave the
+    // table. The caret's text offset rides along so a press feels continuous.
+    if (event.key === "ArrowDown") {
+      event.preventDefault()
+      event.stopPropagation()
+      if (r === lastRow) exitBelow()
+      else enterCell((r + 1) * cols + c, this.readCaret()?.offset ?? 0)
+      return
+    }
+    if (event.key === "ArrowUp") {
+      event.preventDefault()
+      event.stopPropagation()
+      if (r === 0) exitAbove()
+      else enterCell((r - 1) * cols + c, this.readCaret()?.offset ?? 0)
+      return
+    }
+    // Left / Right cross into the neighbouring cell only from the text edge —
+    // mid-text (or with a range selected) the browser moves within the cell.
+    if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+      const back = event.key === "ArrowLeft"
+      const caret = this.readCaret()
+      if (!caret || caret.offset !== caret.head) return
+      if (back ? caret.offset > 0 : caret.offset < (cell.textContent ?? "").length) return
+      event.preventDefault()
+      event.stopPropagation()
+      const flat = r * cols + c + (back ? -1 : 1)
+      if (flat < 0) return exitAbove()
+      if (flat >= this.rows.length * cols) return exitBelow()
+      enterCell(flat, back ? (this.rows[Math.floor(flat / cols)]?.[flat % cols] ?? "").length : 0)
+      return
+    }
+  }
+
+  /**
+   * Focus the first (top-left) or last (bottom-right) cell — keyboard entry into
+   * the table from the line above or below. Returns `false` when the DOM isn't
+   * mounted, so the caller can fall back to stock cursor motion.
+   */
+  focusEdge(edge: "first" | "last"): boolean {
+    if (!this.table) return false
+    const r = edge === "first" ? 0 : this.rows.length - 1
+    const c = edge === "first" ? 0 : this.cols() - 1
+    const cell = this.cellAt(r, c)
+    if (!cell) return false
+    this.pendingOffset = edge === "first" ? 0 : (this.rows[r]?.[c] ?? "").length
+    cell.focus()
+    return true
   }
 
   toDOM(view: EditorView) {

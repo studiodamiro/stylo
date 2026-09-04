@@ -16,6 +16,37 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run format:check
+      - run: npm run check:theme
       - run: npm run typecheck
       - run: npm run test
+      - run: npm run build
+      - run: npm run check:size
+
+  # The peer range is React >= 18, but dev pins React 19. Prove 18 still works.
+  react18:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm i --no-save react@^18 react-dom@^18 @types/react@^18 @types/react-dom@^18
+      - run: npm run typecheck
+      - run: npm run test
+
+  # Consumers a TypeScript major behind (e.g. Sympose) must still typecheck
+  # against the shipped .d.ts.
+  typescript6:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm i --no-save typescript@~6
+      - run: npm run typecheck
       - run: npm run build
