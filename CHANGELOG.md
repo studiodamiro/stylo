@@ -35,6 +35,9 @@ consumable from git.
 - `prepare` script, so the bundle builds itself on `npm install` from git.
 - `manualChunks` so the built vendor chunks are named `codemirror`, `markdown`,
   and `katex` rather than after arbitrary internal modules.
+- CI guards: `check:theme` (every `--stylo-*` colour has a light and a dark
+  value) and `check:size` (per-chunk gzip budgets). CI also runs a React 18 and
+  a TypeScript 6 job against the peer/consumer floor.
 
 ### Known limitations
 

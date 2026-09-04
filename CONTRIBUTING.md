@@ -38,8 +38,10 @@ install, so every change is weighed against the cost it imposes on consumers.
 - Touch only the lines and files necessary for the change at hand.
 - Discuss scope before large or architectural changes — open an issue or a draft
   ADR first.
-- Verify before opening a PR: `npm run format:check`, `npm run typecheck`,
-  `npm run build`, and `npm run test` must all pass. CI runs the same set.
+- Verify before opening a PR: `npm run format:check`, `npm run check:theme`,
+  `npm run typecheck`, `npm run test`, `npm run build`, and `npm run check:size`
+  must all pass. CI runs the same set, plus a React 18 and a TypeScript-6 job
+  against the peer/consumer floor.
 - If something fails or stalls, find the root cause rather than working around
   it.
 
@@ -146,6 +148,21 @@ Vite in library mode; TypeScript emits the declarations.
 | Dev / playground     | `npm run dev`          |
 | Format               | `npm run format`       |
 | Check formatting     | `npm run format:check` |
+| Theme-token guard    | `npm run check:theme`  |
 | Typecheck            | `npm run typecheck`    |
-| Build library bundle | `npm run build`        |
 | Run tests            | `npm run test`         |
+| Build library bundle | `npm run build`        |
+| Bundle-size guard    | `npm run check:size`   |
+
+## Releasing
+
+Pre-1.0, so every release may carry breaking changes; bump the **minor** for
+features and breaks, the **patch** for fixes only.
+
+1. `npm run format:check && npm run check:theme && npm run typecheck && npm run test && npm run build && npm run check:size`.
+2. Give the pending `CHANGELOG.md` section a `## [x.y.z] - YYYY-MM-DD` heading
+   and add the release link at the bottom.
+3. Bump `version` in `package.json`.
+4. Commit as `chore: release x.y.z`, then `git tag vx.y.z` and push the tag.
+5. `npm publish` (the `prepare` script builds `dist/` first). Until the first
+   publish, consumers install from git and `prepare` builds on their machine.
