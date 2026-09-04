@@ -25,6 +25,12 @@ const TOOLBARS: Record<string, boolean | ToolbarConfig> = {
   hidden: false,
 }
 
+/** Merge the "sticky (touch)" checkbox into whichever toolbar preset is picked. */
+function withSticky(cfg: boolean | ToolbarConfig, sticky: boolean): boolean | ToolbarConfig {
+  if (!sticky || cfg === false) return cfg
+  return cfg === true ? { sticky: true } : { ...cfg, sticky: true }
+}
+
 type SaveStatus = "idle" | "saving" | "saved" | "error"
 
 /**
@@ -133,6 +139,7 @@ function App() {
   }, [theme])
 
   const [toolbar, setToolbar] = useState<keyof typeof TOOLBARS>("default")
+  const [stickyToolbar, setStickyToolbar] = useState(false)
   const [frontmatter, setFrontmatter] = useState<"hidden" | "code">("hidden")
   const [tableEdit, setTableEdit] = useState<TableEditing>("cells")
   const [reveal, setReveal] = useState<RevealMode>("never")
@@ -224,6 +231,17 @@ function App() {
               </option>
             ))}
           </select>
+          <span
+            style={{ marginLeft: "0.75rem", display: "flex", alignItems: "center", gap: "0.35rem" }}
+          >
+            <input
+              type="checkbox"
+              checked={stickyToolbar}
+              disabled={toolbar === "hidden"}
+              onChange={(e) => setStickyToolbar(e.target.checked)}
+            />
+            sticky (touch)
+          </span>
         </label>
       )}
 
@@ -358,7 +376,7 @@ function App() {
           onWikiLinkClick={setLastLink}
           onLinkClick={(href) => window.open(href, "_blank", "noopener")}
           inPlace={{ decorations, table: tableEdit, reveal, selectionUI }}
-          toolbar={TOOLBARS[toolbar]}
+          toolbar={withSticky(TOOLBARS[toolbar]!, stickyToolbar)}
           frontmatter={frontmatter}
           codeLanguages={languages}
           className={mode === "split" ? "playground-editor is-split" : "playground-editor"}
