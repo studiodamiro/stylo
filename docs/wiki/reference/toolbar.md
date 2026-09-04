@@ -41,6 +41,7 @@ skipped.
 | Id              | Action                                         | Shortcut                |
 | --------------- | ---------------------------------------------- | ----------------------- |
 | `undo` / `redo` | History                                        | `Mod-z` / `Mod-Shift-z` |
+| `save`          | Call the `onSave` prop with the document       | `Mod-s`                 |
 | `h1` `h2` `h3`  | Set / swap / clear an ATX heading              | `Mod-Alt-1..3`          |
 | `body`          | Strip any heading prefix — back to a paragraph | —                       |
 | `bold`          | Wrap in `**…**`                                | `Mod-b`                 |
@@ -60,9 +61,16 @@ skipped.
 | `math`          | Wrap in `$…$`                                  | —                       |
 | `mathBlock`     | Fence the selected lines in `$$`               | —                       |
 
-The default bar shows every id above, grouped by kind: history · headings ·
-inline text (with `link` and `wikilink`) · the three list markers · block
-structure (`quote` `hr` `frontmatter` `table`) · code and math.
+The default bar shows every id above **except `save`**, grouped by kind: history ·
+headings · inline text (with `link` and `wikilink`) · the three list markers ·
+block structure (`quote` `hr` `frontmatter` `table`) · code and math.
+
+`save` is opt-in: add it to `items` yourself. It renders **disabled** until an
+[`onSave`](./props.md) prop is wired, so it stays out of the default bar rather
+than sitting there greyed out for every consumer. `Mod-s` triggers the
+same path with or without the button; with no `onSave` handler it does nothing and
+the browser keeps the key. A "saved / saving" status pill is not built in — see
+the [auto-save guide](../guides/autosave.md).
 
 `Mod` is `Cmd` on macOS and `Ctrl` elsewhere. The shortcuts are bound on the
 CodeMirror surface whether or not the visible bar is mounted; `toolbar={false}`

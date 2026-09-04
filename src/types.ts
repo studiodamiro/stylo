@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import type { Language, LanguageDescription } from "@codemirror/language"
+import type { EditorView } from "@codemirror/view"
 
 export type StyloMode = "in-place" | "source" | "preview" | "split"
 
@@ -18,6 +19,7 @@ export type FrontmatterDisplay = "hidden" | "code"
 export type ToolbarCommandId =
   | "undo"
   | "redo"
+  | "save"
   | "h1"
   | "h2"
   | "h3"
@@ -162,6 +164,13 @@ export interface StyloProps {
    * `"source"` is the plain surface and avoids loading the render chunk.
    */
   mode?: StyloMode
+  /**
+   * Called with the full Markdown string when `Mod-s` is pressed on any editing
+   * surface; the browser's own save dialog is then suppressed. Omit it and
+   * `Mod-s` keeps its default browser behaviour. Stylo holds no dirty state —
+   * `value` is yours, so compare it against your last-saved copy.
+   */
+  onSave?: (value: string) => void
   /** Invoked when a `[[wikilink]]` is activated in the preview or in-place canvas. */
   onWikiLinkClick?: (target: string) => void
   /**
@@ -199,4 +208,30 @@ export interface StyloProps {
   placeholder?: string
   /** Extra class on the root element, alongside the internal classes. */
   className?: string
+}
+
+/**
+ * Imperative handle exposed on a `ref` to `<Stylo>`. Every method is a no-op —
+ * returning `null` / `false` where it has a return value — in `preview` mode or
+ * before the editing surface has mounted, since there is no editor then.
+ */
+export interface StyloHandle {
+  /** Move keyboard focus into the editing surface. */
+  focus(): void
+  /**
+   * Put the caret at the start of the first ATX heading (`#` … `######`) whose
+   * text matches `text` (trimmed, case-insensitive) and scroll it to the top of
+   * the viewport. Returns `true` when a heading matched.
+   */
+  scrollToHeading(text: string): boolean
+  /**
+   * Replace the current selection — or insert at the caret when the selection is
+   * empty — with `md`. No effect on a `readOnly` surface.
+   */
+  insertAtCursor(md: string): void
+  /**
+   * The underlying CodeMirror `EditorView`, or `null` in `preview` mode or
+   * before mount. An escape hatch: not covered by semver.
+   */
+  getView(): EditorView | null
 }

@@ -17,6 +17,8 @@ export interface InPlaceViewProps {
   inPlace?: InPlaceConfig
   /** Fenced-code grammars, forwarded to the Markdown language. Read once. */
   codeLanguages?: CodeLanguages
+  /** Called with the doc string on `Mod-s`. */
+  onSave?: (value: string) => void
   /** Called with the `EditorView` once created, and with `null` on teardown. */
   onViewChange?: (view: EditorView | null) => void
 }
@@ -39,6 +41,7 @@ export function InPlaceView({
   onLinkClick,
   inPlace,
   codeLanguages,
+  onSave,
   onViewChange,
 }: InPlaceViewProps) {
   const clickRef = useRef(onWikiLinkClick)
@@ -62,6 +65,7 @@ export function InPlaceView({
     placeholder,
     extensions,
     codeLanguages,
+    onSave,
     onViewChange,
   })
   return <div className={styles.inplace} ref={ref} />

@@ -13,6 +13,8 @@ export interface SplitViewProps {
   placeholder?: string
   codeLanguages?: CodeLanguages
   frontmatter?: FrontmatterDisplay
+  /** Called with the doc string on `Mod-s`. */
+  onSave?: (value: string) => void
   /** Forwarded the source pane's `EditorView` for the shared toolbar. */
   onViewChange?: (view: EditorView | null) => void
 }
@@ -31,6 +33,7 @@ export function SplitView({
   placeholder,
   codeLanguages,
   frontmatter,
+  onSave,
   onViewChange,
 }: SplitViewProps) {
   const [view, setView] = useState<EditorView | null>(null)
@@ -77,6 +80,7 @@ export function SplitView({
           readOnly={readOnly}
           placeholder={placeholder}
           codeLanguages={codeLanguages}
+          onSave={onSave}
           onViewChange={handleView}
         />
       </div>

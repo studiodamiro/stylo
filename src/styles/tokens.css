@@ -4,6 +4,8 @@
  * visual reference only (ADR-002) — no shadcn or Tailwind code is bundled.
  */
 .stylo {
+  color-scheme: light;
+
   --stylo-bg: #ffffff;
   --stylo-text: #09090b;
   --stylo-text-muted: #71717a;
@@ -36,4 +38,36 @@
   --stylo-syntax-property: #0f766e;
   --stylo-syntax-tag: #cf222e;
   --stylo-syntax-invalid: #dc2626;
+}
+
+/*
+ * Dark palette. Triggered by a `.dark` or `[data-theme="dark"]` ancestor (the
+ * convention `next-themes` / shadcn use), or the same marker on `.stylo`
+ * itself. `:where()` keeps the selector at `.stylo`'s specificity, so a host
+ * override on `.stylo` still wins. Every value here mirrors a light token
+ * above — add both halves when introducing a new colour token.
+ */
+:where(.dark, [data-theme="dark"]) .stylo,
+.stylo:where(.dark, [data-theme="dark"]) {
+  color-scheme: dark;
+
+  --stylo-bg: #09090b;
+  --stylo-text: #fafafa;
+  --stylo-text-muted: #a1a1aa;
+  --stylo-border: #27272a;
+  --stylo-accent: #fafafa;
+  --stylo-link: #60a5fa;
+  --stylo-ring: #52525b;
+
+  --stylo-syntax-keyword: #c678dd;
+  --stylo-syntax-string: #98c379;
+  --stylo-syntax-escape: #d19a66;
+  --stylo-syntax-comment: #7f848e;
+  --stylo-syntax-number: #d19a66;
+  --stylo-syntax-constant: #d19a66;
+  --stylo-syntax-function: #61afef;
+  --stylo-syntax-type: #e5c07b;
+  --stylo-syntax-property: #56b6c2;
+  --stylo-syntax-tag: #e06c75;
+  --stylo-syntax-invalid: #e06c75;
 }

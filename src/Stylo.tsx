@@ -1,5 +1,5 @@
-import { Suspense, useState } from "react"
-import type { EditorView } from "@codemirror/view"
+import { forwardRef, Suspense, useImperativeHandle, useState } from "react"
+import { EditorView } from "@codemirror/view"
 import { SourceView } from "./editor/SourceView"
 import { LazyInPlaceView } from "./inplace/lazyInPlace"
 import { LazyPreview } from "./render/lazyPreview"
@@ -8,7 +8,7 @@ import styles from "./styles/stylo.module.css"
 import { Toolbar } from "./toolbar/Toolbar"
 import { resolveToolbarItems } from "./toolbar/config"
 import "./styles/tokens.css"
-import type { StyloProps } from "./types"
+import type { StyloHandle, StyloProps } from "./types"
 
 /**
  * Plain-text-first Markdown editor. `value` is the canonical Markdown string;
@@ -21,25 +21,61 @@ import type { StyloProps } from "./types"
  * A formatting `toolbar` sits above every editing surface (all modes but
  * `preview`); pass `toolbar={false}` to drop it or a `ToolbarConfig` to trim it.
  */
-export function Stylo({
-  value,
-  onChange,
-  mode = "in-place",
-  onWikiLinkClick,
-  onLinkClick,
-  readOnly,
-  placeholder,
-  className,
-  inPlace,
-  codeLanguages,
-  toolbar,
-  icons,
-  frontmatter,
-}: StyloProps) {
+export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
+  {
+    value,
+    onChange,
+    mode = "in-place",
+    onSave,
+    onWikiLinkClick,
+    onLinkClick,
+    readOnly,
+    placeholder,
+    className,
+    inPlace,
+    codeLanguages,
+    toolbar,
+    icons,
+    frontmatter,
+  },
+  ref,
+) {
   const resolved = mode === "preview" || mode === "split" || mode === "in-place" ? mode : "source"
 
   const [view, setView] = useState<EditorView | null>(null)
   const toolbarItems = resolved === "preview" ? null : resolveToolbarItems(toolbar)
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      focus: () => view?.focus(),
+      getView: () => view,
+      insertAtCursor: (md) => {
+        if (!view) return
+        view.dispatch(view.state.replaceSelection(md))
+        view.focus()
+      },
+      scrollToHeading: (text) => {
+        if (!view) return false
+        const target = text.trim().toLowerCase()
+        const { doc } = view.state
+        for (let n = 1; n <= doc.lines; n++) {
+          const line = doc.line(n)
+          const m = /^ {0,3}#{1,6}[ \t]+(.*?)(?:[ \t]+#+)?[ \t]*$/.exec(line.text)
+          if (!m || m[1] === undefined) continue
+          if (m[1].trim().toLowerCase() !== target) continue
+          view.dispatch({
+            selection: { anchor: line.from },
+            effects: EditorView.scrollIntoView(line.from, { y: "start" }),
+          })
+          view.focus()
+          return true
+        }
+        return false
+      },
+    }),
+    [view],
+  )
 
   const rootClass = [styles.root, "stylo", className].filter(Boolean).join(" ")
 
@@ -56,6 +92,7 @@ export function Stylo({
           readOnly={readOnly}
           placeholder={placeholder}
           codeLanguages={codeLanguages}
+          onSave={onSave}
           onViewChange={setView}
         />
       )}
@@ -75,6 +112,7 @@ export function Stylo({
           placeholder={placeholder}
           codeLanguages={codeLanguages}
           frontmatter={frontmatter}
+          onSave={onSave}
           onViewChange={setView}
         />
       )}
@@ -90,10 +128,13 @@ export function Stylo({
             onLinkClick={onLinkClick}
             inPlace={inPlace}
             codeLanguages={codeLanguages}
+            onSave={onSave}
             onViewChange={setView}
           />
         </Suspense>
       )}
     </div>
   )
-}
+})
+
+Stylo.displayName = "Stylo"

@@ -1,8 +1,9 @@
 import { useEffect, useRef } from "react"
-import { Annotation, Compartment, EditorState, type Extension } from "@codemirror/state"
-import { EditorView } from "@codemirror/view"
+import { Annotation, Compartment, EditorState, type Extension, Prec } from "@codemirror/state"
+import { EditorView, keymap } from "@codemirror/view"
 import type { CodeLanguages } from "../types"
 import { baseExtensions, dynamicConfig } from "./extensions"
+import { runSave } from "./save"
 
 /** Marks doc changes that came from the `value` prop, so they don't echo back through `onChange`. */
 const External = Annotation.define<boolean>()
@@ -12,6 +13,8 @@ export interface UseCodeMirrorOptions {
   onChange: (next: string) => void
   readOnly?: boolean
   placeholder?: string
+  /** Called with the doc string on `Mod-s`; suppresses the browser dialog when set. */
+  onSave?: (value: string) => void
   /** Called with the `EditorView` once it is created, and with `null` on teardown. */
   onViewChange?: (view: EditorView | null) => void
   /**
@@ -32,6 +35,7 @@ export function useCodeMirror({
   onChange,
   readOnly = false,
   placeholder,
+  onSave,
   onViewChange,
   extensions,
   codeLanguages,
@@ -40,6 +44,12 @@ export function useCodeMirror({
   const viewRef = useRef<EditorView | null>(null)
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
+  const onSaveRef = useRef(onSave)
+  onSaveRef.current = onSave
+  // Stable wrapper: the facet holds this, it reads the latest handler. The
+  // compartment only reconfigures when the handler's *presence* flips.
+  const saveFn = useRef((value: string) => onSaveRef.current?.(value)).current
+  const hasSave = onSave != null
   const onViewChangeRef = useRef(onViewChange)
   onViewChangeRef.current = onViewChange
   const dynamic = useRef(new Compartment())
@@ -56,7 +66,10 @@ export function useCodeMirror({
         doc: value,
         extensions: [
           baseExtensions(codeLanguages),
-          dynamic.current.of(dynamicConfig({ readOnly, placeholder })),
+          dynamic.current.of(
+            dynamicConfig({ readOnly, placeholder, save: hasSave ? saveFn : undefined }),
+          ),
+          Prec.high(keymap.of([{ key: "Mod-s", run: runSave }])),
           ...(extensions ?? []),
           EditorView.updateListener.of((update) => {
             if (!update.docChanged) return
@@ -91,9 +104,11 @@ export function useCodeMirror({
   // Reconfigure prop-driven extensions in place.
   useEffect(() => {
     viewRef.current?.dispatch({
-      effects: dynamic.current.reconfigure(dynamicConfig({ readOnly, placeholder })),
+      effects: dynamic.current.reconfigure(
+        dynamicConfig({ readOnly, placeholder, save: hasSave ? saveFn : undefined }),
+      ),
     })
-  }, [readOnly, placeholder])
+  }, [readOnly, placeholder, hasSave, saveFn])
 
   return parent
 }

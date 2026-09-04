@@ -385,10 +385,14 @@ test("wikilink toggling a plain [[target]] off leaves the bare target", () => {
 
 const TABLE_DOC = "intro\n\n| A | B |\n| - | - |\n| c | d |\n\ntail"
 
-/** The sorted ids whose `disabled` fires for the caret at `pos` in `doc`. */
+/**
+ * The sorted ids whose `disabled` fires for the caret at `pos` in `doc`.
+ * `save` is excluded — its `disabled` tracks whether an `onSave` handler is
+ * wired, not the caret context, and these bare views register none.
+ */
 function disabledAt(doc: string, pos: number): string[] {
   const { state } = mkView(doc, pos)
-  return BUILTIN_COMMANDS.filter((c) => c.disabled?.(state))
+  return BUILTIN_COMMANDS.filter((c) => c.id !== "save" && c.disabled?.(state))
     .map((c) => c.id)
     .sort()
 }

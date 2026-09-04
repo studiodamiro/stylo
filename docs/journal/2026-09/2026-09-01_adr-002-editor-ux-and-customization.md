@@ -130,6 +130,19 @@ untouched, and must not gate v1.
   > `max-width`, no `code` backticks, colour-only links, non-italic
   > blockquotes) and the full scale are in the
   > [typography note](./2026-09-02_typography-rhythm.md).
+  >
+  > **Amended 2026-09-04 (dark palette):** the token set now ships **dark values
+  > as well as light**. `tokens.css` keeps the light block on `.stylo` and adds
+  > a dark block that redefines every colour token, triggered by a `.dark` or
+  > `[data-theme="dark"]` ancestor — or the same marker on `.stylo` itself — the
+  > convention `next-themes` / shadcn drive. Stylo does **not** switch on
+  > `prefers-color-scheme`; a consumer's theme layer toggles the class, exactly
+  > as shadcn components behave. The dark selector is wrapped in `:where(...)` so
+  > its specificity stays equal to a bare `.stylo`, leaving host overrides on
+  > `.stylo` to win. `color-scheme` is set on both blocks. New rule: a colour
+  > token is not complete until it has a value in **both** blocks — a
+  > light-only token is a silent dark-mode regression. See the
+  > [save / handle / dark-mode note](./2026-09-04_save-imperative-handle-dark-mode.md).
 
 #### 4. Icons: inline SVG, no icon dependency
 
@@ -142,6 +155,40 @@ untouched, and must not gate v1.
 
 - `Cmd/Ctrl+B` bold, `Cmd/Ctrl+I` italic, `Cmd/Ctrl+K` link, `Cmd/Ctrl+S` save,
   `Cmd/Ctrl+Z` / `Shift+Cmd/Ctrl+Z` undo/redo, `Cmd/Ctrl+Alt+1/2/3` headings.
+
+  > **Amended 2026-09-04 (save wired):** `Cmd/Ctrl+S` is now bound. It calls the
+  > new **`onSave(value)`** prop with the full document and suppresses the
+  > browser's save dialog; with no `onSave` given, the key keeps its default
+  > browser behaviour. Stylo holds **no dirty state** — `value` is the
+  > consumer's, so `dirty = value !== lastSaved` is theirs to derive. The
+  > keymap lives once in `useCodeMirror`, so it covers `source`, `in-place`, and
+  > `split`.
+  >
+  > A **`save` toolbar command id** also ships (glyph + `BUILTIN_COMMANDS`
+  > entry), running the same path. It is **opt-in** — not in
+  > `DEFAULT_TOOLBAR_ITEMS` — and renders disabled until `onSave` is wired, so
+  > every consumer's bar is not stuck with a greyed button. The **status pill**
+  > (`saveStatus`) and the debounced **`autoSave`** hook stay deferred; the
+  > auto-save pattern is written up as a
+  > [wiki guide](../../wiki/guides/autosave.md) instead of a prop.
+
+#### 6. Imperative handle on a `ref`
+
+> **Added 2026-09-04 (post-v1, additive).** Not in the original ADR; recorded
+> here because it is part of the same consumer-integration surface.
+
+- `<Stylo>` forwards a `ref` exposing a small imperative handle, `StyloHandle`:
+  - `focus()` — move keyboard focus into the editing surface.
+  - `scrollToHeading(text)` — put the caret at the first ATX heading whose text
+    matches `text` (trimmed, case-insensitive) and scroll it to the top; returns
+    whether one matched. Backs "open note X, scroll to heading Y" navigation.
+  - `insertAtCursor(md)` — replace the selection, or insert at the caret.
+  - `getView()` — the underlying CodeMirror `EditorView`. An escape hatch,
+    explicitly **not** covered by semver; every other method is.
+- Every method is inert in `preview` mode (no editor): no-ops, `null`, `false`.
+- This supersedes exposing the internal `onViewChange` callback as a prop — the
+  handle is the single, typed seam. See the
+  [save / handle / dark-mode note](./2026-09-04_save-imperative-handle-dark-mode.md).
 
 ### Deferred (post-v1, additive)
 
@@ -167,6 +214,11 @@ untouched, and must not gate v1.
   >   The `<StyloToolbarSettings />` customizer and the docks stay deferred.
 
 - **Debounced auto-save hook** — `autoSave={{ enabled, intervalMs, onAutoSave }}`.
+  Still deferred as of 2026-09-04: manual save (`onSave` + `Cmd/Ctrl+S` + the
+  opt-in `save` toolbar id, §5) now ships, but a Stylo-owned debounce timer does
+  not. The pattern — a `useAutosave` hook over `onChange`, flushed on tab hide —
+  is documented as a [wiki guide](../../wiki/guides/autosave.md); it stays a
+  consumer concern, matching CodeMirror / TipTap / Lexical.
 - **Richer in-place decorations** beyond math and headings (tables, callouts,
   embeds).
 - **Real-time collaboration (CRDT)** — kept out of core to stay lightweight;

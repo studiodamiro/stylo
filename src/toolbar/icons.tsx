@@ -29,6 +29,7 @@ function Svg({ d }: { d: string }): ReactNode {
 export const DEFAULT_ICONS: Record<ToolbarCommandId, ReactNode> = {
   undo: <Svg d={ICON_PATHS.undo!} />,
   redo: <Svg d={ICON_PATHS.redo!} />,
+  save: <Svg d={ICON_PATHS.save!} />,
   h1: <b aria-hidden="true">H1</b>,
   h2: <b aria-hidden="true">H2</b>,
   h3: <b aria-hidden="true">H3</b>,

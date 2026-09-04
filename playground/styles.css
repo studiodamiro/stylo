@@ -1,7 +1,25 @@
+:root {
+  color-scheme: light;
+  --pg-bg: #fafafa;
+  --pg-surface: #ffffff;
+  --pg-fg: #18181b;
+  --pg-border: #d4d4d8;
+  --pg-muted: #71717a;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --pg-bg: #09090b;
+  --pg-surface: #1c1c1f;
+  --pg-fg: #fafafa;
+  --pg-border: #3f3f46;
+  --pg-muted: #a1a1aa;
+}
+
 body {
   margin: 0;
-  color: #18181b;
-  background: #fafafa;
+  color: var(--pg-fg);
+  background: var(--pg-bg);
 }
 
 .playground-editor {

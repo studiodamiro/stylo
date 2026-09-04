@@ -1,4 +1,4 @@
-import { StrictMode, useState } from "react"
+import { StrictMode, useEffect, useRef, useState } from "react"
 import { createRoot } from "react-dom/client"
 import { languages } from "@codemirror/language-data"
 import {
@@ -65,8 +65,40 @@ const MODES: StyloMode[] = ["in-place", "source", "preview", "split"]
 
 const TOOLBARS: Record<string, boolean | ToolbarConfig> = {
   default: true,
-  compact: { items: ["bold", "italic", "code", "|", "h2", "link", "bulletList", "task"] },
+  compact: {
+    items: ["save", "|", "bold", "italic", "code", "|", "h2", "link", "bulletList", "task"],
+  },
   hidden: false,
+}
+
+/**
+ * Trimmed `useAutosave` — debounce `onChange`, report status, expose `saveNow`
+ * for `Mod-s`. The full version (blur / pagehide flush, error state) is in
+ * `docs/wiki/guides/autosave.md`.
+ */
+function useAutosave(value: string, save: (v: string) => void, delay = 600) {
+  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle")
+  const saved = useRef(value)
+  const latest = useRef(value)
+  latest.current = value
+  const saveRef = useRef(save)
+  saveRef.current = save
+
+  const flush = useRef(() => {
+    if (latest.current === saved.current) return
+    setStatus("saving")
+    saveRef.current(latest.current)
+    saved.current = latest.current
+    setStatus("saved")
+  }).current
+
+  useEffect(() => {
+    if (value === saved.current) return
+    const id = setTimeout(flush, delay)
+    return () => clearTimeout(id)
+  }, [value, delay, flush])
+
+  return { status, saveNow: flush }
 }
 
 const DECORATION_KEYS: (keyof InPlaceDecorationToggles)[] = [
@@ -84,15 +116,32 @@ const DECORATION_KEYS: (keyof InPlaceDecorationToggles)[] = [
   "tables",
 ]
 
+type Theme = "light" | "dark"
+
 function App() {
   const [doc, setDoc] = useState(DEMO)
   const [mode, setMode] = useState<StyloMode>("in-place")
+  const [theme, setTheme] = useState<Theme>("light")
+
+  // Stylo's dark palette activates under a `.dark` / `[data-theme="dark"]`
+  // ancestor — here, on <html>, the way next-themes / shadcn drive it.
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+  }, [theme])
+
   const [toolbar, setToolbar] = useState<keyof typeof TOOLBARS>("default")
   const [frontmatter, setFrontmatter] = useState<"hidden" | "code">("hidden")
   const [tableEdit, setTableEdit] = useState<TableEditing>("cells")
   const [reveal, setReveal] = useState<RevealMode>("never")
   const [selectionUI, setSelectionUI] = useState<SelectionUI>("menu")
   const [lastLink, setLastLink] = useState<string | null>(null)
+  const { status: saveStatus, saveNow } = useAutosave(doc, (md) => {
+    try {
+      localStorage.setItem("stylo:playground", md)
+    } catch {
+      /* private mode, quota, etc. */
+    }
+  })
   // ADR-005: inPlace config is read once at mount, so a changed toggle remounts
   // the canvas via `key` below — a deliberate demo of that construction-time rule.
   const [decorations, setDecorations] = useState<Required<InPlaceDecorationToggles>>(
@@ -122,15 +171,30 @@ function App() {
             style={{
               padding: "0.35rem 0.8rem",
               borderRadius: 6,
-              border: "1px solid #d4d4d8",
-              background: mode === m ? "#18181b" : "#fff",
-              color: mode === m ? "#fff" : "#18181b",
+              border: "1px solid var(--pg-border)",
+              background: mode === m ? "var(--pg-fg)" : "var(--pg-surface)",
+              color: mode === m ? "var(--pg-surface)" : "var(--pg-fg)",
               cursor: "pointer",
             }}
           >
             {m}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={() => setTheme((t) => (t === "light" ? "dark" : "light"))}
+          style={{
+            marginLeft: "auto",
+            padding: "0.35rem 0.8rem",
+            borderRadius: 6,
+            border: "1px solid var(--pg-border)",
+            background: "var(--pg-surface)",
+            color: "var(--pg-fg)",
+            cursor: "pointer",
+          }}
+        >
+          {theme === "light" ? "◐ dark" : "◑ light"}
+        </button>
       </div>
 
       {mode !== "preview" && (
@@ -141,14 +205,18 @@ function App() {
             gap: "0.5rem",
             margin: "0 0 1rem",
             fontSize: "0.85rem",
-            color: "#71717a",
+            color: "var(--pg-muted)",
           }}
         >
           toolbar
           <select
             value={toolbar}
             onChange={(e) => setToolbar(e.target.value as keyof typeof TOOLBARS)}
-            style={{ padding: "0.2rem 0.4rem", borderRadius: 6, border: "1px solid #d4d4d8" }}
+            style={{
+              padding: "0.2rem 0.4rem",
+              borderRadius: 6,
+              border: "1px solid var(--pg-border)",
+            }}
           >
             {Object.keys(TOOLBARS).map((k) => (
               <option key={k} value={k}>
@@ -167,14 +235,18 @@ function App() {
             gap: "0.5rem",
             margin: "0 0 1rem",
             fontSize: "0.85rem",
-            color: "#71717a",
+            color: "var(--pg-muted)",
           }}
         >
           frontmatter
           <select
             value={frontmatter}
             onChange={(e) => setFrontmatter(e.target.value as "hidden" | "code")}
-            style={{ padding: "0.2rem 0.4rem", borderRadius: 6, border: "1px solid #d4d4d8" }}
+            style={{
+              padding: "0.2rem 0.4rem",
+              borderRadius: 6,
+              border: "1px solid var(--pg-border)",
+            }}
           >
             <option value="hidden">hidden</option>
             <option value="code">code</option>
@@ -190,14 +262,18 @@ function App() {
             gap: "0.5rem",
             margin: "0 0 1rem",
             fontSize: "0.85rem",
-            color: "#71717a",
+            color: "var(--pg-muted)",
           }}
         >
           table editing
           <select
             value={tableEdit}
             onChange={(e) => setTableEdit(e.target.value as TableEditing)}
-            style={{ padding: "0.2rem 0.4rem", borderRadius: 6, border: "1px solid #d4d4d8" }}
+            style={{
+              padding: "0.2rem 0.4rem",
+              borderRadius: 6,
+              border: "1px solid var(--pg-border)",
+            }}
           >
             <option value="source">source</option>
             <option value="cells">cells</option>
@@ -206,7 +282,11 @@ function App() {
           <select
             value={reveal}
             onChange={(e) => setReveal(e.target.value as RevealMode)}
-            style={{ padding: "0.2rem 0.4rem", borderRadius: 6, border: "1px solid #d4d4d8" }}
+            style={{
+              padding: "0.2rem 0.4rem",
+              borderRadius: 6,
+              border: "1px solid var(--pg-border)",
+            }}
           >
             <option value="caret">caret</option>
             <option value="never">never</option>
@@ -215,7 +295,11 @@ function App() {
           <select
             value={selectionUI}
             onChange={(e) => setSelectionUI(e.target.value as SelectionUI)}
-            style={{ padding: "0.2rem 0.4rem", borderRadius: 6, border: "1px solid #d4d4d8" }}
+            style={{
+              padding: "0.2rem 0.4rem",
+              borderRadius: 6,
+              border: "1px solid var(--pg-border)",
+            }}
           >
             <option value="menu">menu</option>
             <option value="bar">bar</option>
@@ -226,7 +310,7 @@ function App() {
 
       {mode === "in-place" && (
         <details style={{ margin: "0 0 1rem", fontSize: "0.85rem" }}>
-          <summary style={{ cursor: "pointer", color: "#71717a" }}>
+          <summary style={{ cursor: "pointer", color: "var(--pg-muted)" }}>
             Customize in-place decorations (ADR-005)
           </summary>
           <div
@@ -260,6 +344,7 @@ function App() {
         value={doc}
         onChange={setDoc}
         mode={mode}
+        onSave={() => saveNow()}
         onWikiLinkClick={setLastLink}
         onLinkClick={(href) => window.open(href, "_blank", "noopener")}
         inPlace={{ decorations, table: tableEdit, reveal, selectionUI }}
@@ -269,10 +354,18 @@ function App() {
         className={mode === "split" ? "playground-editor is-split" : "playground-editor"}
       />
 
-      <p style={{ color: "#71717a", fontSize: "0.85rem", marginTop: "1rem" }}>
+      <p style={{ color: "var(--pg-muted)", fontSize: "0.85rem", marginTop: "1rem" }}>
         {lastLink ? `Wikilink clicked: ${lastLink}` : "Switch to preview and click a [[wikilink]]."}
         {" · "}
         {doc.length} characters
+        {" · "}
+        autosave:{" "}
+        {saveStatus === "saving"
+          ? "saving…"
+          : saveStatus === "saved"
+            ? "saved to localStorage"
+            : "idle"}{" "}
+        (⌘/Ctrl-S or the compact toolbar to save now)
       </p>
     </main>
   )
