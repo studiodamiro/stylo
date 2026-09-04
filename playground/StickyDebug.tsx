@@ -1,16 +1,18 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { useFloatingWatchdog } from "../src/toolbar/floating-watchdog"
 
 interface Snapshot {
   barY: number
   barH: number
   barPosition: string
+  selfY: number
   scrollY: number
   vvHeight: number | null
   vvOffsetTop: number | null
   innerHeight: number
 }
 
-function snapshot(): Snapshot {
+function snapshot(selfEl: HTMLElement | null): Snapshot {
   const bar = document.querySelector('[role="toolbar"]')
   const rect = bar?.getBoundingClientRect()
   const cs = bar ? getComputedStyle(bar) : null
@@ -19,6 +21,10 @@ function snapshot(): Snapshot {
     barY: rect ? Math.round(rect.y) : NaN,
     barH: rect ? Math.round(rect.height) : NaN,
     barPosition: cs?.position ?? "n/a",
+    // This readout's own position — a bare `position: fixed` div with the
+    // same rAF watchdog the toolbar uses (see below). If this drifts too,
+    // the bug isn't specific to the toolbar's own code.
+    selfY: selfEl ? Math.round(selfEl.getBoundingClientRect().y) : NaN,
     scrollY: Math.round(window.scrollY),
     vvHeight: vv ? Math.round(vv.height) : null,
     vvOffsetTop: vv ? Math.round(vv.offsetTop) : null,
@@ -37,10 +43,16 @@ function snapshot(): Snapshot {
  * browser.
  */
 export function StickyDebug() {
-  const [snap, setSnap] = useState<Snapshot>(snapshot)
+  const selfRef = useRef<HTMLDivElement>(null)
+  const [snap, setSnap] = useState<Snapshot>(() => snapshot(null))
+  // The same rAF watchdog the toolbar uses, applied to this readout too — a
+  // control group. If this bare fixed div also drifts on scroll, the bug
+  // isn't specific to the toolbar; if it holds while the toolbar still
+  // doesn't, that points at something toolbar- or render-specific instead.
+  useFloatingWatchdog(selfRef, true)
 
   useEffect(() => {
-    const update = () => setSnap(snapshot())
+    const update = () => setSnap(snapshot(selfRef.current))
     window.addEventListener("scroll", update, { passive: true })
     window.addEventListener("resize", update)
     window.visualViewport?.addEventListener("resize", update)
@@ -57,10 +69,11 @@ export function StickyDebug() {
 
   return (
     <div
+      ref={selfRef}
       style={{
         position: "fixed",
         left: 4,
-        bottom: 4,
+        top: 4,
         zIndex: 9999,
         padding: "4px 6px",
         background: "rgba(0,0,0,0.75)",
@@ -73,7 +86,7 @@ export function StickyDebug() {
         whiteSpace: "pre",
       }}
     >
-      {`bar y:${snap.barY} h:${snap.barH} pos:${snap.barPosition}\nscrollY:${snap.scrollY} vvH:${snap.vvHeight} vvTop:${snap.vvOffsetTop} winH:${snap.innerHeight}`}
+      {`bar y:${snap.barY} h:${snap.barH} pos:${snap.barPosition} | self y:${snap.selfY}\nscrollY:${snap.scrollY} vvH:${snap.vvHeight} vvTop:${snap.vvOffsetTop} winH:${snap.innerHeight}`}
     </div>
   )
 }
