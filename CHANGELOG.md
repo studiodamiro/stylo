@@ -20,6 +20,9 @@ consumable from git.
   per-command icon overrides via the `icons` prop.
 - `[[wikilink]]` support with an `onWikiLinkClick` callback; `onLinkClick` for
   standard links.
+- `onFrontmatter(raw)` callback (fires on mount and on change) and a
+  `splitFrontmatter(md)` export. Stylo bundles no YAML parser — the host parses
+  the raw block.
 - `onSave` prop: `Mod-s` on any editing surface calls it with the full document
   and suppresses the browser's save dialog. An opt-in `save` toolbar id runs the
   same path; it is not in the default bar and stays disabled until `onSave` is
@@ -41,8 +44,8 @@ consumable from git.
 
 ### Known limitations
 
-- Frontmatter is recognised but not parsed to key/value pairs; `preview` renders
-  the block as `<pre>` at most.
+- No built-in YAML parsing or rendered "properties" panel; `onFrontmatter` hands
+  over the raw block and the host parses it.
 - `@codemirror/*` are regular dependencies, not peer dependencies.
 - The test suite runs in jsdom only.
 - `inPlace` config is read once at mount; changing it needs a remount.

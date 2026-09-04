@@ -29,6 +29,7 @@ milestones and Architectural Decision Records, newest first.
 
 | Date       | Entry                                                                                                                                             |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-04 | [Frontmatter as a raw callback](./journal/2026-09/2026-09-04_frontmatter-callback.md)                                                             |
 | 2026-09-04 | [Save hook, imperative ref handle, and a dark palette](./journal/2026-09/2026-09-04_save-imperative-handle-dark-mode.md)                          |
 | 2026-09-03 | [In-place canvas — menu groups, selection bar in cells, callouts](./journal/2026-09/2026-09-03_menu-groups-cell-bar-callouts.md)                  |
 | 2026-09-03 | [In-place canvas — shared table menu, table style hooks, list indent guides](./journal/2026-09/2026-09-03_table-menu-shell-and-list-guides.md)    |

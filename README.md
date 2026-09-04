@@ -83,6 +83,7 @@ function Editor() {
       onChange={setDoc}
       mode="in-place" // default — also "source" | "preview" | "split"
       onSave={(md) => persist(md)} // fires on Mod-s
+      onFrontmatter={(raw) => setMeta(raw)} // raw `---` block; parse it yourself
       onWikiLinkClick={(target) => navigate(target)}
     />
   )

@@ -1,4 +1,4 @@
-import { forwardRef, Suspense, useImperativeHandle, useState } from "react"
+import { forwardRef, Suspense, useEffect, useImperativeHandle, useRef, useState } from "react"
 import { EditorView } from "@codemirror/view"
 import { SourceView } from "./editor/SourceView"
 import { LazyInPlaceView } from "./inplace/lazyInPlace"
@@ -7,6 +7,7 @@ import { SplitView } from "./SplitView"
 import styles from "./styles/stylo.module.css"
 import { Toolbar } from "./toolbar/Toolbar"
 import { resolveToolbarItems } from "./toolbar/config"
+import { splitFrontmatter } from "./frontmatter"
 import "./styles/tokens.css"
 import type { StyloHandle, StyloProps } from "./types"
 
@@ -27,6 +28,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
     onChange,
     mode = "in-place",
     onSave,
+    onFrontmatter,
     onWikiLinkClick,
     onLinkClick,
     readOnly,
@@ -44,6 +46,18 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
 
   const [view, setView] = useState<EditorView | null>(null)
   const toolbarItems = resolved === "preview" ? null : resolveToolbarItems(toolbar)
+
+  // Report the raw frontmatter block on mount and whenever it changes. Stylo
+  // does not parse it — the host passes `raw` to its own YAML parser.
+  const onFrontmatterRef = useRef(onFrontmatter)
+  onFrontmatterRef.current = onFrontmatter
+  const lastFrontmatter = useRef<string | null | undefined>(undefined)
+  useEffect(() => {
+    const raw = splitFrontmatter(value)?.frontmatter ?? null
+    if (raw === lastFrontmatter.current) return
+    lastFrontmatter.current = raw
+    onFrontmatterRef.current?.(raw)
+  }, [value])
 
   useImperativeHandle(
     ref,

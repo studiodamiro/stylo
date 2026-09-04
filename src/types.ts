@@ -171,6 +171,13 @@ export interface StyloProps {
    * `value` is yours, so compare it against your last-saved copy.
    */
   onSave?: (value: string) => void
+  /**
+   * Called on mount and whenever the leading `---` YAML block changes, with its
+   * inner text (no fences), or `null` when there is no block. Stylo does not
+   * parse it — pass `raw` to your own YAML parser for a structured panel. The
+   * same split is available synchronously as the exported `splitFrontmatter`.
+   */
+  onFrontmatter?: (raw: string | null) => void
   /** Invoked when a `[[wikilink]]` is activated in the preview or in-place canvas. */
   onWikiLinkClick?: (target: string) => void
   /**
