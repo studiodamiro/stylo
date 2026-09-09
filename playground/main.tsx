@@ -21,7 +21,19 @@ const MODES: StyloMode[] = ["in-place", "source", "preview", "split"]
 const TOOLBARS: Record<string, boolean | ToolbarConfig> = {
   default: true,
   compact: {
-    items: ["save", "|", "bold", "italic", "code", "|", "h2", "link", "bulletList", "task"],
+    items: [
+      "save",
+      "search",
+      "|",
+      "bold",
+      "italic",
+      "code",
+      "|",
+      "h2",
+      "link",
+      "bulletList",
+      "task",
+    ],
   },
   hidden: false,
 }

@@ -1,4 +1,5 @@
 import { redo, undo } from "@codemirror/commands"
+import { openSearchPanel } from "@codemirror/search"
 import type { EditorState } from "@codemirror/state"
 import type { EditorView } from "@codemirror/view"
 import { runSave, saveHandler } from "../editor/save"
@@ -175,6 +176,16 @@ export const BUILTIN_COMMANDS: ToolbarCommand[] = [
       return ok
     },
     disabled: (state) => state.facet(saveHandler) == null,
+  },
+  {
+    // Opens the find / replace panel (`@codemirror/search`). `Mod-f` is bound on
+    // every surface via `keys`, so the panel works without the visible toolbar;
+    // the button is opt-in — not in `DEFAULT_TOOLBAR_ITEMS`. Focus moves into
+    // the panel's field, so no `view.focus()` here.
+    id: "search",
+    title: "Find / replace",
+    run: (view) => openSearchPanel(view),
+    keys: ["Mod-f"],
   },
   heading(1),
   heading(2),

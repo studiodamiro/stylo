@@ -6,11 +6,26 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-10
+
+### Added
+
+- **Find / replace.** `@codemirror/search` is wired into every editing surface
+  (`source`, `split`, `in-place`); `preview` has no editor, so it is unaffected.
+  `Mod-f` opens the panel whether or not the visible toolbar is mounted;
+  `Mod-g` / `Mod-Shift-g` step matches, `Mod-Alt-g` replaces, `Escape` closes.
+  The panel docks at the top and is restyled to Stylo's flat, token-driven
+  chrome. A new opt-in `search` toolbar command id (like `save` / `underline`,
+  not in the default bar) opens the same panel. `@codemirror/search` is a
+  regular dependency — auto-installed for the consumer — but externalised from
+  the bundle like the other `@codemirror/*` packages, so npm dedupe keeps a
+  single CodeMirror instance. ADR-002 §2 amendment.
+
 ## [0.2.0] - 2026-09-10
 
-First release published to the npm registry (0.1.0 was git-install only). Carries
-the CodeMirror peer-dependency change, so it is a minor bump under the pre-1.0
-"anything may still change" rule rather than a patch.
+Carries the CodeMirror peer-dependency change, so it is a minor bump under the
+pre-1.0 "anything may still change" rule rather than a patch. Cut and tagged;
+the first npm-registry publish is deferred to a later version.
 
 ### Added
 
@@ -174,5 +189,6 @@ consumable from git.
 - `inPlace` config is read once at mount; changing it needs a remount. (Now
   documented as an intentional contract — see `[Unreleased]`.)
 
+[0.3.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.3.0
 [0.2.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.2.0
 [0.1.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.1.0
