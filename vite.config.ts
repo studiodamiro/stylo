@@ -74,7 +74,14 @@ export default defineConfig(({ command }) => ({
       // installs one copy and Stylo shares it, so a single `@codemirror/state`
       // instance backs both. Keeping them out of the bundle is what makes that
       // real; `react` is external for the same reason.
-      external: ["react", "react-dom", "react/jsx-runtime", /^@codemirror\//, /^@lezer\//],
+      external: [
+        "react",
+        "react-dom",
+        "react/jsx-runtime",
+        /^@codemirror\//,
+        /^@lezer\//,
+        /^@dnd-kit\//,
+      ],
       output: {
         assetFileNames: "styles.css",
         // Name the vendor chunks honestly. Without this, Rollup names a shared

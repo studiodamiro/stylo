@@ -1,9 +1,24 @@
-import { useEffect, useId, useRef, useState } from "react"
-import type { KeyboardEvent, ReactNode } from "react"
+import { useId, useState } from "react"
+import type { ReactNode } from "react"
+import {
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable"
 import type { ToolbarCommandId, ToolbarItem } from "../types"
 import { DEFAULT_TOOLBAR_ITEMS } from "../toolbar/config"
 import { ALL_BUILTIN_IDS } from "../toolbar/labels"
 import styles from "./StyloToolbarSettings.module.css"
+import { SortableRow } from "./SortableRow"
 import {
   append,
   availableNotOnBar,
@@ -33,11 +48,12 @@ export interface StyloToolbarSettingsProps {
 /**
  * A keyboard-accessible editor for the formatting bar's `items`. Controlled:
  * the host owns `value`, persists it, and feeds it to both this component and
- * `<Stylo>`. Holds no state of its own beyond the live-region message.
+ * `<Stylo>`.
  *
- * Reordering is by the ↑ / ↓ buttons on each row, or the Arrow keys while a row
- * is focused. Pointer drag-and-drop is a separate, additive layer (not yet
- * shipped) — see the ADR-002 §2 design note.
+ * Reorder a row by dragging its ⠿ handle, or focus the handle and use
+ * Space + Arrow keys (`@dnd-kit`'s keyboard sensor). The ✕ / Add buttons move
+ * items between the two lists. `@dnd-kit/core`, `/sortable`, and `/utilities`
+ * are optional peer dependencies of this entry point.
  */
 export function StyloToolbarSettings({
   value,
@@ -49,36 +65,32 @@ export function StyloToolbarSettings({
   const barHeadId = useId()
   const availHeadId = useId()
   const [message, setMessage] = useState("")
-  const rowRefs = useRef<(HTMLLIElement | null)[]>([])
-  const focusAfter = useRef<number | null>(null)
 
-  // Restore focus to the row that moved / was added, after the list re-renders.
-  useEffect(() => {
-    if (focusAfter.current == null) return
-    rowRefs.current[focusAfter.current]?.focus()
-    focusAfter.current = null
-  })
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
 
   const paletteItems = availableNotOnBar(available ?? ALL_BUILTIN_IDS, value)
+  const barIds = value.map((_, i) => String(i))
 
-  function reorder(from: number, to: number) {
-    if (to < 0 || to >= value.length || from === to) return
+  function onDragEnd({ active, over }: DragEndEvent) {
+    if (!over || active.id === over.id) return
+    const from = Number(active.id)
+    const to = Number(over.id)
     const label = resolveDisplay(value[from]!, icons).label
     onChange(move(value, from, to))
-    focusAfter.current = to
     setMessage(`${label} moved to position ${to + 1} of ${value.length}`)
   }
 
   function removeSlot(index: number) {
     const label = resolveDisplay(value[index]!, icons).label
     onChange(removeAt(value, index))
-    focusAfter.current = Math.min(index, value.length - 2)
     setMessage(`${label} removed from the bar`)
   }
 
   function add(item: ToolbarItem) {
     onChange(append(value, item))
-    focusAfter.current = value.length
     setMessage(`${resolveDisplay(item, icons).label} added to the bar`)
   }
 
@@ -87,15 +99,8 @@ export function StyloToolbarSettings({
     setMessage("Toolbar reset to the default set")
   }
 
-  function onRowKeyDown(e: KeyboardEvent<HTMLLIElement>, index: number) {
-    if (e.key === "ArrowUp") {
-      e.preventDefault()
-      reorder(index, index - 1)
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault()
-      reorder(index, index + 1)
-    }
-  }
+  const dragAnnounce = (id: string | number, verb: string) =>
+    `${resolveDisplay(value[Number(id)]!, icons).label} ${verb}`
 
   return (
     <div className={[styles.root, className].filter(Boolean).join(" ")}>
@@ -103,59 +108,52 @@ export function StyloToolbarSettings({
         <h3 className={styles.colHead} id={barHeadId}>
           On the bar
         </h3>
-        <ul className={styles.list} aria-labelledby={barHeadId}>
-          {value.map((item, i) => {
-            const { icon, label } = resolveDisplay(item, icons)
-            return (
-              <li
-                key={itemKey(item, i)}
-                ref={(el) => {
-                  rowRefs.current[i] = el
-                }}
-                className={styles.row}
-                tabIndex={0}
-                aria-label={`${label}, position ${i + 1} of ${value.length}`}
-                onKeyDown={(e) => onRowKeyDown(e, i)}
-              >
-                <span className={styles.glyph} aria-hidden="true">
-                  {icon}
-                </span>
-                <span className={styles.label}>{label}</span>
-                <span className={styles.rowActions}>
-                  <button
-                    type="button"
-                    className={styles.iconButton}
-                    title="Move up"
-                    aria-label={`Move ${label} up`}
-                    disabled={i === 0}
-                    onClick={() => reorder(i, i - 1)}
-                  >
-                    ↑
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.iconButton}
-                    title="Move down"
-                    aria-label={`Move ${label} down`}
-                    disabled={i === value.length - 1}
-                    onClick={() => reorder(i, i + 1)}
-                  >
-                    ↓
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.iconButton}
-                    title="Remove"
-                    aria-label={`Remove ${label} from the bar`}
-                    onClick={() => removeSlot(i)}
-                  >
-                    ✕
-                  </button>
-                </span>
-              </li>
-            )
-          })}
-        </ul>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={onDragEnd}
+          accessibility={{
+            announcements: {
+              onDragStart: ({ active }) => dragAnnounce(active.id, "picked up"),
+              onDragOver: ({ active, over }) =>
+                over ? `${dragAnnounce(active.id, "is over position")} ${Number(over.id) + 1}` : "",
+              onDragEnd: ({ active, over }) =>
+                over
+                  ? `${dragAnnounce(active.id, "dropped at position")} ${Number(over.id) + 1}`
+                  : dragAnnounce(active.id, "dropped"),
+              onDragCancel: ({ active }) => dragAnnounce(active.id, "drag cancelled"),
+            },
+          }}
+        >
+          <SortableContext items={barIds} strategy={verticalListSortingStrategy}>
+            <ul className={styles.list} aria-labelledby={barHeadId}>
+              {value.map((item, i) => {
+                const { icon, label } = resolveDisplay(item, icons)
+                return (
+                  <SortableRow
+                    key={itemKey(item, i)}
+                    id={String(i)}
+                    label={label}
+                    icon={icon}
+                    position={i + 1}
+                    count={value.length}
+                    actions={
+                      <button
+                        type="button"
+                        className={styles.iconButton}
+                        title="Remove"
+                        aria-label={`Remove ${label} from the bar`}
+                        onClick={() => removeSlot(i)}
+                      >
+                        ✕
+                      </button>
+                    }
+                  />
+                )
+              })}
+            </ul>
+          </SortableContext>
+        </DndContext>
         <div className={styles.footer}>
           <button type="button" className={styles.textButton} onClick={() => add(SEPARATOR)}>
             Add separator

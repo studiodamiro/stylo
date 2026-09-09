@@ -50,6 +50,7 @@
   gap: 8px;
   padding: 5px 6px;
   border-radius: calc(var(--stylo-radius) - 3px);
+  background: var(--stylo-bg);
 }
 
 .row:focus-visible {
@@ -59,6 +60,46 @@
 
 .row:hover {
   background: color-mix(in srgb, var(--stylo-border) 30%, transparent);
+}
+
+/* Mid-drag: the sortable clone floats over the list, so give it an opaque
+   raised surface and lift the original's contrast down. */
+.row[data-dragging] {
+  background: var(--stylo-surface-floating, #fff);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  opacity: 0.9;
+}
+
+.handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 22px;
+  flex: none;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: calc(var(--stylo-radius) - 4px);
+  background: none;
+  color: var(--stylo-text-muted);
+  font: inherit;
+  line-height: 1;
+  cursor: grab;
+  touch-action: none;
+}
+
+.handle:hover {
+  background: color-mix(in srgb, var(--stylo-border) 45%, transparent);
+  color: var(--stylo-text);
+}
+
+.handle:focus-visible {
+  outline: 2px solid var(--stylo-ring);
+  outline-offset: -1px;
+}
+
+.handle:active {
+  cursor: grabbing;
 }
 
 .glyph {

@@ -25,6 +25,16 @@ import { Stylo } from "@damiro/stylo"
 import "@damiro/stylo/styles.css"
 ```
 
+### Extra install
+
+The reordering drag is built on `@dnd-kit`. These three are **optional peer
+dependencies** — a plain `@damiro/stylo` install skips them; add them only if
+you render this component:
+
+```bash
+npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
+```
+
 ## Controlled, like the editor
 
 It edits the same `items` array `<Stylo>` takes. The host holds that array,
@@ -90,19 +100,16 @@ applied to document content.
 
 Two lists:
 
-- **On the bar** — the current `items`. Reorder a row with its ↑ / ↓ buttons, or
-  focus the row and press **Arrow Up** / **Arrow Down**. The ✕ button moves it to
+- **On the bar** — the current `items`. **Reorder** by dragging a row's ⠿
+  handle, or focus the handle and press **Space** then the **Arrow keys** then
+  **Space** to drop (`@dnd-kit`'s keyboard sensor). The ✕ button moves the row to
   Available. Below the list: **Add separator** appends a `"|"`, **Reset to
   default** restores the built-in set.
 - **Available** — every palette entry not already on the bar. **Add** appends it.
 
-Every change is announced in an `aria-live` region, and keyboard focus follows
-the row that moved. A keyboard-only user can do everything.
-
-> **Pointer drag-and-drop** is a planned additive layer over the same
-> behaviour — not yet shipped. Until then, reordering is the ↑ / ↓ buttons and
-> the Arrow keys. See the
-> [customizer design note](../../journal/2026-09/2026-09-10_toolbar-customizer-design.md).
+Drag moves are announced by `@dnd-kit`'s own live region; the button actions
+(add, remove, reset) announce in a second `aria-live` region. A keyboard-only
+user can do everything.
 
 ## Styling
 
