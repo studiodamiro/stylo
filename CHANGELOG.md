@@ -6,18 +6,22 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-10
+
 ### Added
 
 - **`<StyloToolbarSettings />`** — an opt-in component, exported from
   `@damiro/stylo/toolbar-settings`, that lets an end user rearrange the
   formatting bar. Controlled: `value` is the same `items` array passed to
   `<Stylo toolbar={{ items }}>`, `onChange` fires on every edit, and the host
-  owns persistence. Two lists — "On the bar" and "Available" — with reordering
-  by ↑ / ↓ buttons or the Arrow keys, add / remove, an "Add separator" and a
-  "Reset to default", and an `aria-live` region announcing each move. This is
-  step 1 of the ADR-002 §2 customizer: **keyboard-only, no new dependency**.
-  Pointer drag-and-drop is a later, additive layer. Separate build entry so it
-  never touches a plain `@damiro/stylo` import.
+  owns persistence. Two lists, "On the bar" and "Available": **drag a row's ⠿
+  handle to reorder** (pointer, or focus the handle and use Space + Arrow keys —
+  `@dnd-kit`'s keyboard sensor, with screen-reader announcements); the ✕ / Add
+  buttons move items between the lists; "Add separator" and "Reset to default"
+  below. `@dnd-kit/core`, `@dnd-kit/sortable`, and `@dnd-kit/utilities` are
+  **optional** peer dependencies of this entry — a plain `@damiro/stylo` import
+  never pulls them, and they are externalised from the bundle. Completes the
+  ADR-002 §2 customizer.
 
 ## [0.3.0] - 2026-09-10
 
@@ -202,6 +206,7 @@ consumable from git.
 - `inPlace` config is read once at mount; changing it needs a remount. (Now
   documented as an intentional contract — see `[Unreleased]`.)
 
+[0.4.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.4.0
 [0.3.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.3.0
 [0.2.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.2.0
 [0.1.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.1.0

@@ -36,6 +36,11 @@ npm install @codemirror/state @codemirror/view @codemirror/commands \
 
 React 18+ is also a peer dependency. Import lines are in [Usage](#usage).
 
+The optional `@damiro/stylo/toolbar-settings` component (an end-user toolbar
+customizer) additionally needs `@dnd-kit/core @dnd-kit/sortable
+@dnd-kit/utilities` — optional peers, install them only if you render it. See
+[its reference](./docs/wiki/reference/toolbar-settings.md).
+
 ---
 
 ## Why

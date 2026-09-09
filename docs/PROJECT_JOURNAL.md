@@ -30,6 +30,7 @@ milestones and Architectural Decision Records, newest first.
 
 | Date       | Entry                                                                                                                                              |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-10 | [Toolbar customizer — step 2, drag-and-drop (feature complete)](./journal/2026-09/2026-09-10_toolbar-customizer-step-2.md)                         |
 | 2026-09-10 | [Toolbar customizer — step 1, the keyboard-only core](./journal/2026-09/2026-09-10_toolbar-customizer-step-1.md)                                   |
 | 2026-09-10 | [Design — the `<StyloToolbarSettings />` toolbar customizer](./journal/2026-09/2026-09-10_toolbar-customizer-design.md)                            |
 | 2026-09-10 | [Find / replace — `@codemirror/search` wired in](./journal/2026-09/2026-09-10_find-and-replace.md)                                                 |

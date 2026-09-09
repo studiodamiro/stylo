@@ -2,6 +2,7 @@ import { useState } from "react"
 import { afterEach, expect, test } from "vitest"
 import { cleanup, fireEvent, render } from "@testing-library/react"
 import { StyloToolbarSettings } from "../src/toolbar-settings"
+import { move } from "../src/toolbar-settings/items"
 import { BUILTIN_LABELS } from "../src/toolbar/labels"
 import { BUILTIN_BY_ID } from "../src/toolbar/commands"
 import { DEFAULT_TOOLBAR_ITEMS } from "../src/toolbar/config"
@@ -34,21 +35,21 @@ test("splits value into 'on the bar' and everything else into 'available'", () =
   expect(available.textContent).not.toContain("Bold") // already on the bar
 })
 
-test("'move down' reorders the bar", () => {
-  const { container } = render(<Harness initial={["bold", "italic"]} />)
+test("every bar row has a labelled drag handle; the palette rows don't", () => {
+  const { container } = render(<Harness initial={["bold", "italic", "|"]} />)
 
-  fireEvent.click(container.querySelector('[aria-label="Move Bold down"]')!)
+  const handles = container.querySelectorAll('[aria-label^="Reorder "]')
+  expect(handles).toHaveLength(3) // one per slot on the bar, separator included
+  expect(handles[0]!.getAttribute("aria-label")).toBe("Reorder Bold, position 1 of 3")
 
-  expect(items(container)).toBe("italic,bold")
+  const [, available] = container.querySelectorAll("ul")
+  expect(available!.querySelectorAll('[aria-label^="Reorder "]')).toHaveLength(0)
 })
 
-test("Arrow keys reorder a focused row", () => {
-  const { container } = render(<Harness initial={["bold", "italic", "link"]} />)
-  const row = container.querySelectorAll("ul")[0]!.querySelectorAll("li")[2]!
-
-  fireEvent.keyDown(row, { key: "ArrowUp" })
-
-  expect(items(container)).toBe("bold,link,italic")
+test("move() reorders items — the operation a drag performs", () => {
+  expect(move(["a", "b", "c"], 2, 0)).toEqual(["c", "a", "b"])
+  expect(move(["a", "b", "c"], 0, 1)).toEqual(["b", "a", "c"])
+  expect(move(["a", "b", "c"], 1, 1)).toEqual(["a", "b", "c"])
 })
 
 test("Remove moves an item to 'available'; Add puts it back", () => {
@@ -73,12 +74,12 @@ test("'Add separator' appends a separator; 'Reset' restores the default", () => 
 })
 
 test("an action is announced in the live region", () => {
-  const { container } = render(<Harness initial={["bold", "italic"]} />)
+  const { container } = render(<Harness initial={["bold", "link"]} />)
 
-  fireEvent.click(container.querySelector('[aria-label="Move Bold down"]')!)
+  fireEvent.click(container.querySelector('[aria-label="Remove Link from the bar"]')!)
 
   expect(container.querySelector('[aria-live="polite"]')!.textContent).toBe(
-    "Bold moved to position 2 of 2",
+    "Link removed from the bar",
   )
 })
 

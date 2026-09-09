@@ -610,6 +610,22 @@ untouched, and must not gate v1.
   > the pointer/touch `@dnd-kit` layer over the same state — is still open, and
   > still what gates the publish. See the
   > [step-1 build log](./2026-09-10_toolbar-customizer-step-1.md).
+  >
+  > **Step 2 shipped 2026-09-10 (drag-and-drop) — feature complete:** each "On
+  > the bar" row gained a ⠿ drag handle wired to `@dnd-kit`'s `SortableContext`.
+  > A `PointerSensor` (4px activation distance, so the ✕ button still clicks
+  > cleanly) drives pointer / touch reordering; a `KeyboardSensor` with
+  > `sortableKeyboardCoordinates` gives Space-then-Arrows keyboard reordering
+  > with dnd-kit's own screen-reader announcements. The reorder itself still
+  > goes through the local `move()` helper, so the drop outcome stays unit-
+  > tested without simulating a drag. `@dnd-kit/core`, `/sortable`, and
+  > `/utilities` are declared as **optional** peer dependencies
+  > (`peerDependenciesMeta`) and externalised from the build (`/^@dnd-kit\//`),
+  > so `@damiro/stylo` is unaffected and only a consumer rendering the
+  > customizer installs them. The ↑ / ↓ buttons from step 1 were dropped —
+  > the handle plus the keyboard sensor replace them. Cut as **0.4.0**; this
+  > closes ADR-002 §2 and clears the gate on the first npm-registry publish. See
+  > the [step-2 build log](./2026-09-10_toolbar-customizer-step-2.md).
 
 - **Context-aware selection tooltip** (`mode="tooltip" | "toolbar" | "both"`) — a
   floating bubble menu that inspects the CodeMirror Lezer node under the

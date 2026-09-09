@@ -175,7 +175,10 @@ function App() {
     }
   }, [layout])
 
-  const [toolbar, setToolbar] = useState<keyof typeof TOOLBARS | "custom">("default")
+  // `?tb=custom` (or compact / hidden) deep-links a toolbar preset for quick testing.
+  const [toolbar, setToolbar] = useState<keyof typeof TOOLBARS | "custom">(
+    () => (new URLSearchParams(location.search).get("tb") as "custom") || "default",
+  )
   // Driven by <StyloToolbarSettings> when the "custom" toolbar option is picked.
   const [customItems, setCustomItems] = useState<ToolbarItem[]>([
     "undo",
