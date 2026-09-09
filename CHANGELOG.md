@@ -6,6 +6,12 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-10
+
+First release published to the npm registry (0.1.0 was git-install only). Carries
+the CodeMirror peer-dependency change, so it is a minor bump under the pre-1.0
+"anything may still change" rule rather than a patch.
+
 ### Added
 
 - `--stylo-surface-floating` token — background for the floating in-place popups
@@ -168,4 +174,5 @@ consumable from git.
 - `inPlace` config is read once at mount; changing it needs a remount. (Now
   documented as an intentional contract — see `[Unreleased]`.)
 
+[0.2.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.2.0
 [0.1.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.1.0
