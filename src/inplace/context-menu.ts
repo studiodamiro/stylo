@@ -57,7 +57,11 @@ export interface ContextMenu {
 const isSubmenu = (r: MenuRow): r is MenuSubmenu => typeof r !== "string" && "rows" in r
 const isField = (r: MenuRow): r is MenuField => typeof r !== "string" && "field" in r
 
-export function createContextMenu(doc: Document, className = "cm-inplace-menu"): ContextMenu {
+export function createContextMenu(
+  doc: Document,
+  className = "cm-inplace-menu",
+  onOpenChange?: (open: boolean) => void,
+): ContextMenu {
   const win = doc.defaultView
   // A non-interactive full-viewport layer; the panels inside it take pointers.
   const root = doc.createElement("div")
@@ -83,6 +87,7 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
     root.replaceChildren()
     unbind?.()
     unbind = null
+    onOpenChange?.(false)
   }
 
   // A mousedown inside the menu must not blur the editor before the click fires.
@@ -267,6 +272,7 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
     root.hidden = false
     place(main, x, y)
     armDismiss()
+    onOpenChange?.(true)
   }
 
   // Show one field panel directly (no wrapping menu) — the selection bar's link
@@ -279,6 +285,7 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
     place(panel, x, y)
     ;(panel.querySelector("input") as HTMLInputElement | null)?.focus({ preventScroll: true })
     armDismiss()
+    onOpenChange?.(true)
   }
 
   return {

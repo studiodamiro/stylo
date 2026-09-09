@@ -11,6 +11,7 @@ import { createContextMenu, type ContextMenu } from "./context-menu"
 import { menuRows } from "./context-menu-actions"
 import { wrapAt } from "./edit-boundaries"
 import { attachLongPress, type LongPressHandle } from "./long-press"
+import { setMenuOpen } from "./menu-open"
 
 class ContextMenuController implements PluginValue {
   private view: EditorView
@@ -26,10 +27,18 @@ class ContextMenuController implements PluginValue {
    *  `contextmenu` from the same gesture; one that lands within the window is
    *  swallowed so the menu does not re-open on top of itself. */
   private longPressAt = 0
+  private destroyed = false
 
   constructor(view: EditorView) {
     this.view = view
-    this.menu = createContextMenu(view.dom.ownerDocument)
+    // The selection bar watches `menuOpenField` and hides while the menu is up,
+    // so the two floating popups never stack. Fires on open and on every
+    // dismissal path (`hide()` is the single choke point in `context-menu.ts`).
+    // The guard covers teardown: `menu.destroy()` calls `hide()`, and the view
+    // may already be gone.
+    this.menu = createContextMenu(view.dom.ownerDocument, "cm-inplace-menu", (open) => {
+      if (!this.destroyed) view.dispatch({ effects: setMenuOpen.of(open) })
+    })
     // Inside `.cm-editor` so the `inPlaceTheme` rules (an `EditorView.theme`,
     // scoped to that element) reach it and the `--stylo-*` tokens inherit. The
     // panels are `position: fixed`, so placement is still viewport-relative.
@@ -109,6 +118,7 @@ class ContextMenuController implements PluginValue {
   }
 
   destroy() {
+    this.destroyed = true
     this.contentDOM.removeEventListener("pointerdown", this.onPointerDown, true)
     this.contentDOM.removeEventListener("contextmenu", this.onContextMenu)
     this.longPress.dispose()

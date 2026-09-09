@@ -21,6 +21,10 @@
   --stylo-link: #2563eb;
   --stylo-ring: #a1a1aa;
   --stylo-radius: 0.5rem;
+  /* Base editor font size. The in-place canvas and every relative size in it
+     track this, so a host scales the whole surface from one value. Not a
+     colour — one value serves both themes, like `--stylo-radius`. */
+  --stylo-font-size: 0.9375rem;
 
   /* Rendered-table styling. Overridable on `.stylo` to reskin tables on both
      the in-place canvas and the preview surface. Defaults keep today's look;

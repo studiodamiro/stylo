@@ -85,20 +85,21 @@ surface has mounted.
 
 ## Styling tokens
 
-Stylo ships structural CSS only. The palette comes from nine CSS custom
+Stylo ships structural CSS only. The palette comes from ten CSS custom
 properties you can set on `.stylo` or any ancestor:
 
-| Token                      | Default   | Role                                             |
-| -------------------------- | --------- | ------------------------------------------------ |
-| `--stylo-bg`               | `#ffffff` | surface background                               |
-| `--stylo-surface-floating` | `#ffffff` | background for floating popups (menu, selbar, …) |
-| `--stylo-text`             | `#09090b` | body text                                        |
-| `--stylo-text-muted`       | `#71717a` | secondary text                                   |
-| `--stylo-border`           | `#e4e4e7` | borders and rules                                |
-| `--stylo-accent`           | `#18181b` | active / pressed states                          |
-| `--stylo-link`             | `#2563eb` | links and wikilinks (no underline)               |
-| `--stylo-ring`             | `#a1a1aa` | focus ring                                       |
-| `--stylo-radius`           | `0.5rem`  | corner radius                                    |
+| Token                      | Default     | Role                                             |
+| -------------------------- | ----------- | ------------------------------------------------ |
+| `--stylo-bg`               | `#ffffff`   | surface background                               |
+| `--stylo-surface-floating` | `#ffffff`   | background for floating popups (menu, selbar, …) |
+| `--stylo-text`             | `#09090b`   | body text                                        |
+| `--stylo-text-muted`       | `#71717a`   | secondary text                                   |
+| `--stylo-border`           | `#e4e4e7`   | borders and rules                                |
+| `--stylo-accent`           | `#18181b`   | active / pressed states                          |
+| `--stylo-link`             | `#2563eb`   | links and wikilinks (no underline)               |
+| `--stylo-ring`             | `#a1a1aa`   | focus ring                                       |
+| `--stylo-radius`           | `0.5rem`    | corner radius                                    |
+| `--stylo-font-size`        | `0.9375rem` | base editor font size — sizes inside track it    |
 
 Defaults follow shadcn/ui's neutral conventions as a visual reference; no
 Tailwind or shadcn code is bundled.
@@ -108,6 +109,9 @@ setting `--stylo-bg: transparent` to embed the editor in an existing card leaves
 the context menu, selection bar, URL input, and link-hover tooltip opaque. Set
 it too when you theme `--stylo-bg` to a non-default colour. `--stylo-ring` is the
 focus ring only — the in-place menu's active row follows `--stylo-accent`.
+
+`--stylo-radius` and `--stylo-font-size` are not colours: one value each serves
+both themes, so they live only in the light block.
 
 ### Dark mode
 

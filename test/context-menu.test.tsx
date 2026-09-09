@@ -2,6 +2,7 @@ import { afterEach, expect, test, vi } from "vitest"
 import { cleanup, render } from "@testing-library/react"
 import { EditorView } from "@codemirror/view"
 import { Stylo } from "../src/Stylo"
+import { menuOpenField } from "../src/inplace/menu-open"
 import type { InPlaceConfig } from "../src/types"
 
 afterEach(() => {
@@ -219,6 +220,23 @@ test("the canvas right-click menu does not take over an editable table cell", as
 test("the selection bar element is mounted for an in-place editor", async () => {
   await mount("some text here")
   expect(document.querySelector(".cm-inplace-selbar")).not.toBeNull()
+})
+
+test("the selection bar yields while the right-click menu is open", async () => {
+  const { view } = await mount("make this a link", { selectionUI: "bar" })
+  view.dispatch({ selection: { anchor: 5, head: 9 } }) // "this"
+  const bar = document.querySelector(".cm-inplace-selbar") as HTMLElement
+  expect(bar).not.toBeNull()
+
+  rightClick(view)
+  expect(document.querySelector(".cm-inplace-menu-panel"), "menu open").not.toBeNull()
+  expect(view.state.field(menuOpenField), "field tracks the open menu").toBe(true)
+  expect(bar.hidden, "bar hidden while the menu is up").toBe(true)
+
+  // Escape dismisses the menu; the field clears so the bar can return.
+  document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))
+  expect(document.querySelector(".cm-inplace-menu-panel"), "menu dismissed").toBeNull()
+  expect(view.state.field(menuOpenField), "field cleared on dismiss").toBe(false)
 })
 
 test("selecting text and right-clicking yields an 'Add external link' flyout with an input", async () => {

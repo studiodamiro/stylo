@@ -19,6 +19,7 @@ import { ICON_PATHS, iconSvg } from "../toolbar/icon-paths"
 import { selectionBarItemsFacet, selectionUIFacet } from "./config"
 import { createContextMenu, type ContextMenu } from "./context-menu"
 import { cellHasSelection, linkRow, wikiLinkRow } from "./context-menu-actions"
+import { menuOpenField } from "./menu-open"
 
 interface Box {
   left: number
@@ -96,7 +97,9 @@ class SelectionBar implements PluginValue {
   update(u: ViewUpdate) {
     // Not `geometryChanged` — scrolling dismisses the bar (see `onScroll`)
     // rather than re-chasing the selection.
-    if (u.selectionSet || u.docChanged || u.focusChanged) this.schedule()
+    const menuToggled =
+      u.startState.field(menuOpenField, false) !== u.state.field(menuOpenField, false)
+    if (u.selectionSet || u.docChanged || u.focusChanged || menuToggled) this.schedule()
   }
 
   /**
@@ -140,6 +143,9 @@ class SelectionBar implements PluginValue {
   private measure(): Placement {
     const { view } = this
     if (view.state.facet(selectionUIFacet) !== "bar") return null
+    // The right-click menu is up — yield to it rather than stack two popups.
+    // The bar re-measures and returns when `menuOpenField` clears.
+    if (view.state.field(menuOpenField, false)) return null
     const found = this.selectionBox()
     if (!found) return null
     const { box, inCell } = found
