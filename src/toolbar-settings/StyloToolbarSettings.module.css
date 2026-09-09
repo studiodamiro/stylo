@@ -1,0 +1,159 @@
+/* Reads the same `--stylo-*` tokens as the editor chrome, so it themes with it
+   in light and dark. Structural only — the host controls the palette. */
+.root {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  color: var(--stylo-text);
+  font: inherit;
+}
+
+@media (max-width: 460px) {
+  .root {
+    grid-template-columns: 1fr;
+  }
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--stylo-border);
+  border-radius: var(--stylo-radius);
+  background: var(--stylo-bg);
+}
+
+.colHead {
+  margin: 0;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--stylo-border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--stylo-text-muted);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  border-radius: calc(var(--stylo-radius) - 3px);
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--stylo-ring);
+  outline-offset: -2px;
+}
+
+.row:hover {
+  background: color-mix(in srgb, var(--stylo-border) 30%, transparent);
+}
+
+.glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--stylo-text-muted);
+}
+
+.glyph svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+}
+
+.rowActions {
+  display: flex;
+  gap: 2px;
+  flex: none;
+}
+
+.iconButton,
+.textButton {
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: calc(var(--stylo-radius) - 4px);
+  background: none;
+  color: var(--stylo-text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.iconButton {
+  width: 22px;
+  height: 22px;
+  font-size: 0.8125rem;
+  line-height: 1;
+}
+
+.textButton {
+  padding: 3px 8px;
+  font-size: 0.75rem;
+}
+
+.iconButton:hover:not(:disabled),
+.textButton:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--stylo-border) 45%, transparent);
+  color: var(--stylo-text);
+}
+
+.iconButton:focus-visible,
+.textButton:focus-visible {
+  outline: 2px solid var(--stylo-ring);
+  outline-offset: -1px;
+}
+
+.iconButton:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px;
+  border-top: 1px solid var(--stylo-border);
+}
+
+.empty {
+  padding: 8px 6px;
+  font-size: 0.8125rem;
+  color: var(--stylo-text-muted);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

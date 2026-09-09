@@ -30,6 +30,7 @@ milestones and Architectural Decision Records, newest first.
 
 | Date       | Entry                                                                                                                                              |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-10 | [Toolbar customizer — step 1, the keyboard-only core](./journal/2026-09/2026-09-10_toolbar-customizer-step-1.md)                                   |
 | 2026-09-10 | [Design — the `<StyloToolbarSettings />` toolbar customizer](./journal/2026-09/2026-09-10_toolbar-customizer-design.md)                            |
 | 2026-09-10 | [Find / replace — `@codemirror/search` wired in](./journal/2026-09/2026-09-10_find-and-replace.md)                                                 |
 | 2026-09-10 | [Token decoupling — floating-surface token, ring/accent split, scrollbar styling](./journal/2026-09/2026-09-10_token-decoupling-and-scrollbars.md) |

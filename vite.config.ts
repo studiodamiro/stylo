@@ -57,9 +57,14 @@ export default defineConfig(({ command }) => ({
   root: command === "build" ? import.meta.dirname : resolve(import.meta.dirname, "playground"),
   build: {
     lib: {
-      entry: resolve(import.meta.dirname, "src/index.ts"),
+      // Two entry points: the editor, and the opt-in toolbar customizer. The
+      // output files take the object keys — `dist/stylo.js`,
+      // `dist/toolbar-settings.js` — so `package.json` `exports` stay stable.
+      entry: {
+        stylo: resolve(import.meta.dirname, "src/index.ts"),
+        "toolbar-settings": resolve(import.meta.dirname, "src/toolbar-settings/index.ts"),
+      },
       formats: ["es"],
-      fileName: "stylo",
     },
     cssCodeSplit: false,
     sourcemap: true,

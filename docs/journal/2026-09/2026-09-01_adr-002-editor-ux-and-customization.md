@@ -597,6 +597,19 @@ untouched, and must not gate v1.
   > staged so a dependency-free keyboard-only core ships first and the
   > dependency is a later, skippable layer. This remains the item whose delivery
   > gates the first npm-registry publish.
+  >
+  > **Step 1 shipped 2026-09-10 (keyboard-only core):**
+  > `<StyloToolbarSettings />` lands as a controlled `value` / `onChange`
+  > component on the new `@damiro/stylo/toolbar-settings` entry — "On the bar" /
+  > "Available" lists, reorder by ↑ / ↓ buttons or Arrow keys, add / remove,
+  > add-separator, reset-to-default, and an `aria-live` region. **No new
+  > dependency.** A pure-data `src/toolbar/labels.ts` (guarded against drift from
+  > `BUILTIN_COMMANDS` by a test) gives the customizer button names without
+  > pulling the editor in. The multi-entry build split `stylo.js` and the shared
+  > toolbar data into their own chunks; `check:size` budgets updated. Step 2 —
+  > the pointer/touch `@dnd-kit` layer over the same state — is still open, and
+  > still what gates the publish. See the
+  > [step-1 build log](./2026-09-10_toolbar-customizer-step-1.md).
 
 - **Context-aware selection tooltip** (`mode="tooltip" | "toolbar" | "both"`) — a
   floating bubble menu that inspects the CodeMirror Lezer node under the

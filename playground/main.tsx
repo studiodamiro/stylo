@@ -9,7 +9,9 @@ import {
   type StyloMode,
   type TableEditing,
   type ToolbarConfig,
+  type ToolbarItem,
 } from "../src/index"
+import { StyloToolbarSettings } from "../src/toolbar-settings"
 import { StickyDebug } from "./StickyDebug"
 import "katex/dist/katex.min.css"
 import "./styles.css"
@@ -173,7 +175,28 @@ function App() {
     }
   }, [layout])
 
-  const [toolbar, setToolbar] = useState<keyof typeof TOOLBARS>("default")
+  const [toolbar, setToolbar] = useState<keyof typeof TOOLBARS | "custom">("default")
+  // Driven by <StyloToolbarSettings> when the "custom" toolbar option is picked.
+  const [customItems, setCustomItems] = useState<ToolbarItem[]>([
+    "undo",
+    "redo",
+    "|",
+    "bold",
+    "italic",
+    "strike",
+    "link",
+    "wikilink",
+    "|",
+    "bulletList",
+    "orderedList",
+    "task",
+    "|",
+    "quote",
+    "code",
+    "math",
+  ])
+  const toolbarConfig: boolean | ToolbarConfig =
+    toolbar === "custom" ? { items: customItems } : TOOLBARS[toolbar]!
   const [stickyToolbar, setStickyToolbar] = useState<StickyPick>("off")
   const [stickyVisibility, setStickyVisibility] = useState<StickyVisibilityPick>("consistent")
   const [frontmatter, setFrontmatter] = useState<"hidden" | "code">("hidden")
@@ -272,14 +295,14 @@ function App() {
             toolbar
             <select
               value={toolbar}
-              onChange={(e) => setToolbar(e.target.value as keyof typeof TOOLBARS)}
+              onChange={(e) => setToolbar(e.target.value as keyof typeof TOOLBARS | "custom")}
               style={{
                 padding: "0.2rem 0.4rem",
                 borderRadius: 6,
                 border: "1px solid var(--pg-border)",
               }}
             >
-              {Object.keys(TOOLBARS).map((k) => (
+              {[...Object.keys(TOOLBARS), "custom"].map((k) => (
                 <option key={k} value={k}>
                   {k}
                 </option>
@@ -314,6 +337,12 @@ function App() {
               <option value="dynamic">dynamic</option>
             </select>
           </label>
+        )}
+
+        {mode !== "preview" && toolbar === "custom" && (
+          <div style={{ margin: "0 0 1rem" }}>
+            <StyloToolbarSettings value={customItems} onChange={setCustomItems} />
+          </div>
         )}
 
         {(mode === "preview" || mode === "split") && (
@@ -450,7 +479,7 @@ function App() {
           onWikiLinkClick={setLastLink}
           onLinkClick={(href) => window.open(href, "_blank", "noopener")}
           inPlace={{ decorations, table: tableEdit, reveal, selectionUI }}
-          toolbar={withSticky(TOOLBARS[toolbar]!, stickyToolbar, stickyVisibility)}
+          toolbar={withSticky(toolbarConfig, stickyToolbar, stickyVisibility)}
           frontmatter={frontmatter}
           codeLanguages={languages}
           className={mode === "split" ? "playground-editor is-split" : "playground-editor"}
