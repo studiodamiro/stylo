@@ -13,12 +13,17 @@
  * `cancel()` aborts a pending press without detaching — the caller uses it when
  * a real `contextmenu` lands first (Android synthesises one from the same
  * gesture) so the two paths can't both open the menu.
+ *
+ * The defaults are tuned for a fingertip, not a stylus: a finger cannot hold a
+ * contact point to within a few pixels for half a second, so `slop` is generous
+ * and `delay` sits just under the ~500 ms where iOS Safari commits to its own
+ * long-press selection.
  */
 
 export interface LongPressOptions {
-  /** Hold time before the press completes. Default 500 ms. */
+  /** Hold time before the press completes. Default 450 ms. */
   delay?: number
-  /** Movement (from the contact point, on either axis) that aborts it. Default 10 px. */
+  /** Movement (from the contact point, on either axis) that aborts it. Default 20 px. */
   slop?: number
   /** Fired when the hold completes: viewport coordinates and the element the
    *  finger first landed on. */
@@ -34,8 +39,8 @@ export interface LongPressHandle {
 
 /** Attach long-press detection to `el`. */
 export function attachLongPress(el: HTMLElement, opts: LongPressOptions): LongPressHandle {
-  const delay = opts.delay ?? 500
-  const slop = opts.slop ?? 10
+  const delay = opts.delay ?? 450
+  const slop = opts.slop ?? 20
   let timer: ReturnType<typeof setTimeout> | null = null
   let startX = 0
   let startY = 0

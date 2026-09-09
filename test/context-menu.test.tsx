@@ -108,6 +108,55 @@ test("inPlace.contextMenu = false leaves the browser menu alone", async () => {
   expect(document.querySelector(".cm-inplace-menu-panel")).toBeNull()
 })
 
+test("a fingertip's drift within slop does not abort the long-press", async () => {
+  const { view } = await mount("Heading here")
+  vi.useFakeTimers()
+  view.contentDOM.dispatchEvent(
+    new PointerEvent("pointerdown", {
+      bubbles: true,
+      clientX: 20,
+      clientY: 20,
+      pointerType: "touch",
+    }),
+  )
+  vi.advanceTimersByTime(200)
+  // 15 px of wobble — under the 20 px slop, so the press keeps counting.
+  view.contentDOM.dispatchEvent(
+    new PointerEvent("pointermove", {
+      bubbles: true,
+      clientX: 35,
+      clientY: 20,
+      pointerType: "touch",
+    }),
+  )
+  vi.advanceTimersByTime(300)
+  expect(document.querySelector(".cm-inplace-menu-panel")).not.toBeNull()
+})
+
+test("a real drag past slop aborts the long-press", async () => {
+  const { view } = await mount("Heading here")
+  vi.useFakeTimers()
+  view.contentDOM.dispatchEvent(
+    new PointerEvent("pointerdown", {
+      bubbles: true,
+      clientX: 20,
+      clientY: 20,
+      pointerType: "touch",
+    }),
+  )
+  vi.advanceTimersByTime(200)
+  view.contentDOM.dispatchEvent(
+    new PointerEvent("pointermove", {
+      bubbles: true,
+      clientX: 48,
+      clientY: 20,
+      pointerType: "touch",
+    }),
+  )
+  vi.advanceTimersByTime(400)
+  expect(document.querySelector(".cm-inplace-menu-panel")).toBeNull()
+})
+
 test("a long-press opens the canvas menu on touch and selects the word", async () => {
   const { view } = await mount("Heading here")
   longPress(view)
@@ -123,6 +172,27 @@ test("a long-press then the browser's synthesised contextmenu open one menu", as
     new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }),
   )
   expect(document.querySelectorAll(".cm-inplace-menu-panel")).toHaveLength(1)
+})
+
+test("a scroll right after a long-press does not dismiss the menu, a later one does", async () => {
+  const { view } = await mount("Heading here")
+  longPress(view) // opens the menu; fake timers now at the 500 ms hold mark
+  expect(document.querySelector(".cm-inplace-menu-panel")).not.toBeNull()
+
+  // The opening gesture's own incidental scroll — inside the grace window.
+  document.dispatchEvent(new Event("scroll"))
+  expect(
+    document.querySelector(".cm-inplace-menu-panel"),
+    "menu survives the gesture's incidental scroll",
+  ).not.toBeNull()
+
+  // A deliberate scroll well after the menu settled still closes it.
+  vi.advanceTimersByTime(400)
+  document.dispatchEvent(new Event("scroll"))
+  expect(
+    document.querySelector(".cm-inplace-menu-panel"),
+    "a later scroll dismisses as before",
+  ).toBeNull()
 })
 
 test("inPlace.contextMenu = false ignores a long-press too", async () => {

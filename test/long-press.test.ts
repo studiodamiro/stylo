@@ -22,7 +22,7 @@ test("fires after the hold with the contact point", () => {
   attachLongPress(el, { onLongPress })
 
   down(el, 30, 40)
-  vi.advanceTimersByTime(499)
+  vi.advanceTimersByTime(449)
   expect(onLongPress).not.toHaveBeenCalled()
   vi.advanceTimersByTime(1)
   expect(onLongPress).toHaveBeenCalledWith(30, 40, el)
@@ -69,6 +69,17 @@ test("a small jitter within the slop still fires", () => {
   down(el, 10, 10)
   move(el, 14, 16) // within 10 on both axes
   vi.advanceTimersByTime(500)
+  expect(onLongPress).toHaveBeenCalledTimes(1)
+})
+
+test("the default slop tolerates a fingertip's drift", () => {
+  const el = document.createElement("div")
+  const onLongPress = vi.fn()
+  attachLongPress(el, { onLongPress }) // default slop (20)
+
+  down(el, 100, 100)
+  move(el, 118, 100) // 18px — a finger roll, under the default
+  vi.advanceTimersByTime(450)
   expect(onLongPress).toHaveBeenCalledTimes(1)
 })
 

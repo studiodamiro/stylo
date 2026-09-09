@@ -227,6 +227,7 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
   }
 
   const armDismiss = () => {
+    const armedAt = Date.now()
     const outside = (e: Event) => !root.contains(e.target as Node)
     const onDown = (e: Event) => {
       if (outside(e)) hide()
@@ -234,9 +235,15 @@ export function createContextMenu(doc: Document, className = "cm-inplace-menu"):
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") hide()
     }
-    // Ignore scrolls that come from inside the menu — e.g. the URL input
-    // scrolling its own text as you type past its width.
+    // A scroll dismisses the menu — but not one in the first moments after it
+    // opens. A touch long-press is one continuous gesture that routinely emits
+    // an incidental scroll (iOS's own long-press handling, a hair of finger
+    // drift, a focus-driven viewport shift) in the frames right after the menu
+    // appears; without this grace it is gone before the finger lifts. A
+    // deliberate scroll-away lands well after the window. Also skips scrolls
+    // from inside the menu — e.g. the URL input scrolling its own text.
     const onScroll = (e: Event) => {
+      if (Date.now() - armedAt < 350) return
       if (outside(e)) hide()
     }
     // `pointerdown` as well as `mousedown` — a touch tap outside fires only the
