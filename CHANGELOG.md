@@ -19,12 +19,18 @@ Notable changes to Stylo. The format follows
   pair (Markdown has no underline), bound to `Mod-u`. Not in the default bar;
   add `"underline"` to `toolbar.items` to show the button. Renders underlined
   wherever the host renders inline HTML; Stylo's bundled `preview` does not.
-- Touch support for the in-place context menu. A long-press (≈500 ms) opens the
+- Touch support for the in-place context menu. A long-press (≈450 ms) opens the
   canvas menu and the editable table's structural menu where a mouse would
   right-click; a tap outside dismisses it. The table's edge `+` add-row /
-  add-column strips stay visible on touch devices instead of only on hover. The
-  gesture logic is unit-tested; a hands-on pass on real iOS / Android hardware
-  is still pending. ADR-007 rollout log.
+  add-column strips stay visible on touch devices instead of only on hover.
+  Refined after an on-device pass — see **Fixed** and **Changed** below. ADR-007
+  rollout log; ADR-002 §2 amendment (2026-09-09).
+- The in-place context menu grows for touch under `@media (pointer: coarse)` —
+  menu rows and the URL input take a wider vertical gutter (~18&nbsp;px between
+  labels), the selection bar a 44&nbsp;px tap target. Automatic, no prop —
+  resizing an existing popup changes no layout, unlike `toolbar.sticky`, which
+  stays opt-in. Override through the `.cm-inplace-*` classes. ADR-002 §2
+  amendment.
 - `toolbar={{ sticky: "bottom" | "top" | true }}` — pins the formatting bar to
   an edge instead of wherever `<Stylo>` sits on the page (`true` is an alias
   for `"bottom"`). Both are `position: fixed`. `"bottom"` rides above the
@@ -47,6 +53,10 @@ Notable changes to Stylo. The format follows
   mount** — a deliberate contract, with the `key`-to-remount recipe and the
   reasons a live-reconfiguration path was rejected. ADR-005 config-lifecycle
   amendment; props and in-place-config references.
+- New guide, [Layout and touch](docs/wiki/guides/layout-and-touch.md): the
+  three page layouts (inline, full height, bounded box), the full-height recipe
+  that pins a toolbar with no `position: fixed`, and what to expect from the
+  context menu, menu sizing, and caret placement on touch.
 
 ### Changed
 
@@ -58,6 +68,22 @@ Notable changes to Stylo. The format follows
   `syntaxTree` reads all line up. Install the packages alongside Stylo; see the
   README. Drops roughly 190&nbsp;kB gzipped from the bundle, and the `dist/`
   `codemirror` chunk with it.
+- Long-press tuning for the in-place menu: abort `slop` 10&nbsp;px → 20&nbsp;px
+  (a fingertip cannot hold to 10&nbsp;px for half a second), hold `delay`
+  500&nbsp;ms → 450&nbsp;ms. `.cm-content` now sets `-webkit-touch-callout: none`
+  so iOS Safari's own long-press callout stops racing — and usually beating —
+  the gesture. Text selection and the selection handles are unaffected. Still
+  fiddly to land on iOS after these changes; `inPlace.selectionUI: "bar"` is the
+  recommended touch trigger. ADR-002 §2 amendment.
+
+### Fixed
+
+- The in-place context menu no longer dismisses itself the instant it opens on
+  touch. `armDismiss` now ignores `scroll` for 350&nbsp;ms after the menu
+  appears — a long-press is one continuous gesture that routinely emits an
+  incidental scroll (iOS's own long-press handling, a hair of finger drift, a
+  focus-driven viewport shift) in the frames right after it opens. A deliberate
+  scroll-away lands well after the window and still dismisses as before.
 
 ### Known limitations
 

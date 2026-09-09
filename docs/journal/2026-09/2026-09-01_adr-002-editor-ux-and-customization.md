@@ -379,6 +379,62 @@ untouched, and must not gate v1.
   > and reappears on the next selection — the same behaviour this
   > investigation arrived at by necessity, already shipped and stable.
 
+  > **Amended 2026-09-09 (touch menu, and the layout that pins a toolbar for
+  > free).** A second hands-on pass, this time on the in-place context menu
+  > rather than the toolbar, surfaced three things.
+  >
+  > 1. **The long-press was hard to summon.** Two causes. The abort `slop`
+  >    was 10px — tighter than a fingertip can hold for half a second, so
+  >    ordinary finger roll cancelled the press before it completed; it is
+  >    now 20px, and the `delay` drops 500ms → 450ms. And iOS Safari's own
+  >    long-press callout was left un-suppressed, so it raced the gesture and
+  >    usually won (the same "selection callout racing long-press" noted as
+  >    the first of the sticky-toolbar rollout's native-chrome interactions).
+  >    `-webkit-touch-callout: none` on `.cm-content` stops that without
+  >    touching text selection or the selection handles. An on-device retest
+  >    after these two changes still found the long-press unreliable to land
+  >    on iOS — better, not solved. It is left here rather than chased
+  >    further: `inPlace.selectionUI: "bar"` is the dependable touch trigger
+  >    (it needs no gesture at all, just a selection) and is the recommended
+  >    default for a touch-first deployment.
+  >
+  > 2. **The menu was mouse-sized on touch.** It, its URL input, and the
+  >    selection bar now grow under `@media (pointer: coarse)` — the menu
+  >    rows to 9px of vertical padding (roughly an 18px gutter between
+  >    labels) with no `min-height`, the selection bar to a 44px tap target.
+  >    An early pass forced a full 44px menu row and it spread the list out
+  >    more than it earned. This sizing _is_ automatic, and that is a
+  >    deliberate contrast with `toolbar.sticky`, which the earlier amendment
+  >    explicitly kept opt-in "rather than it firing from a `pointer: coarse`
+  >    media query": relocating a toolbar to the window edge is a layout
+  >    decision only the host can make, whereas resizing the rows of a popup
+  >    that already exists changes no layout and has no wrong context. The
+  >    `.cm-inplace-*` classes remain the consumer override.
+  >
+  > 3. **Touch caret placement is imprecise** — a tap lands at the nearest
+  >    word boundary, not mid-word (a mouse is exact). This is iOS Safari's
+  >    native behaviour for a tap in `contenteditable`; CodeMirror defers to
+  >    the platform for touch, and the platform's answer for precision is the
+  >    tap-and-hold magnifier. Left as-is: overriding it means hand-rolled
+  >    touch caret handling that fights the platform, against the same
+  >    principle the sticky-toolbar rounds arrived at. Documented, not fixed.
+  >
+  > The same pass also settled the trade-off flagged at the end of the
+  > `sticky` rounds above ("`sticky` only tracks an ancestor it shares with
+  > the content underneath it"). If the host gives `<Stylo>` a **bounded
+  > height** so the editor pane scrolls internally and the document itself
+  > does not, the toolbar — already a non-scrolling flex sibling of that
+  > pane — stays pinned with no `position: fixed`, no portal, and no rAF
+  > watchdog: the machinery the six rounds built exists only for the
+  > whole-page-scrolls layout. Confirmed on-device this session ("the text
+  > area scroll combined with the sticky top is actually usable"). This is
+  > not a new prop — the consumer supplies the height and owns any
+  > breakpoint — but it is now the recommended layout for a full-screen or
+  > mobile editor, written up in
+  > [Layout and touch](../../wiki/guides/layout-and-touch.md). Whether
+  > `toolbar.sticky` should detect a bounded context and skip its
+  > window-pinning machinery is left as a possible follow-up.
+
 #### 3. Styling: CSS Modules + a small custom-property token set
 
 - Internal UI (toolbar, menus, drawer) is styled with **CSS Modules**, compiled

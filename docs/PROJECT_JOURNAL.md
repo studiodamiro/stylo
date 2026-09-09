@@ -30,6 +30,7 @@ milestones and Architectural Decision Records, newest first.
 
 | Date       | Entry                                                                                                                                             |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-09 | [Touch context menu, and the layout that pins a toolbar for free](./journal/2026-09/2026-09-09_touch-menu-and-full-height-layout.md)              |
 | 2026-09-04 | [Frontmatter as a raw callback](./journal/2026-09/2026-09-04_frontmatter-callback.md)                                                             |
 | 2026-09-04 | [Save hook, imperative ref handle, and a dark palette](./journal/2026-09/2026-09-04_save-imperative-handle-dark-mode.md)                          |
 | 2026-09-03 | [In-place canvas — menu groups, selection bar in cells, callouts](./journal/2026-09/2026-09-03_menu-groups-cell-bar-callouts.md)                  |
