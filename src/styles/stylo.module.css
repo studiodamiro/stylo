@@ -117,7 +117,14 @@
 
 /* Text glyphs that stand in for an icon (e.g. `fm`) — monospace to read as syntax. */
 .toolbarButton code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(
+    --stylo-font-family-mono,
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace
+  );
   font-size: 0.8125rem;
   font-weight: 500;
 }
@@ -144,8 +151,18 @@
   /* The base `.toolbar` deliberately leaves font-family to inherit from
      wherever the host mounts `<Stylo>`. Both sticky edges are
      `position: fixed` against the window, so neither can safely lean on
-     that — an explicit stack instead of the browser's serif default. */
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+     that — the prose-font token (or its default stack) instead of the
+     browser's serif default. */
+  font-family: var(
+    --stylo-font-family,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif
+  );
 }
 
 .toolbarSticky::-webkit-scrollbar {
@@ -313,7 +330,14 @@
 }
 
 .preview code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(
+    --stylo-font-family-mono,
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace
+  );
   font-size: 0.9em;
   padding: 0.1em 0.35em;
   border-radius: calc(var(--stylo-radius) - 3px);
@@ -346,7 +370,14 @@
   border-radius: calc(var(--stylo-radius) - 3px);
   background: color-mix(in srgb, var(--stylo-border) 22%, transparent);
   color: var(--stylo-text-muted);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(
+    --stylo-font-family-mono,
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace
+  );
   font-size: 0.8125rem;
   line-height: 1.5;
   white-space: pre-wrap;
@@ -357,7 +388,16 @@
   content: "Frontmatter";
   display: block;
   margin-bottom: 0.5em;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(
+    --stylo-font-family,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif
+  );
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.04em;

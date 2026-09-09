@@ -1,6 +1,10 @@
 import { EditorView } from "@codemirror/view"
 
-const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+const MONO =
+  "var(--stylo-font-family-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace)"
+
+const SANS =
+  'var(--stylo-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif)'
 
 /**
  * Display styling for the in-place canvas. Scoped to editors that include this
@@ -24,8 +28,7 @@ export const inPlaceTheme = EditorView.theme({
   // rendered table, a `$$` math block — would otherwise bleed to the editor
   // frame. Padding on `.cm-content` holds every one of them off the edge.
   "& .cm-content": {
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    fontFamily: SANS,
     lineHeight: "1.75",
     padding: "0.75rem",
     // Suppress iOS Safari's own long-press callout so it stops racing (and
@@ -194,8 +197,7 @@ export const inPlaceTheme = EditorView.theme({
   ".cm-inplace-fm-first::before": {
     content: '"Frontmatter"',
     marginRight: "0.6em",
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    fontFamily: SANS,
     fontSize: "0.8rem",
     fontWeight: "600",
     textTransform: "uppercase",

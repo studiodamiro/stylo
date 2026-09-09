@@ -6,6 +6,19 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-10
+
+### Added
+
+- **`--stylo-font-family` and `--stylo-font-family-mono`** — the prose and code
+  font stacks, previously hard-coded. `--stylo-font-family` backs the in-place
+  canvas, the "Frontmatter" labels, and the fixed-position sticky toolbar;
+  `--stylo-font-family-mono` backs source mode, the in-place code decorations,
+  and preview `code` / `pre`. Defaults are the stacks that were inline, so no
+  visual change out of the box. Not colours — one value each, light block only,
+  like `--stylo-radius` / `--stylo-font-size`. The `preview` prose surface still
+  inherits its font from the host by design.
+
 ## [0.5.0] - 2026-09-10
 
 ### Added

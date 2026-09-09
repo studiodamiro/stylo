@@ -25,6 +25,14 @@
      track this, so a host scales the whole surface from one value. Not a
      colour — one value serves both themes, like `--stylo-radius`. */
   --stylo-font-size: 0.9375rem;
+  /* Font stacks. `--stylo-font-family` is the reading/prose font (the in-place
+     canvas, the "Frontmatter" labels, the fixed-position sticky toolbar);
+     `--stylo-font-family-mono` is the code font (source mode, in-place code
+     decorations, preview `code` / `pre`). Defaults match the previously
+     hard-coded stacks. Not colours — one value each serves both themes. */
+  --stylo-font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --stylo-font-family-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   /* Rendered-table styling. Overridable on `.stylo` to reskin tables on both
      the in-place canvas and the preview surface. Defaults keep today's look;

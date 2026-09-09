@@ -164,8 +164,9 @@ full grammar set is ~110 lazy chunks). See
 Every colour is a `--stylo-*` custom property; override any of them on `.stylo`
 or an ancestor. A dark palette ships built in and activates under a `.dark` or
 `[data-theme="dark"]` ancestor — the `next-themes` / shadcn convention.
-`--stylo-font-size` (default `0.9375rem`) sets the base editor size; everything
-inside scales from it.
+`--stylo-font-size` (default `0.9375rem`) sets the base editor size and
+everything inside scales from it; `--stylo-font-family` and
+`--stylo-font-family-mono` set the prose and code fonts.
 
 ---
 
