@@ -30,6 +30,7 @@ milestones and Architectural Decision Records, newest first.
 
 | Date       | Entry                                                                                                                                              |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-10 | [Find / replace — `@codemirror/search` wired in](./journal/2026-09/2026-09-10_find-and-replace.md)                                                 |
 | 2026-09-10 | [Token decoupling — floating-surface token, ring/accent split, scrollbar styling](./journal/2026-09/2026-09-10_token-decoupling-and-scrollbars.md) |
 | 2026-09-09 | [Touch context menu, and the layout that pins a toolbar for free](./journal/2026-09/2026-09-09_touch-menu-and-full-height-layout.md)               |
 | 2026-09-04 | [Frontmatter as a raw callback](./journal/2026-09/2026-09-04_frontmatter-callback.md)                                                              |

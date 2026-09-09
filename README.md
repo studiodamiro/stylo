@@ -64,6 +64,7 @@ truth.** The editor is a thin, composable surface over it.
 | Concern          | Library                                                                     |
 | ---------------- | --------------------------------------------------------------------------- |
 | Editing surface  | CodeMirror 6 (`@codemirror/lang-markdown`)                                  |
+| Find / replace   | `@codemirror/search` — `Mod-f` on every editing surface                     |
 | Render / preview | `react-markdown` + `remark-gfm` + `remark-math` + `rehype-katex` + `katex`  |
 | `[[wikilinks]]`  | small custom `remark` plugin                                                |
 | Frontmatter      | `remark-frontmatter` — fences recognised; key/value parsing deferred        |

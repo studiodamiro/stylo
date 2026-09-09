@@ -1,5 +1,6 @@
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands"
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown"
+import { search, searchKeymap } from "@codemirror/search"
 import { EditorState, type Extension, Prec } from "@codemirror/state"
 import { EditorView, keymap, placeholder as placeholderExt } from "@codemirror/view"
 import { markdownKeymap } from "../toolbar/keymap"
@@ -26,6 +27,13 @@ export function baseExtensions(codeLanguages?: CodeLanguages): Extension {
     Prec.high(tableKeymap),
     markdownKeymap,
     tableRealign,
+    // Find / replace. `search` supplies the panel and its state; `searchKeymap`
+    // carries in-panel navigation (`Mod-g` next, `Shift-Mod-g` previous,
+    // `Mod-Alt-g` replace, `Escape` close). Opening on `Mod-f` also comes from
+    // the `search` toolbar command's `keys`, so the panel opens whether or not
+    // the visible toolbar is mounted. Panel docks at the top, editor-style.
+    search({ top: true }),
+    keymap.of(searchKeymap),
     markdown({ base: markdownLanguage, codeLanguages }),
     styloHighlighting,
     EditorView.lineWrapping,

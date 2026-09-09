@@ -435,6 +435,29 @@ untouched, and must not gate v1.
   > `toolbar.sticky` should detect a bounded context and skip its
   > window-pinning machinery is left as a possible follow-up.
 
+  > **Amended 2026-09-10 (find / replace):** the audit's "baseline editor
+  > expectation Stylo simply omits" — no in-note search — is closed with
+  > `@codemirror/search`. It is wired into `baseExtensions`, so `source`,
+  > `split`, and the `in-place` canvas all get it from one place; `preview` has
+  > no CodeMirror surface and is unaffected. `Mod-f` opens the panel (via the
+  > new `search` command's `keys`, so it works with the visible toolbar hidden),
+  > and the library's own `searchKeymap` carries in-panel navigation. The
+  > default panel is restyled through `styloTheme` to match Stylo's flat
+  > token-driven chrome rather than CodeMirror's gradient buttons.
+  >
+  > A `search` toolbar command id ships alongside — **opt-in**, not in
+  > `DEFAULT_TOOLBAR_ITEMS`, the same treatment as `save` and `underline`. It
+  > has no `disabled` predicate (search is always valid) and no active state.
+  >
+  > **Dependency call:** `@codemirror/search` is a regular `dependency`, not a
+  > tenth peer. ADR-008's peer-dependency rule exists for the ~190&nbsp;kB
+  > CodeMirror core and for a single shared `EditorState` identity; search is
+  > ~5&nbsp;kB gzipped and holds no cross-boundary state, so the peer-install
+  > friction is not worth it for a baseline feature. It is still caught by the
+  > build's `/^@codemirror\//` external rule, so it adds nothing to the bundle
+  > and npm dedupe keeps it on the host's single CodeMirror copy. See the
+  > [find / replace note](./2026-09-10_find-and-replace.md).
+
 #### 3. Styling: CSS Modules + a small custom-property token set
 
 - Internal UI (toolbar, menus, drawer) is styled with **CSS Modules**, compiled

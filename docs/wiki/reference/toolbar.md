@@ -209,6 +209,7 @@ a long-press opens them, the same as a right-click. See
 | --------------- | -------------------------------------------------------- | ----------------------- |
 | `undo` / `redo` | History                                                  | `Mod-z` / `Mod-Shift-z` |
 | `save`          | Call the `onSave` prop with the document                 | `Mod-s`                 |
+| `search`        | Open the find / replace panel — _not in the default bar_ | `Mod-f`                 |
 | `h1` `h2` `h3`  | Set / swap / clear an ATX heading                        | `Mod-Alt-1..3`          |
 | `body`          | Strip any heading prefix — back to a paragraph           | —                       |
 | `bold`          | Wrap in `**…**`                                          | `Mod-b`                 |
@@ -229,10 +230,10 @@ a long-press opens them, the same as a right-click. See
 | `math`          | Wrap in `$…$`                                            | —                       |
 | `mathBlock`     | Fence the selected lines in `$$`                         | —                       |
 
-The default bar shows every id above **except `save` and `underline`**, grouped
-by kind: history · headings · inline text (with `link` and `wikilink`) · the
-three list markers · block structure (`quote` `hr` `frontmatter` `table`) · code
-and math.
+The default bar shows every id above **except `save`, `search`, and
+`underline`**, grouped by kind: history · headings · inline text (with `link`
+and `wikilink`) · the three list markers · block structure (`quote` `hr`
+`frontmatter` `table`) · code and math.
 
 `save` is opt-in: add it to `items` yourself. It renders **disabled** until an
 [`onSave`](./props.md) prop is wired, so it stays out of the default bar rather
@@ -240,6 +241,13 @@ than sitting there greyed out for every consumer. `Mod-s` triggers the
 same path with or without the button; with no `onSave` handler it does nothing and
 the browser keeps the key. A "saved / saving" status pill is not built in — see
 the [auto-save guide](../guides/autosave.md).
+
+`search` is opt-in only as a button — the find / replace panel (`@codemirror/search`)
+is always active, and `Mod-f` opens it on every editing surface (`source`,
+`split`, `in-place`) whether or not the bar is mounted. `Mod-g` / `Mod-Shift-g`
+step through matches, `Mod-Alt-g` replaces, `Escape` closes. `preview` has no
+editor, so nothing happens there. Add `"search"` to `items` if you want a
+visible button as well.
 
 `underline` is opt-in for a different reason: Markdown has no underline, so the
 command writes a raw `<u>…</u>` HTML pair. That renders underlined wherever the

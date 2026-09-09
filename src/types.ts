@@ -21,6 +21,7 @@ export type ToolbarCommandId =
   | "undo"
   | "redo"
   | "save"
+  | "search"
   | "h1"
   | "h2"
   | "h3"
