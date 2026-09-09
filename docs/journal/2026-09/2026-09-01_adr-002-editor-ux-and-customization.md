@@ -584,6 +584,20 @@ untouched, and must not gate v1.
 - **`<StyloToolbarSettings />` visual customizer** — drag tools between an
   "Available" drawer and "Left"/"Right" magnetic docks; persist to `localStorage`
   or hand out via `onSettingsChange`. Requires an accessible keyboard fallback.
+
+  > **Design spec 2026-09-10 (not yet built):** written up in
+  > [the customizer design note](./2026-09-10_toolbar-customizer-design.md). Key
+  > departures from the sketch above, both following the shipped v1 toolbar: it
+  > edits the single ordered `items` list (a "on the bar" / "available" tray
+  > pair), not left/right docks; and it is a **controlled** `value` /
+  > `onChange` component over `ToolbarItem[]` — the host owns persistence, so
+  > `onSettingsChange` and self-`localStorage` are dropped. Drag-and-drop is
+  > proposed as `@dnd-kit`, an **optional** peer dependency used only by a
+  > separately-exported `@damiro/stylo/toolbar-settings` entry, and the build is
+  > staged so a dependency-free keyboard-only core ships first and the
+  > dependency is a later, skippable layer. This remains the item whose delivery
+  > gates the first npm-registry publish.
+
 - **Context-aware selection tooltip** (`mode="tooltip" | "toolbar" | "both"`) — a
   floating bubble menu that inspects the CodeMirror Lezer node under the
   selection to show context-relevant actions (plain text vs. link vs. math) and
