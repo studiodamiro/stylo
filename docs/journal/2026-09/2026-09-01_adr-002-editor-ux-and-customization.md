@@ -458,6 +458,29 @@ untouched, and must not gate v1.
   > and npm dedupe keeps it on the host's single CodeMirror copy. See the
   > [find / replace note](./2026-09-10_find-and-replace.md).
 
+  > **Amended 2026-09-10 (`[[wikilink]]` autocomplete):** the last audit gap that
+  > was buildable without a fork. A new prop, **`wikiLinkSource`**, takes a
+  > `(query: string) => WikiLinkCompletion[] | Promise<…>` — the host's own index
+  > (vault tree, search endpoint); Stylo owns only the trigger and the insert.
+  > It is a `@codemirror/autocomplete` source registered through the **Markdown
+  > language data**, not `override`, so it is inert inside a fenced code block
+  > and leaves any embedded-language completions intact. The source fires inside
+  > an unclosed `[[…`, passes the text after `[[` (before any `|`), returns the
+  > host's list with `filter: false` (the host has already searched and
+  > ordered), and on accept writes `[[target]]` — or `[[target|label]]` when a
+  > candidate's `label` differs — reusing a following `]]` if the user already
+  > typed one. Wired in `baseExtensions` alongside find / replace, so `source`,
+  > `split`, and `in-place` share it; read once, at mount, like `codeLanguages`.
+  > Off entirely when `wikiLinkSource` is omitted. `![[embed]]` transclusion
+  > stays out of scope, a known parked item.
+  >
+  > **Dependency call:** `@codemirror/autocomplete` becomes a regular
+  > `dependency`, the same reasoning as `@codemirror/search` above — small, no
+  > cross-boundary state, already transitive through `@codemirror/lang-markdown`,
+  > and caught by the `/^@codemirror\//` external rule so it adds nothing to the
+  > bundle. See the
+  > [wikilink autocomplete note](./2026-09-10_wikilink-autocomplete.md).
+
 #### 3. Styling: CSS Modules + a small custom-property token set
 
 - Internal UI (toolbar, menus, drawer) is styled with **CSS Modules**, compiled

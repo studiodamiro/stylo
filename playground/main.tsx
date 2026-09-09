@@ -40,6 +40,14 @@ const TOOLBARS: Record<string, boolean | ToolbarConfig> = {
   hidden: false,
 }
 
+// Demo `wikiLinkSource` — a fixed page list, prefix-filtered. A real host would
+// hit its vault index or a search endpoint here.
+const DEMO_PAGES = ["Getting Started", "Field notes", "api/reference", "Roadmap", "Changelog"]
+const demoWikiLinkSource = (query: string) => {
+  const q = query.trim().toLowerCase()
+  return DEMO_PAGES.filter((p) => p.toLowerCase().includes(q)).map((target) => ({ target }))
+}
+
 type StickyPick = "off" | "top" | "bottom"
 type StickyVisibilityPick = "consistent" | "dynamic"
 
@@ -485,6 +493,7 @@ function App() {
           toolbar={withSticky(toolbarConfig, stickyToolbar, stickyVisibility)}
           frontmatter={frontmatter}
           codeLanguages={languages}
+          wikiLinkSource={demoWikiLinkSource}
           className={mode === "split" ? "playground-editor is-split" : "playground-editor"}
         />
       )}

@@ -35,16 +35,18 @@ import "@damiro/stylo/katex.css" // only if you use math in preview
 | `icons`           | `Partial<Record<ToolbarCommandId, ReactNode>>`                                                  | —            | Replace individual toolbar glyphs, keyed by command id. Any id left out keeps its built-in inline-SVG icon — Stylo ships no icon dependency.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `frontmatter`     | `"hidden" \| "code"`                                                                            | `"hidden"`   | How `preview` (and `split`'s preview pane) shows the leading `---` YAML block. `"hidden"` drops it; `"code"` renders the raw block as `<div class="stylo-frontmatter">` above the body. Restyle it with your own CSS (see below). For structured data use `onFrontmatter`; Stylo bundles no YAML parser ([ADR-001](../../journal/2026-09/2026-09-01_adr-001-editor-architecture.md)).                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `codeLanguages`   | `readonly LanguageDescription[] \| ((info: string) => Language \| LanguageDescription \| null)` | —            | Grammars for fenced-code sub-highlighting, forwarded verbatim to `@codemirror/lang-markdown`. Stylo bundles none — pass your own set (`codeLanguages={languages}` from `@codemirror/language-data`, or a hand-built list). Affects the CodeMirror surfaces (`source`, `split`, `in-place`); `preview` is unaffected. Read once, at mount. See [fenced-code highlighting](./code-languages.md).                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `wikiLinkSource`  | `(query: string) => readonly WikiLinkCompletion[] \| Promise<…>`                                | —            | Enables `[[wikilink]]` autocomplete on the CodeMirror surfaces. Called with the target typed so far while the caret is inside an unclosed `[[…`; return your index's matches, already ordered (Stylo does not re-rank or filter). May be async. Off when omitted. Read once, at mount. See [Wikilink autocomplete](#wikilink-autocomplete).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `readOnly`        | `boolean`                                                                                       | `false`      | Render the source surface read-only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `placeholder`     | `string`                                                                                        | —            | Shown when the document is empty (source surface).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `className`       | `string`                                                                                        | —            | Added to the root element alongside the internal classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 ## Config applied at mount
 
-Two props feed the CodeMirror extension configuration and are read **once**, when
-the editing surface is constructed: **`inPlace`** and **`codeLanguages`**.
-Changing either on a live `<Stylo>` has no effect. To apply a change, give the
-component a `key` derived from the config so React remounts it:
+Three props feed the CodeMirror extension configuration and are read **once**,
+when the editing surface is constructed: **`inPlace`**, **`codeLanguages`**, and
+**`wikiLinkSource`**. Changing any of them on a live `<Stylo>` has no effect. To
+apply a change, give the component a `key` derived from the config so React
+remounts it:
 
 ```tsx
 <Stylo key={mode + JSON.stringify(inPlace)} value={doc} onChange={setDoc} inPlace={inPlace} />
@@ -55,6 +57,34 @@ Everything else — `value`, `onChange`, every callback, `readOnly`,
 remount. The rationale for keeping `inPlace` mount-time (rather than a
 live-reconfiguration path) is in the
 [ADR-005 config-lifecycle amendment](../../journal/2026-09/2026-09-01_adr-005-in-place-decoration-toggles.md).
+
+## Wikilink autocomplete
+
+Pass `wikiLinkSource` to complete `[[wikilinks]]` from your own index. Stylo owns
+the trigger (an unclosed `[[…`) and the insert; the host owns the search.
+
+```tsx
+type WikiLinkCompletion = { target: string; label?: string }
+;<Stylo
+  value={doc}
+  onChange={setDoc}
+  wikiLinkSource={(query) =>
+    vault.search(query).map((note) => ({ target: note.path, label: note.title }))
+  }
+/>
+```
+
+- Called with the text typed after `[[`, before any `|`. Return matches
+  **already ordered** — `filter: false` is set, so Stylo shows them verbatim.
+  Return `[]` for no matches (the popup closes).
+- May be `async`; debouncing a network source is the host's call.
+- On accept: `[[target]]`, or `[[target|label]]` when `label` is set and differs
+  from `target`. A `]]` the user already typed is reused, not duplicated.
+- Works on `source`, `split`, and the `in-place` canvas. Inert inside fenced code
+  (it is a Markdown-language completion source). `![[embed]]` transclusion is not
+  covered.
+- Uses `@codemirror/autocomplete`, a regular dependency that dedupes onto the
+  host's CodeMirror copy.
 
 ## Ref — imperative handle
 

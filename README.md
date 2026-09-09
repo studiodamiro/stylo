@@ -26,7 +26,8 @@ built in.
 - **First-class math** — `$…$` and `$$…$$` rendered with KaTeX, live in the
   canvas and in preview.
 - **`[[wikilinks]]`** — recognised, styled, and clickable, with an
-  `onWikiLinkClick` callback.
+  `onWikiLinkClick` callback and opt-in `[[` autocomplete from an index you
+  supply (`wikiLinkSource`).
 - **Interactive tables** — edit a rendered table cell by cell in the in-place
   canvas, with row / column controls; or keep plain source pipes.
 - **Callouts** — `> [!note]` blockquotes render as tinted admonition blocks
@@ -149,10 +150,14 @@ function Editor() {
 your own `ToolbarCustomItem` buttons, and a `render` slot to wrap it. See the
 [toolbar reference](./docs/wiki/reference/toolbar.md).
 
-`inPlace` and `codeLanguages` are read once, when the editing surface mounts —
-give `<Stylo>` a `key` derived from the config to apply a change. Every other
-prop is fully reactive. See
+`inPlace`, `codeLanguages`, and `wikiLinkSource` are read once, when the editing
+surface mounts — give `<Stylo>` a `key` derived from the config to apply a
+change. Every other prop is fully reactive. See
 [props · applied at mount](./docs/wiki/reference/props.md#config-applied-at-mount).
+
+Pass `wikiLinkSource` — `(query) => { target, label? }[]`, sync or async — to
+turn on `[[wikilink]]` autocomplete backed by your own index. See
+[Wikilink autocomplete](./docs/wiki/reference/props.md#wikilink-autocomplete).
 
 Fenced code blocks render in plain monospace — no token colours — until you pass
 `codeLanguages` with the grammars you want. Stylo bundles none by design (the

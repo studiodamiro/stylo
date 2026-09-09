@@ -16,4 +16,6 @@ export type {
   ToolbarConfig,
   ToolbarCustomItem,
   ToolbarItem,
+  WikiLinkCompletion,
+  WikiLinkSource,
 } from "./types"
