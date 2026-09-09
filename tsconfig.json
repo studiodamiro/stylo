@@ -21,5 +21,12 @@
 
     "noEmit": true
   },
-  "include": ["src", "test", "playground", "vite.config.ts", "vitest.config.ts"]
+  "include": [
+    "src",
+    "test",
+    "playground",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "playwright.config.ts"
+  ]
 }
