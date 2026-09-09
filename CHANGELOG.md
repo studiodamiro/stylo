@@ -8,6 +8,18 @@ Notable changes to Stylo. The format follows
 
 ### Added
 
+- `--stylo-surface-floating` token — background for the floating in-place popups
+  (the context menu, its URL input, the selection bar, the link-hover tooltip).
+  A concrete colour with light and dark values, **not** an alias of
+  `--stylo-bg`: a host that sets `--stylo-bg: transparent` to drop the editor
+  into an existing card now keeps those popups opaque and legible instead of
+  seeing them blend into the content behind. Override it for a raised or tinted
+  popup surface. ADR-002 §3 amendment.
+- Thin, token-tinted scrollbars on the editing surface (`.cm-scroller`), so
+  `source`, `in-place`, and the source pane of `split` no longer fall back to a
+  heavier native scrollbar than the chrome around them. Driven by
+  `--stylo-border` / `--stylo-text-muted`; a host's own `.cm-scroller` rules
+  load after and win.
 - Toolbar extensibility. `toolbar.items` now accepts `ToolbarCustomItem` objects
   (`{ id, title, icon, run, isActive?, disabled? }`) mixed in with the built-in
   ids — a consumer's own button, run against the live view, refreshed on the
@@ -53,6 +65,9 @@ Notable changes to Stylo. The format follows
   mount** — a deliberate contract, with the `key`-to-remount recipe and the
   reasons a live-reconfiguration path was rejected. ADR-005 config-lifecycle
   amendment; props and in-place-config references.
+- The README and the fenced-code reference now state up front that fenced code
+  renders in flat, uncoloured monospace until `codeLanguages` is passed —
+  previously only discoverable by reading the reference in full.
 - New guide, [Layout and touch](docs/wiki/guides/layout-and-touch.md): the
   three page layouts (inline, full height, bounded box), the full-height recipe
   that pins a toolbar with no `position: fixed`, and what to expect from the
@@ -60,6 +75,11 @@ Notable changes to Stylo. The format follows
 
 ### Changed
 
+- The in-place context menu's active row now takes its accent from
+  `--stylo-accent` (documented role: active / pressed states) instead of
+  `--stylo-ring`. `--stylo-ring` is the focus ring only now, so a host can drop
+  or restyle the focus outline without also recolouring the menu. ADR-002 §3
+  amendment.
 - **BREAKING:** `@codemirror/*` and `@lezer/common` / `@lezer/highlight` are now
   `peerDependencies` rather than bundled dependencies, and are externalised from
   the build (ADR-008). The host installs one copy of CodeMirror and Stylo shares

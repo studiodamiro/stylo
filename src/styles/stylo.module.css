@@ -9,6 +9,36 @@
   overflow: hidden;
 }
 
+/* The editing surface's own scroll container (source, in-place, and the source
+   pane of split all resolve to `.cm-scroller`). Thin, token-tinted bars so the
+   editor doesn't fall back to a heavier native scrollbar than the app chrome
+   around it. A host's own `.cm-scroller` rules load after and win. */
+.root :global(.cm-scroller) {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--stylo-border) 90%, transparent) transparent;
+}
+
+.root :global(.cm-scroller)::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.root :global(.cm-scroller)::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--stylo-border) 90%, transparent);
+  background-clip: padding-box;
+}
+
+.root :global(.cm-scroller)::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--stylo-text-muted) 55%, transparent);
+  background-clip: padding-box;
+}
+
+.root :global(.cm-scroller)::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 .source {
   flex: 1 1 auto;
   min-height: 0;

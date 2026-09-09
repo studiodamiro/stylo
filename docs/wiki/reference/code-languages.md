@@ -10,6 +10,10 @@ tags:
 
 # Fenced-code highlighting
 
+> **Fenced code rendering in flat, uncoloured monospace?** That is the default —
+> Stylo ships no language grammars. Pass the `codeLanguages` prop (below) to opt
+> in to the ones you need.
+
 Stylo carries a built-in token palette (the `--stylo-syntax-*` custom
 properties — see [props](./props.md#syntax-colours)) and applies it on every
 CodeMirror surface (`source`, `split`, `in-place`). But it can only colour

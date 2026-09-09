@@ -484,6 +484,31 @@ untouched, and must not gate v1.
   > token is not complete until it has a value in **both** blocks — a
   > light-only token is a silent dark-mode regression. See the
   > [save / handle / dark-mode note](./2026-09-04_save-imperative-handle-dark-mode.md).
+  >
+  > **Amended 2026-09-10 (ninth token; ring/accent split):** a downstream
+  > integration trial surfaced two token seams. First, every floating in-place
+  > popup — the context menu, its URL input, the selection bar, the link-hover
+  > tooltip — drew its background from `--stylo-bg`, the same token as the base
+  > editing surface. Setting `--stylo-bg: transparent`, the natural move when
+  > embedding `<Stylo>` in an existing card, silently made all four popups
+  > unreadable against the content behind them. A ninth token,
+  > **`--stylo-surface-floating`** (default `#ffffff` / `#09090b`), now backs
+  > them — a **concrete** colour, not `var(--stylo-bg)`, so a transparent base
+  > surface leaves the popups opaque. This is the shadcn `--popover` role, which
+  > the set had folded into `--stylo-bg`; splitting it out is "one token per real
+  > role", not sprawl. Second, `--stylo-ring` was doing double duty as both the
+  > focus-ring colour and the in-place menu's active-row accent, so a host that
+  > wanted to drop the focus outline could not without also recolouring the
+  > menu. The active row now follows `--stylo-accent` (whose documented role is
+  > "active / pressed states"); `--stylo-ring` is the focus ring only.
+  >
+  > The same pass added thin, token-tinted scrollbars to `.cm-scroller` (the
+  > editing surface's scroll container across `source`, `in-place`, and
+  > `split`), which previously carried no scrollbar styling at all while the
+  > toolbar, menu, and selection bar each had a full design pass — it fell back
+  > to the browser's default-weight bar. Host `.cm-scroller` rules still win.
+  > See the
+  > [token-decoupling note](./2026-09-10_token-decoupling-and-scrollbars.md).
 
 #### 4. Icons: inline SVG, no icon dependency
 

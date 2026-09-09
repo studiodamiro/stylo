@@ -112,6 +112,11 @@ give `<Stylo>` a `key` derived from the config to apply a change. Every other
 prop is fully reactive. See
 [props · applied at mount](./docs/wiki/reference/props.md#config-applied-at-mount).
 
+Fenced code blocks render in plain monospace — no token colours — until you pass
+`codeLanguages` with the grammars you want. Stylo bundles none by design (the
+full grammar set is ~110 lazy chunks). See
+[Fenced-code highlighting](./docs/wiki/reference/code-languages.md).
+
 ### Theming
 
 Every colour is a `--stylo-*` custom property; override any of them on `.stylo`

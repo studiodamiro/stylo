@@ -7,6 +7,13 @@
   color-scheme: light;
 
   --stylo-bg: #ffffff;
+  /* Background for floating popups — the in-place context menu, its URL input,
+     the selection bar, the link-hover tooltip. A concrete colour, deliberately
+     *not* `var(--stylo-bg)`: a host that sets `--stylo-bg: transparent` to drop
+     the editor into an existing card still needs its popups to stay opaque and
+     legible against whatever sits behind them. Override for a raised/tinted
+     popup surface. */
+  --stylo-surface-floating: #ffffff;
   --stylo-text: #09090b;
   --stylo-text-muted: #71717a;
   --stylo-border: #e4e4e7;
@@ -52,6 +59,7 @@
   color-scheme: dark;
 
   --stylo-bg: #09090b;
+  --stylo-surface-floating: #09090b;
   --stylo-text: #fafafa;
   --stylo-text-muted: #a1a1aa;
   --stylo-border: #27272a;
