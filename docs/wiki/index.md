@@ -34,6 +34,8 @@ React with first-class LaTeX (KaTeX) support.
   and math setup.
 - [[reference/toolbar|Formatting toolbar]] — the `toolbar` prop, command ids,
   keyboard shortcuts, and the `icons` override.
+- [[reference/toolbar-settings|`<StyloToolbarSettings />`]] — the opt-in
+  end-user customizer for the formatting bar.
 - [[reference/in-place-config|In-place canvas configuration]] — the `inPlace`
   prop and its decoration toggles.
 - [[reference/code-languages|Fenced-code highlighting]] — the `codeLanguages`

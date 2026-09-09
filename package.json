@@ -32,6 +32,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/stylo.js"
     },
+    "./toolbar-settings": {
+      "types": "./dist/toolbar-settings/index.d.ts",
+      "import": "./dist/toolbar-settings.js"
+    },
     "./styles.css": "./dist/styles.css",
     "./katex.css": "./dist/katex.css"
   },

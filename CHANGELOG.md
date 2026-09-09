@@ -6,6 +6,19 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **`<StyloToolbarSettings />`** — an opt-in component, exported from
+  `@damiro/stylo/toolbar-settings`, that lets an end user rearrange the
+  formatting bar. Controlled: `value` is the same `items` array passed to
+  `<Stylo toolbar={{ items }}>`, `onChange` fires on every edit, and the host
+  owns persistence. Two lists — "On the bar" and "Available" — with reordering
+  by ↑ / ↓ buttons or the Arrow keys, add / remove, an "Add separator" and a
+  "Reset to default", and an `aria-live` region announcing each move. This is
+  step 1 of the ADR-002 §2 customizer: **keyboard-only, no new dependency**.
+  Pointer drag-and-drop is a later, additive layer. Separate build entry so it
+  never touches a plain `@damiro/stylo` import.
+
 ## [0.3.0] - 2026-09-10
 
 ### Added
