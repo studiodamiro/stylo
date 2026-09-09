@@ -8,7 +8,8 @@ export const styloTheme = EditorView.theme({
     fontSize: "var(--stylo-font-size, 0.9375rem)",
   },
   ".cm-content": {
-    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+    fontFamily:
+      "var(--stylo-font-family-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace)",
     padding: "0.75rem 0",
     caretColor: "var(--stylo-text)",
   },

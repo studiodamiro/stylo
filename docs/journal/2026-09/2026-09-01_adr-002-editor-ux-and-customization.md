@@ -546,6 +546,21 @@ untouched, and must not gate v1.
   > the same `z-index` that previously stacked); it now yields while the menu is
   > open. See the
   > [font-size / menu-coordination note](./2026-09-10_font-size-token-and-menu-selbar-coordination.md).
+  >
+  > **Amended 2026-09-10 (eleventh & twelfth tokens; font stacks):** the same
+  > seam as the tenth token, one level up. The prose stack
+  > (`-apple-system, …`) and the mono stack (`ui-monospace, …`) were hard-coded
+  > in ~eight places across `editor/theme.ts`, `inplace/theme.ts`, and
+  > `stylo.module.css`. **`--stylo-font-family`** backs the reading surfaces —
+  > the in-place `.cm-content`, the "Frontmatter" labels, the fixed-position
+  > sticky toolbar — and **`--stylo-font-family-mono`** backs the code surfaces
+  > — source-mode `.cm-content`, the in-place code decorations, preview `code` /
+  > `pre`. Defaults are the previously inline stacks, so nothing moves out of
+  > the box. Two tokens, not one: prose and mono are distinct roles a host
+  > re-skins independently. Not colours, so light block only. The `preview`
+  > prose surface keeps inheriting the host font, as it already did — a rendered
+  > document reads in the page's own typography. See the
+  > [font-family tokens note](./2026-09-10_font-family-tokens.md).
 
 #### 4. Icons: inline SVG, no icon dependency
 
