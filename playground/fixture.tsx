@@ -6,6 +6,7 @@ import {
   type SelectionUI,
   type StyloMode,
   type TableEditing,
+  type WikiLinkSource,
 } from "../src/index"
 import "katex/dist/katex.min.css"
 
@@ -22,7 +23,15 @@ import "katex/dist/katex.min.css"
  *   ?toolbar=0                            (default on)
  *   ?theme=dark                           (default light)
  *   ?doc=basic|math|table|long            (default basic)
+ *   ?wikilinks=1                          (canned wikiLinkSource; default off)
  */
+
+/** A fixed candidate list, filtered by prefix — enough to exercise the popup. */
+const WIKI_TARGETS = ["Getting Started", "Guide/Setup", "Guide/API Reference", "Changelog"]
+const cannedWikiLinkSource: WikiLinkSource = (query) => {
+  const q = query.trim().toLowerCase()
+  return WIKI_TARGETS.filter((t) => t.toLowerCase().includes(q)).map((target) => ({ target }))
+}
 
 const DOCS: Record<string, string> = {
   basic: [
@@ -66,6 +75,7 @@ const table = (params.get("table") as TableEditing) ?? "source"
 const reveal = (params.get("reveal") as RevealMode) ?? "caret"
 const sticky = params.get("sticky") as "top" | "bottom" | null
 const toolbar = params.get("toolbar") !== "0"
+const wikiLinkSource = params.get("wikilinks") === "1" ? cannedWikiLinkSource : undefined
 const doc = DOCS[params.get("doc") ?? "basic"] ?? DOCS.basic!
 
 if (params.get("theme") === "dark") document.documentElement.dataset.theme = "dark"
@@ -79,6 +89,7 @@ function Fixture() {
       mode={mode}
       inPlace={{ selectionUI, table, reveal }}
       toolbar={sticky ? { sticky } : toolbar}
+      wikiLinkSource={wikiLinkSource}
     />
   )
 }

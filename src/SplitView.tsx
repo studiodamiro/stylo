@@ -3,7 +3,7 @@ import type { EditorView } from "@codemirror/view"
 import { SourceView } from "./editor/SourceView"
 import { LazyPreview } from "./render/lazyPreview"
 import styles from "./styles/stylo.module.css"
-import type { CodeLanguages, FrontmatterDisplay } from "./types"
+import type { CodeLanguages, FrontmatterDisplay, WikiLinkSource } from "./types"
 
 export interface SplitViewProps {
   value: string
@@ -12,6 +12,7 @@ export interface SplitViewProps {
   readOnly?: boolean
   placeholder?: string
   codeLanguages?: CodeLanguages
+  wikiLinkSource?: WikiLinkSource
   frontmatter?: FrontmatterDisplay
   /** Called with the doc string on `Mod-s`. */
   onSave?: (value: string) => void
@@ -32,6 +33,7 @@ export function SplitView({
   readOnly,
   placeholder,
   codeLanguages,
+  wikiLinkSource,
   frontmatter,
   onSave,
   onViewChange,
@@ -80,6 +82,7 @@ export function SplitView({
           readOnly={readOnly}
           placeholder={placeholder}
           codeLanguages={codeLanguages}
+          wikiLinkSource={wikiLinkSource}
           onSave={onSave}
           onViewChange={handleView}
         />

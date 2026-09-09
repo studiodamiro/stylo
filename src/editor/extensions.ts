@@ -5,10 +5,11 @@ import { EditorState, type Extension, Prec } from "@codemirror/state"
 import { EditorView, keymap, placeholder as placeholderExt } from "@codemirror/view"
 import { markdownKeymap } from "../toolbar/keymap"
 import { tableKeymap, tableRealign } from "../toolbar/table"
-import type { CodeLanguages } from "../types"
+import type { CodeLanguages, WikiLinkSource } from "../types"
 import { styloHighlighting } from "./highlight"
 import { saveHandler } from "./save"
 import { styloTheme } from "./theme"
+import { wikilinkCompletion } from "./wikilink-complete"
 
 /**
  * Static extensions — created once with the view.
@@ -20,7 +21,10 @@ import { styloTheme } from "./theme"
  * consumer opts in with exactly the set they want. See the 2026-09-01 journal
  * note and the ADR-001 amendment.
  */
-export function baseExtensions(codeLanguages?: CodeLanguages): Extension {
+export function baseExtensions(
+  codeLanguages?: CodeLanguages,
+  wikiLinkSource?: WikiLinkSource,
+): Extension {
   return [
     history(),
     keymap.of([...defaultKeymap, ...historyKeymap]),
@@ -36,6 +40,8 @@ export function baseExtensions(codeLanguages?: CodeLanguages): Extension {
     keymap.of(searchKeymap),
     markdown({ base: markdownLanguage, codeLanguages }),
     styloHighlighting,
+    // `[[wikilink]]` autocomplete — a no-op unless the host passes a source.
+    wikilinkCompletion(wikiLinkSource),
     EditorView.lineWrapping,
     styloTheme,
   ]

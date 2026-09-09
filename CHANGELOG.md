@@ -6,6 +6,22 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-10
+
+### Added
+
+- **`wikiLinkSource`** — a prop that turns on `[[wikilink]]` autocomplete on the
+  CodeMirror surfaces (`source`, `split`, `in-place`). It takes
+  `(query: string) => WikiLinkCompletion[] | Promise<…>`, where
+  `WikiLinkCompletion` is `{ target: string; label?: string }`; the host owns the
+  index and the ordering, Stylo owns the trigger (an unclosed `[[…`) and the
+  insert. Accepting writes `[[target]]`, or `[[target|label]]` when a candidate's
+  `label` differs, reusing a `]]` the user already typed. Registered as a
+  Markdown-language completion source, so it is inert in fenced code. Off unless
+  the prop is passed; read once, at mount. `@codemirror/autocomplete` becomes a
+  regular dependency (already transitive via `@codemirror/lang-markdown`,
+  externalised from the bundle). `![[embed]]` transclusion is still out of scope.
+
 ## [0.6.0] - 2026-09-10
 
 ### Added

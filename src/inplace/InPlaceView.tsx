@@ -2,7 +2,7 @@ import { useRef, useState } from "react"
 import type { EditorView } from "@codemirror/view"
 import { useCodeMirror } from "../editor/useCodeMirror"
 import styles from "../styles/stylo.module.css"
-import type { CodeLanguages, InPlaceConfig } from "../types"
+import type { CodeLanguages, InPlaceConfig, WikiLinkSource } from "../types"
 import { inPlaceExtension } from "./extension"
 
 export interface InPlaceViewProps {
@@ -17,6 +17,8 @@ export interface InPlaceViewProps {
   inPlace?: InPlaceConfig
   /** Fenced-code grammars, forwarded to the Markdown language. Read once. */
   codeLanguages?: CodeLanguages
+  /** `[[wikilink]]` autocomplete source. Read once. */
+  wikiLinkSource?: WikiLinkSource
   /** Called with the doc string on `Mod-s`. */
   onSave?: (value: string) => void
   /** Called with the `EditorView` once created, and with `null` on teardown. */
@@ -41,6 +43,7 @@ export function InPlaceView({
   onLinkClick,
   inPlace,
   codeLanguages,
+  wikiLinkSource,
   onSave,
   onViewChange,
 }: InPlaceViewProps) {
@@ -65,6 +68,7 @@ export function InPlaceView({
     placeholder,
     extensions,
     codeLanguages,
+    wikiLinkSource,
     onSave,
     onViewChange,
   })

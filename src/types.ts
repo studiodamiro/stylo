@@ -119,6 +119,29 @@ export interface ToolbarConfig {
 export type CodeLanguages =
   readonly LanguageDescription[] | ((info: string) => Language | LanguageDescription | null)
 
+/** One `[[wikilink]]` autocomplete candidate returned by `wikiLinkSource`. */
+export interface WikiLinkCompletion {
+  /** Written verbatim between `[[` and `]]`. */
+  target: string
+  /**
+   * Shown in the dropdown in place of `target`. When it differs from `target`,
+   * the accepted link is written `[[target|label]]`.
+   */
+  label?: string
+}
+
+/**
+ * Supplies `[[wikilink]]` autocomplete candidates. Called with the text typed
+ * after `[[` (before any `|`) while the caret sits inside an unclosed `[[…`;
+ * return the matches your index finds, already ordered — Stylo does not re-rank
+ * or filter. May be async (e.g. a vault search endpoint). Pass it to enable the
+ * feature; omit it and there is no wikilink completion. Read once, at mount.
+ * Affects the CodeMirror surfaces only (`source`, `split`, `in-place`).
+ */
+export type WikiLinkSource = (
+  query: string,
+) => readonly WikiLinkCompletion[] | Promise<readonly WikiLinkCompletion[]>
+
 /**
  * Per-construct on/off switches for the in-place canvas. Each key defaults to
  * `true`; setting one `false` leaves that construct as plain source — no
@@ -257,6 +280,12 @@ export interface StyloProps {
    * (`source`, `split`, `in-place`). None by default. Read once, at mount.
    */
   codeLanguages?: CodeLanguages
+  /**
+   * Enables `[[wikilink]]` autocomplete on the CodeMirror surfaces. Called with
+   * the target typed so far; return your index's matches, ordered. Off when
+   * omitted. Read once, at mount. See `WikiLinkSource`.
+   */
+  wikiLinkSource?: WikiLinkSource
   /**
    * Formatting toolbar above the editing surface (`source`, `in-place`,
    * `split`; never `preview`). Omit or `true` for the default bar, `false` to

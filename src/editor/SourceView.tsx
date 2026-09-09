@@ -1,6 +1,6 @@
 import type { EditorView } from "@codemirror/view"
 import styles from "../styles/stylo.module.css"
-import type { CodeLanguages } from "../types"
+import type { CodeLanguages, WikiLinkSource } from "../types"
 import { useCodeMirror } from "./useCodeMirror"
 
 export interface SourceViewProps {
@@ -10,6 +10,8 @@ export interface SourceViewProps {
   placeholder?: string
   /** Fenced-code grammars, forwarded to the Markdown language. Read once. */
   codeLanguages?: CodeLanguages
+  /** `[[wikilink]]` autocomplete source. Read once. */
+  wikiLinkSource?: WikiLinkSource
   /** Called with the doc string on `Mod-s`. */
   onSave?: (value: string) => void
   /** Called with the `EditorView` once created, and with `null` on teardown. */
@@ -23,6 +25,7 @@ export function SourceView({
   readOnly,
   placeholder,
   codeLanguages,
+  wikiLinkSource,
   onSave,
   onViewChange,
 }: SourceViewProps) {
@@ -32,6 +35,7 @@ export function SourceView({
     readOnly,
     placeholder,
     codeLanguages,
+    wikiLinkSource,
     onSave,
     onViewChange,
   })

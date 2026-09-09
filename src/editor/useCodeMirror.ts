@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react"
 import { Annotation, Compartment, EditorState, type Extension, Prec } from "@codemirror/state"
 import { EditorView, keymap } from "@codemirror/view"
-import type { CodeLanguages } from "../types"
+import type { CodeLanguages, WikiLinkSource } from "../types"
 import { baseExtensions, dynamicConfig } from "./extensions"
 import { runSave } from "./save"
 
@@ -24,6 +24,8 @@ export interface UseCodeMirrorOptions {
   extensions?: Extension[]
   /** Fenced-code grammars, forwarded to the Markdown language. Read once. */
   codeLanguages?: CodeLanguages
+  /** `[[wikilink]]` autocomplete source. Read once. */
+  wikiLinkSource?: WikiLinkSource
 }
 
 /**
@@ -39,6 +41,7 @@ export function useCodeMirror({
   onViewChange,
   extensions,
   codeLanguages,
+  wikiLinkSource,
 }: UseCodeMirrorOptions) {
   const parent = useRef<HTMLDivElement | null>(null)
   const viewRef = useRef<EditorView | null>(null)
@@ -65,7 +68,7 @@ export function useCodeMirror({
       state: EditorState.create({
         doc: value,
         extensions: [
-          baseExtensions(codeLanguages),
+          baseExtensions(codeLanguages, wikiLinkSource),
           dynamic.current.of(
             dynamicConfig({ readOnly, placeholder, save: hasSave ? saveFn : undefined }),
           ),
