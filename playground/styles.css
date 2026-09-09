@@ -30,3 +30,45 @@ body {
   height: 70vh;
   min-height: 0;
 }
+
+/* --- Sticky-toolbar containment experiment -------------------------------------
+   `data-pg-layout="full-height"` (toggled from main.tsx) pins the shell to the
+   viewport so nothing but the editor pane scrolls. The whole point: the toolbar
+   is already a non-scrolling sibling of the editor's scroll container, so once
+   the document itself stops scrolling it stays put with no `position: fixed`,
+   no portal, and no rAF watchdog — the machinery those exist to work around is
+   only needed when the page is the scroller. Compare A/B on a real iPhone. */
+html[data-pg-layout="full-height"] {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* `position: fixed` (not just `overflow: hidden`) is what actually pins the
+   body on iOS Safari — that browser ignores `overflow: hidden` here and keeps
+   rubber-banding / collapsing the URL bar. Out of flow with `inset: 0`, there
+   is nothing left for it to scroll. */
+html[data-pg-layout="full-height"] body {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* The pre-editor controls get their own scroll so a tall control stack on a
+   phone can't crush the editor pane down to nothing. */
+html[data-pg-layout="full-height"] .pg-controls {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+html[data-pg-layout="full-height"] .playground-editor {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+html[data-pg-layout="full-height"] .pg-footer {
+  flex: 0 0 auto;
+}

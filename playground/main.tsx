@@ -120,6 +120,11 @@ function App() {
   const [load, setLoad] = useState<"loading" | "ready" | "error">("loading")
   const [mode, setMode] = useState<StyloMode>("in-place")
   const [theme, setTheme] = useState<Theme>("light")
+  // Sticky-toolbar containment experiment: "page" is today's layout (the whole
+  // document scrolls); "full-height" locks the shell to the viewport so only the
+  // editor pane scrolls and the toolbar rides along as a plain flex sibling.
+  const [layout, setLayout] = useState<"page" | "full-height">("page")
+  const layoutFull = layout === "full-height"
 
   // Load the document from the file, the way a real app would.
   useEffect(() => {
@@ -147,6 +152,15 @@ function App() {
     document.documentElement.dataset.theme = theme
   }, [theme])
 
+  // Drives the CSS in styles.css that pins <html>/<body> to 100% and hands the
+  // scroll to the editor pane. Attribute on <html>, mirroring the theme switch.
+  useEffect(() => {
+    document.documentElement.dataset.pgLayout = layout
+    return () => {
+      delete document.documentElement.dataset.pgLayout
+    }
+  }, [layout])
+
   const [toolbar, setToolbar] = useState<keyof typeof TOOLBARS>("default")
   const [stickyToolbar, setStickyToolbar] = useState<StickyPick>("off")
   const [stickyVisibility, setStickyVisibility] = useState<StickyVisibilityPick>("consistent")
@@ -172,222 +186,243 @@ function App() {
     <main
       style={{
         maxWidth: mode === "split" ? 1100 : 760,
-        margin: "3rem auto",
+        margin: layoutFull ? "0 auto" : "3rem auto",
         padding: "0 1rem",
         fontFamily: "system-ui, -apple-system, sans-serif",
+        ...(layoutFull
+          ? { height: "100dvh", display: "flex", flexDirection: "column", overflow: "hidden" }
+          : null),
       }}
     >
-      <h1 style={{ fontSize: "1.2rem" }}>Stylo playground</h1>
+      <div className="pg-controls">
+        <h1 style={{ fontSize: "1.2rem" }}>Stylo playground</h1>
 
-      <div style={{ display: "flex", gap: 8, margin: "1rem 0" }}>
-        {MODES.map((m) => (
+        <div style={{ display: "flex", gap: 8, margin: "1rem 0" }}>
+          {MODES.map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              style={{
+                padding: "0.35rem 0.8rem",
+                borderRadius: 6,
+                border: "1px solid var(--pg-border)",
+                background: mode === m ? "var(--pg-fg)" : "var(--pg-surface)",
+                color: mode === m ? "var(--pg-surface)" : "var(--pg-fg)",
+                cursor: "pointer",
+              }}
+            >
+              {m}
+            </button>
+          ))}
           <button
-            key={m}
             type="button"
-            onClick={() => setMode(m)}
+            onClick={() => setTheme((t) => (t === "light" ? "dark" : "light"))}
+            style={{
+              marginLeft: "auto",
+              padding: "0.35rem 0.8rem",
+              borderRadius: 6,
+              border: "1px solid var(--pg-border)",
+              background: "var(--pg-surface)",
+              color: "var(--pg-fg)",
+              cursor: "pointer",
+            }}
+          >
+            {theme === "light" ? "◐ dark" : "◑ light"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setLayout((l) => (l === "page" ? "full-height" : "page"))}
             style={{
               padding: "0.35rem 0.8rem",
               borderRadius: 6,
               border: "1px solid var(--pg-border)",
-              background: mode === m ? "var(--pg-fg)" : "var(--pg-surface)",
-              color: mode === m ? "var(--pg-surface)" : "var(--pg-fg)",
+              background: layoutFull ? "var(--pg-fg)" : "var(--pg-surface)",
+              color: layoutFull ? "var(--pg-surface)" : "var(--pg-fg)",
               cursor: "pointer",
             }}
           >
-            {m}
+            {layoutFull ? "▣ full-height" : "▤ page scroll"}
           </button>
-        ))}
-        <button
-          type="button"
-          onClick={() => setTheme((t) => (t === "light" ? "dark" : "light"))}
-          style={{
-            marginLeft: "auto",
-            padding: "0.35rem 0.8rem",
-            borderRadius: 6,
-            border: "1px solid var(--pg-border)",
-            background: "var(--pg-surface)",
-            color: "var(--pg-fg)",
-            cursor: "pointer",
-          }}
-        >
-          {theme === "light" ? "◐ dark" : "◑ light"}
-        </button>
+        </div>
+
+        {mode !== "preview" && (
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              margin: "0 0 1rem",
+              fontSize: "0.85rem",
+              color: "var(--pg-muted)",
+            }}
+          >
+            toolbar
+            <select
+              value={toolbar}
+              onChange={(e) => setToolbar(e.target.value as keyof typeof TOOLBARS)}
+              style={{
+                padding: "0.2rem 0.4rem",
+                borderRadius: 6,
+                border: "1px solid var(--pg-border)",
+              }}
+            >
+              {Object.keys(TOOLBARS).map((k) => (
+                <option key={k} value={k}>
+                  {k}
+                </option>
+              ))}
+            </select>
+            <span style={{ marginLeft: "0.75rem" }}>sticky (touch)</span>
+            <select
+              value={stickyToolbar}
+              disabled={toolbar === "hidden"}
+              onChange={(e) => setStickyToolbar(e.target.value as StickyPick)}
+              style={{
+                padding: "0.2rem 0.4rem",
+                borderRadius: 6,
+                border: "1px solid var(--pg-border)",
+              }}
+            >
+              <option value="off">off</option>
+              <option value="top">top</option>
+              <option value="bottom">bottom</option>
+            </select>
+            <select
+              value={stickyVisibility}
+              disabled={stickyToolbar === "off" || toolbar === "hidden"}
+              onChange={(e) => setStickyVisibility(e.target.value as StickyVisibilityPick)}
+              style={{
+                padding: "0.2rem 0.4rem",
+                borderRadius: 6,
+                border: "1px solid var(--pg-border)",
+              }}
+            >
+              <option value="consistent">consistent</option>
+              <option value="dynamic">dynamic</option>
+            </select>
+          </label>
+        )}
+
+        {(mode === "preview" || mode === "split") && (
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              margin: "0 0 1rem",
+              fontSize: "0.85rem",
+              color: "var(--pg-muted)",
+            }}
+          >
+            frontmatter
+            <select
+              value={frontmatter}
+              onChange={(e) => setFrontmatter(e.target.value as "hidden" | "code")}
+              style={{
+                padding: "0.2rem 0.4rem",
+                borderRadius: 6,
+                border: "1px solid var(--pg-border)",
+              }}
+            >
+              <option value="hidden">hidden</option>
+              <option value="code">code</option>
+            </select>
+          </label>
+        )}
+
+        {mode === "in-place" && (
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              margin: "0 0 1rem",
+              fontSize: "0.85rem",
+              color: "var(--pg-muted)",
+            }}
+          >
+            table editing
+            <select
+              value={tableEdit}
+              onChange={(e) => setTableEdit(e.target.value as TableEditing)}
+              style={{
+                padding: "0.2rem 0.4rem",
+                borderRadius: 6,
+                border: "1px solid var(--pg-border)",
+              }}
+            >
+              <option value="source">source</option>
+              <option value="cells">cells</option>
+            </select>
+            <span style={{ marginLeft: "0.75rem" }}>reveal (ADR-007)</span>
+            <select
+              value={reveal}
+              onChange={(e) => setReveal(e.target.value as RevealMode)}
+              style={{
+                padding: "0.2rem 0.4rem",
+                borderRadius: 6,
+                border: "1px solid var(--pg-border)",
+              }}
+            >
+              <option value="caret">caret</option>
+              <option value="never">never</option>
+            </select>
+            <span style={{ marginLeft: "0.75rem" }}>selection</span>
+            <select
+              value={selectionUI}
+              onChange={(e) => setSelectionUI(e.target.value as SelectionUI)}
+              style={{
+                padding: "0.2rem 0.4rem",
+                borderRadius: 6,
+                border: "1px solid var(--pg-border)",
+              }}
+            >
+              <option value="menu">menu</option>
+              <option value="bar">bar</option>
+              <option value="none">none</option>
+            </select>
+          </label>
+        )}
+
+        {mode === "in-place" && (
+          <details style={{ margin: "0 0 1rem", fontSize: "0.85rem" }}>
+            <summary style={{ cursor: "pointer", color: "var(--pg-muted)" }}>
+              Customize in-place decorations (ADR-005)
+            </summary>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                gap: "0.35rem 1rem",
+                marginTop: "0.6rem",
+              }}
+            >
+              {DECORATION_KEYS.map((key) => (
+                <label key={key} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                  <input
+                    type="checkbox"
+                    checked={decorations[key]}
+                    onChange={(e) =>
+                      setDecorations((prev) => ({ ...prev, [key]: e.target.checked }))
+                    }
+                  />
+                  {key}
+                </label>
+              ))}
+            </div>
+          </details>
+        )}
+
+        {load === "loading" && <p style={{ color: "var(--pg-muted)" }}>Loading sample.md…</p>}
+
+        {load === "error" && (
+          <p style={{ color: "var(--pg-muted)" }}>
+            Couldn’t reach <code>{DOC_URL}</code>. Start the playground with{" "}
+            <code>npm run dev</code> so the file middleware is active.
+          </p>
+        )}
       </div>
-
-      {mode !== "preview" && (
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            margin: "0 0 1rem",
-            fontSize: "0.85rem",
-            color: "var(--pg-muted)",
-          }}
-        >
-          toolbar
-          <select
-            value={toolbar}
-            onChange={(e) => setToolbar(e.target.value as keyof typeof TOOLBARS)}
-            style={{
-              padding: "0.2rem 0.4rem",
-              borderRadius: 6,
-              border: "1px solid var(--pg-border)",
-            }}
-          >
-            {Object.keys(TOOLBARS).map((k) => (
-              <option key={k} value={k}>
-                {k}
-              </option>
-            ))}
-          </select>
-          <span style={{ marginLeft: "0.75rem" }}>sticky (touch)</span>
-          <select
-            value={stickyToolbar}
-            disabled={toolbar === "hidden"}
-            onChange={(e) => setStickyToolbar(e.target.value as StickyPick)}
-            style={{
-              padding: "0.2rem 0.4rem",
-              borderRadius: 6,
-              border: "1px solid var(--pg-border)",
-            }}
-          >
-            <option value="off">off</option>
-            <option value="top">top</option>
-            <option value="bottom">bottom</option>
-          </select>
-          <select
-            value={stickyVisibility}
-            disabled={stickyToolbar === "off" || toolbar === "hidden"}
-            onChange={(e) => setStickyVisibility(e.target.value as StickyVisibilityPick)}
-            style={{
-              padding: "0.2rem 0.4rem",
-              borderRadius: 6,
-              border: "1px solid var(--pg-border)",
-            }}
-          >
-            <option value="consistent">consistent</option>
-            <option value="dynamic">dynamic</option>
-          </select>
-        </label>
-      )}
-
-      {(mode === "preview" || mode === "split") && (
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            margin: "0 0 1rem",
-            fontSize: "0.85rem",
-            color: "var(--pg-muted)",
-          }}
-        >
-          frontmatter
-          <select
-            value={frontmatter}
-            onChange={(e) => setFrontmatter(e.target.value as "hidden" | "code")}
-            style={{
-              padding: "0.2rem 0.4rem",
-              borderRadius: 6,
-              border: "1px solid var(--pg-border)",
-            }}
-          >
-            <option value="hidden">hidden</option>
-            <option value="code">code</option>
-          </select>
-        </label>
-      )}
-
-      {mode === "in-place" && (
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            margin: "0 0 1rem",
-            fontSize: "0.85rem",
-            color: "var(--pg-muted)",
-          }}
-        >
-          table editing
-          <select
-            value={tableEdit}
-            onChange={(e) => setTableEdit(e.target.value as TableEditing)}
-            style={{
-              padding: "0.2rem 0.4rem",
-              borderRadius: 6,
-              border: "1px solid var(--pg-border)",
-            }}
-          >
-            <option value="source">source</option>
-            <option value="cells">cells</option>
-          </select>
-          <span style={{ marginLeft: "0.75rem" }}>reveal (ADR-007)</span>
-          <select
-            value={reveal}
-            onChange={(e) => setReveal(e.target.value as RevealMode)}
-            style={{
-              padding: "0.2rem 0.4rem",
-              borderRadius: 6,
-              border: "1px solid var(--pg-border)",
-            }}
-          >
-            <option value="caret">caret</option>
-            <option value="never">never</option>
-          </select>
-          <span style={{ marginLeft: "0.75rem" }}>selection</span>
-          <select
-            value={selectionUI}
-            onChange={(e) => setSelectionUI(e.target.value as SelectionUI)}
-            style={{
-              padding: "0.2rem 0.4rem",
-              borderRadius: 6,
-              border: "1px solid var(--pg-border)",
-            }}
-          >
-            <option value="menu">menu</option>
-            <option value="bar">bar</option>
-            <option value="none">none</option>
-          </select>
-        </label>
-      )}
-
-      {mode === "in-place" && (
-        <details style={{ margin: "0 0 1rem", fontSize: "0.85rem" }}>
-          <summary style={{ cursor: "pointer", color: "var(--pg-muted)" }}>
-            Customize in-place decorations (ADR-005)
-          </summary>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-              gap: "0.35rem 1rem",
-              marginTop: "0.6rem",
-            }}
-          >
-            {DECORATION_KEYS.map((key) => (
-              <label key={key} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                <input
-                  type="checkbox"
-                  checked={decorations[key]}
-                  onChange={(e) => setDecorations((prev) => ({ ...prev, [key]: e.target.checked }))}
-                />
-                {key}
-              </label>
-            ))}
-          </div>
-        </details>
-      )}
-
-      {load === "loading" && <p style={{ color: "var(--pg-muted)" }}>Loading sample.md…</p>}
-
-      {load === "error" && (
-        <p style={{ color: "var(--pg-muted)" }}>
-          Couldn’t reach <code>{DOC_URL}</code>. Start the playground with <code>npm run dev</code>{" "}
-          so the file middleware is active.
-        </p>
-      )}
 
       {load === "ready" && (
         <Stylo
@@ -412,7 +447,10 @@ function App() {
 
       {stickyToolbar !== "off" && <StickyDebug />}
 
-      <p style={{ color: "var(--pg-muted)", fontSize: "0.85rem", marginTop: "1rem" }}>
+      <p
+        className="pg-footer"
+        style={{ color: "var(--pg-muted)", fontSize: "0.85rem", marginTop: "1rem" }}
+      >
         {lastLink ? `Wikilink clicked: ${lastLink}` : "Switch to preview and click a [[wikilink]]."}
         {" · "}
         {doc.length} characters
