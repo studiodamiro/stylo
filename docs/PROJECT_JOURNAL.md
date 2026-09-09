@@ -30,6 +30,7 @@ milestones and Architectural Decision Records, newest first.
 
 | Date       | Entry                                                                                                                                                     |
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-10 | [A browser test harness — Playwright over the in-place canvas](./journal/2026-09/2026-09-10_browser-test-harness.md)                                      |
 | 2026-09-10 | [Font-family tokens — the prose and mono stacks move onto the contract](./journal/2026-09/2026-09-10_font-family-tokens.md)                               |
 | 2026-09-10 | [A font-size token, and the selection bar yielding to the right-click menu](./journal/2026-09/2026-09-10_font-size-token-and-menu-selbar-coordination.md) |
 | 2026-09-10 | [Toolbar customizer — step 2, drag-and-drop (feature complete)](./journal/2026-09/2026-09-10_toolbar-customizer-step-2.md)                                |

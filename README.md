@@ -209,11 +209,14 @@ Engineering journal and Architectural Decision Records:
 
 ```bash
 npm install
-npm run dev        # playground
+npm run dev            # playground
 npm run typecheck
-npm run test
-npm run build      # library bundle
+npm run test           # unit suite (Vitest + jsdom)
+npm run test:browser   # in-place canvas in real Chromium (Playwright)
+npm run build          # library bundle
 ```
+
+`npm run test:browser` needs the browser once: `npx playwright install chromium`.
 
 ## License
 

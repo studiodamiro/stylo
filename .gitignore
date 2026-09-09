@@ -33,6 +33,10 @@ CLAUDE.md
 
 # test / coverage
 coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
 
 # playground scratch doc (seeded from sample.template.md)
 playground/content/sample.md

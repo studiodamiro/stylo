@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stylo — browser-test fixture</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #fafafa;
+      }
+      :root[data-theme="dark"],
+      :root[data-theme="dark"] body {
+        background: #09090b;
+      }
+      #fixture {
+        max-width: 720px;
+        margin: 40px auto;
+        padding: 0 24px;
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Mount target for the Playwright fixture (see playground/fixture.tsx).
+         Not part of the playground UI; config comes from URL query params. -->
+    <div id="fixture"></div>
+    <script type="module" src="./fixture.tsx"></script>
+  </body>
+</html>

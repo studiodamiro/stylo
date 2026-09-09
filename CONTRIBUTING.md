@@ -47,6 +47,11 @@ install, so every change is weighed against the cost it imposes on consumers.
   `npm run typecheck`, `npm run test`, `npm run build`, and `npm run check:size`
   must all pass. CI runs the same set, plus a React 18 and a TypeScript-6 job
   against the peer/consumer floor.
+- `npm run test:browser` (Playwright, in `test/browser/`) covers the in-place
+  canvas in a real Chromium — marker reveal, popup positioning, the sticky
+  toolbar, KaTeX. It needs the browser once (`npx playwright install chromium`);
+  CI runs it in its own job. Touch it when a change affects layout or pointer /
+  caret interaction that jsdom can't exercise.
 - If something fails or stalls, find the root cause rather than working around
   it.
 
@@ -173,6 +178,7 @@ Vite in library mode; TypeScript emits the declarations.
 | Theme-token guard    | `npm run check:theme`  |
 | Typecheck            | `npm run typecheck`    |
 | Run tests            | `npm run test`         |
+| Browser tests        | `npm run test:browser` |
 | Build library bundle | `npm run build`        |
 | Bundle-size guard    | `npm run check:size`   |
 
