@@ -532,6 +532,20 @@ untouched, and must not gate v1.
   > to the browser's default-weight bar. Host `.cm-scroller` rules still win.
   > See the
   > [token-decoupling note](./2026-09-10_token-decoupling-and-scrollbars.md).
+  >
+  > **Amended 2026-09-10 (tenth token; `--stylo-font-size`):** `.cm-editor`
+  > hard-coded `font-size: 0.9375rem`, so a host wanting the editor at its own
+  > type scale had to override an internal CodeMirror class — outside the
+  > `--stylo-*` contract, the same class of seam as the ninth-token trial. A
+  > tenth token, **`--stylo-font-size`** (default `0.9375rem`), now backs that
+  > rule on every surface; the in-place canvas is sized in `em`, so the whole
+  > surface scales from it. Like `--stylo-radius` it is **not a colour** — one
+  > value serves both themes, so it lives only in the light block and the
+  > both-blocks rule above does not apply to it. The same pass gave the in-place
+  > selection bar awareness of the right-click menu (separate floating layers at
+  > the same `z-index` that previously stacked); it now yields while the menu is
+  > open. See the
+  > [font-size / menu-coordination note](./2026-09-10_font-size-token-and-menu-selbar-coordination.md).
 
 #### 4. Icons: inline SVG, no icon dependency
 

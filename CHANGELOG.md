@@ -6,6 +6,34 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-10
+
+### Added
+
+- **`--stylo-font-size`** — a tenth styling token (default `0.9375rem`) that
+  sets the base editor font size. `.cm-editor` previously hard-coded it, so a
+  host wanting the editor at its own type scale had to override an internal
+  CodeMirror class outside the `--stylo-*` contract. The token backs that rule
+  on every surface; the in-place canvas is sized in `em`, so the whole surface
+  scales from it. Like `--stylo-radius` it is not a colour — one value serves
+  both themes.
+
+### Fixed
+
+- The in-place selection bar (`selectionUI: "bar"`) and the right-click context
+  menu are separate floating layers at the same `z-index` and had no awareness
+  of each other, so opening the menu left it stacked over the bar. The bar now
+  yields while the menu is open and returns when it closes.
+
+### Documentation
+
+- README gains a **Features** list, a **Documentation** map into the wiki, a
+  screenshot of the in-place canvas, and an `npm install @damiro/stylo` line in
+  place of the pre-publish git instructions.
+- New wiki guide, **Integrating Stylo** (`docs/wiki/guides/integration.md`):
+  controlled-component contract, live vs. mount-time props, persistence,
+  stylesheet and peer-dependency setup, `getView()`, and the theming rules.
+
 ## [0.4.0] - 2026-09-10
 
 ### Added

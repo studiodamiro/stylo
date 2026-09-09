@@ -5,7 +5,7 @@ export const styloTheme = EditorView.theme({
   "&": {
     color: "var(--stylo-text)",
     backgroundColor: "var(--stylo-bg)",
-    fontSize: "0.9375rem",
+    fontSize: "var(--stylo-font-size, 0.9375rem)",
   },
   ".cm-content": {
     fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",

@@ -23,6 +23,7 @@ import { frontmatterField } from "./frontmatter"
 import { linkClickEditor } from "./link-click"
 import { linkHoverTooltip } from "./link-hover"
 import { blockMathField } from "./math"
+import { menuOpenField } from "./menu-open"
 import { contextMenuLayer } from "./menu-plugin"
 import { inPlaceDecorations } from "./plugin"
 import { selectionBar } from "./selection-bar"
@@ -107,6 +108,7 @@ export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
     blockMathField,
     frontmatterField,
     tableField,
+    menuOpenField,
     contextMenuLayer,
     selectionBar,
     linkClickEditor,

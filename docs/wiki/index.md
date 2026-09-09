@@ -22,6 +22,9 @@ React with first-class LaTeX (KaTeX) support.
 
 ### Guides
 
+- [[guides/integration|Integrating Stylo]] — which props are live vs. read at
+  mount, persistence, stylesheet and peer-dependency setup, and the theming
+  contract.
 - [[guides/autosave|Auto-save]] — why it is not a prop, and a `useAutosave`
   hook that debounces `onChange` and flushes before the tab closes.
 - [[guides/layout-and-touch|Layout and touch]] — the three page layouts, the
