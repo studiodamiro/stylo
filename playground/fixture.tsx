@@ -35,11 +35,15 @@ const cannedWikiLinkSource: WikiLinkSource = (query) => {
   return WIKI_TARGETS.filter((t) => t.toLowerCase().includes(q)).map((target) => ({ target }))
 }
 
-/** Resolves any `![[ref]]` to a marked node — enough to prove the portal path. */
+/**
+ * Resolves any `![[ref]]` to a marked node — enough to prove the portal path.
+ * Phrasing content (a `<span>`, not a `<div>`) so it also sits correctly when the
+ * embed is inline mid-sentence.
+ */
 const cannedEmbedSource: EmbedSource = (ref) => (
-  <div className="fixture-embed">
+  <span className="fixture-embed">
     embed: {ref} <button type="button">act</button>
-  </div>
+  </span>
 )
 
 const DOCS: Record<string, string> = {
@@ -81,6 +85,8 @@ const DOCS: Record<string, string> = {
     "Text before the embed.",
     "",
     "![[Weekly note]]",
+    "",
+    "A paragraph that mentions ![[Inline ref]] partway through the line.",
     "",
     "Text after the embed.",
   ].join("\n"),

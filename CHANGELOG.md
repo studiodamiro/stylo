@@ -8,6 +8,13 @@ Notable changes to Stylo. The format follows
 
 ### Added
 
+- **Inline `![[ref]]` embeds.** A `![[ref]]` mid-sentence now renders as inline
+  phrasing content flowing with the text, on `preview`, `split`, and the
+  in-place canvas — previously only a `![[ref]]` alone on its line was an embed.
+  Return phrasing content (not a block element) for these; `![[…]]` inside code
+  stays literal. New style hooks `.stylo-embed-inline` (preview / split) and
+  `.cm-inplace-embed-inline` (canvas).
+
 - **`onResolveError`** — an optional callback fired when `embedSource` or
   `wikiLinkSource` throws or returns a rejected promise. `(error, info)` where
   `info` is `{ source: "embedSource" | "wikiLinkSource"; input: string }`. Pure

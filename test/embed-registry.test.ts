@@ -1,7 +1,12 @@
 import { expect, test, vi } from "vitest"
 import { EmbedRegistry } from "../src/inplace/embed-registry"
 
-const el = () => document.createElement("div")
+const slot = (id: number, ref: string) => ({
+  id,
+  ref,
+  inline: false,
+  el: document.createElement("span"),
+})
 
 test("allocate hands out monotonic ids", () => {
   const r = new EmbedRegistry()
@@ -12,7 +17,7 @@ test("allocate hands out monotonic ids", () => {
 
 test("add / remove are reflected in the snapshot after a microtask", async () => {
   const r = new EmbedRegistry()
-  r.add({ id: 1, ref: "Note", el: el() })
+  r.add(slot(1, "Note"))
   expect(r.getSnapshot()).toEqual([]) // not flushed yet
   await Promise.resolve()
   expect(r.getSnapshot().map((s) => s.ref)).toEqual(["Note"])
@@ -24,7 +29,7 @@ test("add / remove are reflected in the snapshot after a microtask", async () =>
 
 test("the snapshot reference is stable between mutations", async () => {
   const r = new EmbedRegistry()
-  r.add({ id: 1, ref: "A", el: el() })
+  r.add(slot(1, "A"))
   await Promise.resolve()
   const first = r.getSnapshot()
   expect(r.getSnapshot()).toBe(first)
@@ -34,8 +39,8 @@ test("many changes in one tick notify subscribers once", async () => {
   const r = new EmbedRegistry()
   const listener = vi.fn()
   r.subscribe(listener)
-  r.add({ id: 1, ref: "A", el: el() })
-  r.add({ id: 2, ref: "B", el: el() })
+  r.add(slot(1, "A"))
+  r.add(slot(2, "B"))
   r.remove(1)
   expect(listener).not.toHaveBeenCalled()
   await Promise.resolve()
@@ -48,7 +53,7 @@ test("unsubscribe stops notifications", async () => {
   const listener = vi.fn()
   const off = r.subscribe(listener)
   off()
-  r.add({ id: 1, ref: "A", el: el() })
+  r.add(slot(1, "A"))
   await Promise.resolve()
   expect(listener).not.toHaveBeenCalled()
 })

@@ -23,6 +23,18 @@ test.describe("![[embed]] on the in-place canvas", () => {
     await expect(line(page, 4)).toHaveText("![[Weekly note]]")
   })
 
+  test("a ![[ref]] mid-sentence renders inline, flowing with the text", async ({ page }) => {
+    await openFixture(page, { mode: "in-place", doc: "embed", embed: "1" })
+    await line(page, 0).click()
+
+    const inline = page.locator(".cm-content .cm-inplace-embed-inline .fixture-embed")
+    await expect(inline).toBeVisible()
+    await expect(inline).toContainText("embed: Inline ref")
+    // It sits on the same line as its surrounding words, not on its own block.
+    const paraLine = page.locator(".cm-content .cm-line", { hasText: "partway through the line" })
+    await expect(paraLine.locator(".cm-inplace-embed-inline")).toHaveCount(1)
+  })
+
   test("interactive host content keeps its own clicks", async ({ page }) => {
     await openFixture(page, { mode: "in-place", doc: "embed", embed: "1" })
     await line(page, 0).click()
@@ -40,6 +52,7 @@ test.describe("![[embed]] on the in-place canvas", () => {
     await line(page, 0).click()
 
     await expect(page.locator(".cm-inplace-embed")).toHaveCount(0)
-    await expect(page.locator(".cm-content .cm-inplace-wikilink")).toHaveText("Weekly note")
+    await expect(page.locator(".cm-inplace-embed-inline")).toHaveCount(0)
+    await expect(page.locator(".cm-content .cm-inplace-wikilink").first()).toHaveText("Weekly note")
   })
 })

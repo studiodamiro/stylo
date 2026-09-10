@@ -113,6 +113,9 @@ export const inPlaceTheme = EditorView.theme({
     borderLeft: "3px solid var(--stylo-embed-accent, var(--stylo-border))",
     paddingLeft: "1rem",
   },
+  // A `![[ref]]` mid-sentence: flows inline, no box — the host node carries its
+  // own presentation, and `.stylo-embed-inline` is the consumer hook.
+  ".cm-inplace-embed-inline": { display: "inline" },
 
   // The `---` line's own text row is zeroed (same recipe as the fenced-code
   // fence rows) so it does not stack under the widget's height — that stacking

@@ -92,9 +92,11 @@ contributes an inert slot element, and a single React subtree owned by
 
 ### Deferred (post-v1, additive)
 
-- **Inline `![[…]]`** mid-paragraph — the same `<div>`-in-`<p>` constraint as
-  `preview`, plus an inline (non-`block`) widget. Needs an inline wrapper
-  element; not required for the common case.
+- ~~**Inline `![[…]]`** mid-paragraph~~ Landed after 0.9.0: `remark-embed`
+  splits text nodes into a `<span data-stylo-embed-inline>` for `preview` /
+  `split`; `embedField` emits a non-`block` `EmbedWidget` (a `<span>` slot) for a
+  non-lone `![[ref]]` on the canvas. `Embed` gains an `inline` prop. The host
+  should return phrasing content for these.
 - **`![[…]]` inside editable table cells.**
 - **The unconditional `scanWikilinks` lookbehind** — skipping `![[ref]]` even
   when `embedSource` is unset, so a bare `![[ref]]` never renders as a link chip
