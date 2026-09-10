@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useState } from "react"
 import type { EmbedSource } from "../types"
+import { peekEmbed, resolveEmbed } from "./embed-cache"
 
 interface EmbedProps {
   /** The raw `![[ref]]` reference, trimmed. */
@@ -10,18 +11,28 @@ interface EmbedProps {
 type State = { status: "loading" | "error" } | { status: "ready"; node: ReactNode }
 
 /**
- * Renders one `![[ref]]` embed. Calls `embedSource(ref)`, awaits it if it is a
- * promise, and drops the result into `<div class="stylo-embed-content">`. While
- * it resolves — and if it rejects, or resolves to `null` — the literal
- * `![[ref]]` text stands in, so a reference is never silently lost.
+ * Renders one `![[ref]]` embed. Resolves the reference through `embedSource` —
+ * via a shared cache (`embed-cache.ts`), so an embed re-mounted by a scroll or a
+ * `preview` re-render is not re-fetched — and drops the result into
+ * `<div class="stylo-embed-content">`. While it resolves — and if it rejects, or
+ * resolves to `null` — the literal `![[ref]]` text stands in, so a reference is
+ * never silently lost.
  */
 export function Embed({ reference, source }: EmbedProps) {
-  const [state, setState] = useState<State>({ status: "loading" })
+  const [state, setState] = useState<State>(() => {
+    const hit = peekEmbed(source, reference)
+    return hit ? { status: "ready", node: hit.node } : { status: "loading" }
+  })
 
   useEffect(() => {
     let live = true
+    const hit = peekEmbed(source, reference)
+    if (hit) {
+      setState({ status: "ready", node: hit.node })
+      return
+    }
     setState({ status: "loading" })
-    Promise.resolve(source(reference)).then(
+    resolveEmbed(source, reference).then(
       (node) => live && setState({ status: "ready", node }),
       () => live && setState({ status: "error" }),
     )

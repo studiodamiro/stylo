@@ -6,6 +6,16 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **`![[ref]]` resolution is cached.** A shared, per-`embedSource` cache keyed by
+  `ref` means an embed scrolled out of the in-place canvas and back — or
+  re-mounted by a `preview` re-render — is served without re-invoking
+  `embedSource`, and with no loading flash. In-flight requests for the same
+  `ref` are deduplicated; rejections are not cached; the cache is capped at 64
+  references per resolver. Content is now memoised by `ref`: vary the `ref` or
+  pass a new `embedSource` if a reference's content can change.
+
 ## [0.9.0] - 2026-09-11
 
 ### Added
