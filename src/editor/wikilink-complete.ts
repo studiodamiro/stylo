@@ -6,7 +6,9 @@ import {
 } from "@codemirror/autocomplete"
 import { markdownLanguage } from "@codemirror/lang-markdown"
 import type { Extension } from "@codemirror/state"
-import type { WikiLinkCompletion, WikiLinkSource } from "../types"
+import type { ResolveErrorInfo, WikiLinkCompletion, WikiLinkSource } from "../types"
+
+type OnResolveError = (error: unknown, info: ResolveErrorInfo) => void
 
 /**
  * `[[` then the target typed so far — no `]`, `|`, or newline. Anchored at the
@@ -35,7 +37,7 @@ function toOption(c: WikiLinkCompletion): Completion {
  * The completion source. Exposed for unit tests; consumers use
  * `wikilinkCompletion`.
  */
-export function wikilinkCompletionSource(source: WikiLinkSource) {
+export function wikilinkCompletionSource(source: WikiLinkSource, onError?: OnResolveError) {
   return async (ctx: CompletionContext): Promise<CompletionResult | null> => {
     const open = ctx.matchBefore(OPEN)
     if (!open) return null
@@ -43,7 +45,16 @@ export function wikilinkCompletionSource(source: WikiLinkSource) {
     // rather than firing on the bracket itself.
     if (open.from + 2 === ctx.pos && !ctx.explicit) return null
 
-    const options = (await source(open.text.slice(2))).map(toOption)
+    const query = open.text.slice(2)
+    let options
+    try {
+      options = (await source(query)).map(toOption)
+    } catch (error) {
+      // A rejected source shows no completions, as before — the callback is the
+      // only new behaviour, so a network failure is not silently a blank list.
+      onError?.(error, { source: "wikiLinkSource", input: query })
+      return null
+    }
     if (!options.length) return null
     return {
       from: open.from + 2,
@@ -60,10 +71,10 @@ export function wikilinkCompletionSource(source: WikiLinkSource) {
  * Registered through the Markdown language data, so it is inert inside a fenced
  * code block and leaves any embedded-language completions intact.
  */
-export function wikilinkCompletion(source?: WikiLinkSource): Extension {
+export function wikilinkCompletion(source?: WikiLinkSource, onError?: OnResolveError): Extension {
   if (!source) return []
   return [
     autocompletion(),
-    markdownLanguage.data.of({ autocomplete: wikilinkCompletionSource(source) }),
+    markdownLanguage.data.of({ autocomplete: wikilinkCompletionSource(source, onError) }),
   ]
 }

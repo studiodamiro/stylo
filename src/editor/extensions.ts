@@ -5,7 +5,7 @@ import { EditorState, type Extension, Prec } from "@codemirror/state"
 import { EditorView, keymap, placeholder as placeholderExt } from "@codemirror/view"
 import { markdownKeymap } from "../toolbar/keymap"
 import { tableKeymap, tableRealign } from "../toolbar/table"
-import type { CodeLanguages, WikiLinkSource } from "../types"
+import type { CodeLanguages, ResolveErrorInfo, WikiLinkSource } from "../types"
 import { styloHighlighting } from "./highlight"
 import { saveHandler } from "./save"
 import { styloTheme } from "./theme"
@@ -24,6 +24,7 @@ import { wikilinkCompletion } from "./wikilink-complete"
 export function baseExtensions(
   codeLanguages?: CodeLanguages,
   wikiLinkSource?: WikiLinkSource,
+  onResolveError?: (error: unknown, info: ResolveErrorInfo) => void,
 ): Extension {
   return [
     history(),
@@ -41,7 +42,7 @@ export function baseExtensions(
     markdown({ base: markdownLanguage, codeLanguages }),
     styloHighlighting,
     // `[[wikilink]]` autocomplete — a no-op unless the host passes a source.
-    wikilinkCompletion(wikiLinkSource),
+    wikilinkCompletion(wikiLinkSource, onResolveError),
     EditorView.lineWrapping,
     styloTheme,
   ]

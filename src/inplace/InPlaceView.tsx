@@ -4,7 +4,13 @@ import type { EditorView } from "@codemirror/view"
 import { useCodeMirror } from "../editor/useCodeMirror"
 import { Embed } from "../render/Embed"
 import styles from "../styles/stylo.module.css"
-import type { CodeLanguages, EmbedSource, InPlaceConfig, WikiLinkSource } from "../types"
+import type {
+  CodeLanguages,
+  EmbedSource,
+  InPlaceConfig,
+  ResolveErrorInfo,
+  WikiLinkSource,
+} from "../types"
 import { EmbedRegistry } from "./embed-registry"
 import { inPlaceExtension } from "./extension"
 
@@ -24,6 +30,8 @@ export interface InPlaceViewProps {
   wikiLinkSource?: WikiLinkSource
   /** Resolves `![[ref]]` embeds. Read once, at mount — see ADR-009. */
   embedSource?: EmbedSource
+  /** Notified when `embedSource` or `wikiLinkSource` rejects. */
+  onResolveError?: (error: unknown, info: ResolveErrorInfo) => void
   /** Called with the doc string on `Mod-s`. */
   onSave?: (value: string) => void
   /** Called with the `EditorView` once created, and with `null` on teardown. */
@@ -55,6 +63,7 @@ export function InPlaceView({
   codeLanguages,
   wikiLinkSource,
   embedSource,
+  onResolveError,
   onSave,
   onViewChange,
 }: InPlaceViewProps) {
@@ -84,6 +93,7 @@ export function InPlaceView({
     extensions,
     codeLanguages,
     wikiLinkSource,
+    onResolveError,
     onSave,
     onViewChange,
   })
@@ -92,7 +102,7 @@ export function InPlaceView({
       {embedSource &&
         slots.map((slot) =>
           createPortal(
-            <Embed reference={slot.ref} source={embedSource} />,
+            <Embed reference={slot.ref} source={embedSource} onError={onResolveError} />,
             slot.el,
             String(slot.id),
           ),

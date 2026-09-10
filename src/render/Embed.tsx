@@ -1,11 +1,13 @@
 import { type ReactNode, useEffect, useState } from "react"
-import type { EmbedSource } from "../types"
+import type { EmbedSource, ResolveErrorInfo } from "../types"
 import { peekEmbed, resolveEmbed } from "./embed-cache"
 
 interface EmbedProps {
   /** The raw `![[ref]]` reference, trimmed. */
   reference: string
   source: EmbedSource
+  /** Notified if `source` rejects; the literal fallback still renders. */
+  onError?: (error: unknown, info: ResolveErrorInfo) => void
 }
 
 type State = { status: "loading" | "error" } | { status: "ready"; node: ReactNode }
@@ -18,7 +20,7 @@ type State = { status: "loading" | "error" } | { status: "ready"; node: ReactNod
  * resolves to `null` — the literal `![[ref]]` text stands in, so a reference is
  * never silently lost.
  */
-export function Embed({ reference, source }: EmbedProps) {
+export function Embed({ reference, source, onError }: EmbedProps) {
   const [state, setState] = useState<State>(() => {
     const hit = peekEmbed(source, reference)
     return hit ? { status: "ready", node: hit.node } : { status: "loading" }
@@ -34,12 +36,15 @@ export function Embed({ reference, source }: EmbedProps) {
     setState({ status: "loading" })
     resolveEmbed(source, reference).then(
       (node) => live && setState({ status: "ready", node }),
-      () => live && setState({ status: "error" }),
+      (error) => {
+        onError?.(error, { source: "embedSource", input: reference })
+        if (live) setState({ status: "error" })
+      },
     )
     return () => {
       live = false
     }
-  }, [reference, source])
+  }, [reference, source, onError])
 
   const literal = `![[${reference}]]`
   if (state.status === "loading") return <span aria-busy="true">{literal}</span>

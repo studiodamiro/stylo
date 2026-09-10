@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
 import { splitFrontmatter } from "../frontmatter"
 import styles from "../styles/stylo.module.css"
-import type { EmbedSource, FrontmatterDisplay } from "../types"
+import type { EmbedSource, FrontmatterDisplay, ResolveErrorInfo } from "../types"
 import { Embed } from "./Embed"
 import { remarkCallout } from "./remark-callout"
 import { remarkEmbed } from "./remark-embed"
@@ -19,6 +19,8 @@ export interface PreviewProps {
   onWikiLinkClick?: (target: string) => void
   /** Resolves `![[ref]]` embeds. Omit and `![[…]]` stays literal. */
   embedSource?: EmbedSource
+  /** Notified when `embedSource` rejects; the literal fallback still renders. */
+  onResolveError?: (error: unknown, info: ResolveErrorInfo) => void
   /** `"code"` renders the `---` block as a styled `<pre>`; `"hidden"` (default) drops it. */
   frontmatter?: FrontmatterDisplay
 }
@@ -28,6 +30,7 @@ export function Preview({
   value,
   onWikiLinkClick,
   embedSource,
+  onResolveError,
   frontmatter = "hidden",
 }: PreviewProps) {
   const fm = frontmatter === "code" ? splitFrontmatter(value) : null
@@ -75,7 +78,7 @@ export function Preview({
       if (typeof reference === "string" && embedSource) {
         return (
           <div {...rest}>
-            <Embed reference={reference} source={embedSource} />
+            <Embed reference={reference} source={embedSource} onError={onResolveError} />
           </div>
         )
       }

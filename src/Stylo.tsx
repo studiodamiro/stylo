@@ -9,7 +9,7 @@ import { Toolbar } from "./toolbar/Toolbar"
 import { resolveToolbarItems } from "./toolbar/config"
 import { splitFrontmatter } from "./frontmatter"
 import "./styles/tokens.css"
-import type { StyloHandle, StyloProps } from "./types"
+import type { ResolveErrorInfo, StyloHandle, StyloProps } from "./types"
 
 /**
  * Plain-text-first Markdown editor. `value` is the canonical Markdown string;
@@ -38,6 +38,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
     codeLanguages,
     wikiLinkSource,
     embedSource,
+    onResolveError,
     toolbar,
     icons,
     frontmatter,
@@ -59,6 +60,14 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
   // does not parse it — the host passes `raw` to its own YAML parser.
   const onFrontmatterRef = useRef(onFrontmatter)
   onFrontmatterRef.current = onFrontmatter
+
+  // Stable wrapper so a changed `onResolveError` needs no editor rebuild and
+  // does not thrash the embed effect. Passed to every surface.
+  const onResolveErrorRef = useRef(onResolveError)
+  onResolveErrorRef.current = onResolveError
+  const resolveError = useRef((error: unknown, info: ResolveErrorInfo) => {
+    onResolveErrorRef.current?.(error, info)
+  }).current
   const lastFrontmatter = useRef<string | null | undefined>(undefined)
   useEffect(() => {
     const raw = splitFrontmatter(value)?.frontmatter ?? null
@@ -134,6 +143,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
           placeholder={placeholder}
           codeLanguages={codeLanguages}
           wikiLinkSource={wikiLinkSource}
+          onResolveError={resolveError}
           onSave={onSave}
           onViewChange={setView}
         />
@@ -145,6 +155,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
             value={value}
             onWikiLinkClick={onWikiLinkClick}
             embedSource={embedSource}
+            onResolveError={resolveError}
             frontmatter={frontmatter}
           />
         </Suspense>
@@ -160,6 +171,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
           codeLanguages={codeLanguages}
           wikiLinkSource={wikiLinkSource}
           embedSource={embedSource}
+          onResolveError={resolveError}
           frontmatter={frontmatter}
           onSave={onSave}
           onViewChange={setView}
@@ -179,6 +191,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
             codeLanguages={codeLanguages}
             wikiLinkSource={wikiLinkSource}
             embedSource={embedSource}
+            onResolveError={resolveError}
             onSave={onSave}
             onViewChange={setView}
           />

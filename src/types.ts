@@ -164,6 +164,14 @@ export type WikiLinkSource = (
  */
 export type EmbedSource = (ref: string) => ReactNode | Promise<ReactNode>
 
+/** Which host resolver rejected, and the argument it was called with. */
+export interface ResolveErrorInfo {
+  /** The prop whose function threw or returned a rejected promise. */
+  source: "embedSource" | "wikiLinkSource"
+  /** What it was asked to resolve — an `![[ref]]` reference, or the `[[` query. */
+  input: string
+}
+
 /**
  * Per-construct on/off switches for the in-place canvas. Each key defaults to
  * `true`; setting one `false` leaves that construct as plain source — no
@@ -317,6 +325,14 @@ export interface StyloProps {
    * {@link EmbedSource}.
    */
   embedSource?: EmbedSource
+  /**
+   * Called when `embedSource` or `wikiLinkSource` throws or returns a rejected
+   * promise. Purely for observation — logging, a toast — the resolver still
+   * falls back (literal `![[ref]]` text, or no completions) either way. A `null`
+   * return is a valid result, not an error, and does not fire this. Reactive;
+   * see {@link ResolveErrorInfo}.
+   */
+  onResolveError?: (error: unknown, info: ResolveErrorInfo) => void
   /**
    * Formatting toolbar above the editing surface (`source`, `in-place`,
    * `split`; never `preview`). Omit or `true` for the default bar, `false` to
