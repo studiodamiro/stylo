@@ -23,7 +23,7 @@ import "katex/dist/katex.min.css"
  *   ?sticky=top|bottom                    (default none)
  *   ?toolbar=0                            (default on)
  *   ?theme=dark                           (default light)
- *   ?doc=basic|math|code|table|long|embed (default basic)
+ *   ?doc=basic|math|code|rule|table|long|embed (default basic)
  *   ?wikilinks=1                          (canned wikiLinkSource; default off)
  *   ?embed=1                              (canned embedSource; default off)
  */
@@ -73,6 +73,15 @@ const DOCS: Record<string, string> = {
     "```",
     "",
     "A paragraph after the block.",
+  ].join("\n"),
+  rule: [
+    "# Rule",
+    "",
+    "A paragraph above the rule.",
+    "",
+    "---",
+    "",
+    "A paragraph below the rule.",
   ].join("\n"),
   table: [
     "# Table",

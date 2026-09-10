@@ -104,9 +104,12 @@ selection — it also carries a **Format** group and clipboard, so one menu cove
 the table and the text. Like the canvas, a right-click on a word with nothing
 selected selects that word first. A right-click **inside a fenced code block**
 replaces the menu with a **Language** field (edits the ` ```lang ` info string)
-and **Remove code block**, plus clipboard. A right-click outside the text area
-gets the browser's own menu. Set `contextMenu: false` to keep the browser menu
-everywhere.
+and **Remove code block**, plus clipboard. A right-click on a **rendered
+thematic break** (`---` / `***` shown as an `<hr>` under `reveal: "never"`)
+offers **Remove divider** and clipboard — there is nothing to edit in a rule,
+so removal is the only action; Backspace or Delete on the rule does the same. A
+right-click outside the text area gets the browser's own menu. Set
+`contextMenu: false` to keep the browser menu everywhere.
 
 A right-click with no selection first checks whether the pointer is inside a
 marked run. For an inline mark — `**bold**`, `*italic*`, `~~strike~~`,

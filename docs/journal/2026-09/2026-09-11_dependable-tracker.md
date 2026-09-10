@@ -126,9 +126,10 @@ the Stage-4 link editor. Touches the decoration core; land one construct per PR.
   covered the info string and unwrap, so this was just flipping `nodes.ts` from
   `caretRevealed` to `revealed`. A body-less block keeps the caret-reveal
   escape hatch. ADR-007 rollout log, 2026-09-11.
-- **9b — `---` / `***` rules.** A remove affordance (Backspace/Delete on the
-  collapsed rule line + a "Remove divider" menu row), then flip
-  `HorizontalRule` to `revealed`.
+- **9b — `---` / `***` rules.** _Done._ `nodes.ts` flipped to `revealed`;
+  `edit-divider.ts` adds a Backspace/Delete keymap (`removeHiddenRule`) and the
+  menu gains a "Remove divider" row. Both reuse `toggleHorizontalRule`. ADR-007
+  rollout log, 2026-09-11.
 - **9c — inline `$…$` / one-line `$$…$$` math.** Full link treatment: a
   `mathRow` menu field, click-the-widget-to-edit, and a hover tooltip showing
   the raw LaTeX. Then flip `scanInlineMath` to `revealed`.

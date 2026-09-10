@@ -89,6 +89,17 @@ class ContextMenuController implements PluginValue {
     if (!view.state.facet(contextMenuEnabled)) return
     if (target?.closest(".cm-inplace-table-edit")) return
 
+    // A right-click on a rendered thematic break: `posAtCoords` over a block
+    // `<hr>` is unreliable, so place the caret on the rule line explicitly so
+    // the "Remove divider" row shows.
+    const hr = target?.closest(".cm-inplace-hr")
+    if (hr) {
+      const pos = view.posAtDOM(hr as HTMLElement)
+      if (pos >= 0) view.dispatch({ selection: { anchor: pos } })
+      this.menu.show(menuRows(view), clientX, clientY)
+      return
+    }
+
     // A press that landed inside a selection may have collapsed it in the DOM
     // before this fired — put it back so the menu still offers the selection
     // rows (Link field, inline marks).

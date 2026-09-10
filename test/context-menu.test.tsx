@@ -280,3 +280,22 @@ test("the Insert submenu flyout opens on pointerenter on an empty line", async (
   const panels = document.querySelectorAll(".cm-inplace-menu-panel")
   expect(panels.length, "a flyout panel opened alongside the main panel").toBeGreaterThan(1)
 })
+
+test("right-clicking a rendered thematic break offers 'Remove divider'", async () => {
+  const { view } = await mount("above\n\n---\n\nbelow", { reveal: "never" })
+  const hr = view.contentDOM.querySelector(".cm-inplace-hr") as HTMLElement
+  expect(hr, "the rule rendered as an <hr> widget").not.toBeNull()
+
+  hr.dispatchEvent(
+    new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }),
+  )
+
+  const panel = document.querySelector(".cm-inplace-menu-panel")
+  expect(panel?.textContent).toContain("Remove divider")
+
+  const row = [...panel!.querySelectorAll(".cm-inplace-menu-item")].find(
+    (el) => el.textContent?.trim() === "Remove divider",
+  ) as HTMLElement | undefined
+  row!.click()
+  expect(view.state.doc.toString()).toBe("above\n\n\nbelow")
+})
