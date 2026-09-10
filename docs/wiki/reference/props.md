@@ -36,6 +36,7 @@ import "@damiro/stylo/katex.css" // only if you use math in preview
 | `frontmatter`     | `"hidden" \| "code"`                                                                            | `"hidden"`   | How `preview` (and `split`'s preview pane) shows the leading `---` YAML block. `"hidden"` drops it; `"code"` renders the raw block as `<div class="stylo-frontmatter">` above the body. Restyle it with your own CSS (see below). For structured data use `onFrontmatter`; Stylo bundles no YAML parser ([ADR-001](../../journal/2026-09/2026-09-01_adr-001-editor-architecture.md)).                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `codeLanguages`   | `readonly LanguageDescription[] \| ((info: string) => Language \| LanguageDescription \| null)` | —            | Grammars for fenced-code sub-highlighting, forwarded verbatim to `@codemirror/lang-markdown`. Stylo bundles none — pass your own set (`codeLanguages={languages}` from `@codemirror/language-data`, or a hand-built list). Affects the CodeMirror surfaces (`source`, `split`, `in-place`); `preview` is unaffected. Read once, at mount. See [fenced-code highlighting](./code-languages.md).                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `wikiLinkSource`  | `(query: string) => readonly WikiLinkCompletion[] \| Promise<…>`                                | —            | Enables `[[wikilink]]` autocomplete on the CodeMirror surfaces. Called with the target typed so far while the caret is inside an unclosed `[[…`; return your index's matches, already ordered (Stylo does not re-rank or filter). May be async. Off when omitted. Read once, at mount. See [Wikilink autocomplete](#wikilink-autocomplete).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `embedSource`     | `(ref: string) => ReactNode \| Promise<ReactNode>`                                              | —            | Resolves `![[ref]]` embeds for `preview` and `split`. Called with the raw reference (`Note#Heading`, `pic.png\|320` — suffixes intact); return a node to render in its place, or `null` to keep it literal. May be async. Off when omitted. Recognised only when the `![[…]]` is alone on its line. See [Embeds](#embeds).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `readOnly`        | `boolean`                                                                                       | `false`      | Render the source surface read-only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `placeholder`     | `string`                                                                                        | —            | Shown when the document is empty (source surface).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `className`       | `string`                                                                                        | —            | Added to the root element alongside the internal classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -53,8 +54,10 @@ remounts it:
 ```
 
 Everything else — `value`, `onChange`, every callback, `readOnly`,
-`placeholder`, `toolbar`, `icons`, `className` — is fully reactive and needs no
-remount. The rationale for keeping `inPlace` mount-time (rather than a
+`placeholder`, `toolbar`, `icons`, `className`, `embedSource` — is fully reactive
+and needs no remount. `embedSource` in particular: the preview is a pure function
+of its props, so keep the function identity stable or the render pipeline rebuilds
+each frame. The rationale for keeping `inPlace` mount-time (rather than a
 live-reconfiguration path) is in the
 [ADR-005 config-lifecycle amendment](../../journal/2026-09/2026-09-01_adr-005-in-place-decoration-toggles.md).
 
@@ -81,10 +84,51 @@ type WikiLinkCompletion = { target: string; label?: string }
 - On accept: `[[target]]`, or `[[target|label]]` when `label` is set and differs
   from `target`. A `]]` the user already typed is reused, not duplicated.
 - Works on `source`, `split`, and the `in-place` canvas. Inert inside fenced code
-  (it is a Markdown-language completion source). `![[embed]]` transclusion is not
-  covered.
+  (it is a Markdown-language completion source). `![[embed]]` transclusion is a
+  separate prop — see [Embeds](#embeds).
 - Uses `@codemirror/autocomplete`, a regular dependency that dedupes onto the
   host's CodeMirror copy.
+
+## Embeds
+
+`![[ref]]` is Obsidian's transclusion syntax — pull another note, a heading, a
+block, or an image in where the `![[…]]` sits. Stylo has no vault, so it cannot
+resolve `ref` on its own (the same split as `[[wikilinks]]`: Stylo detects,
+the host resolves). Pass **`embedSource`** and it is called with the raw
+reference; return a React node to render in the embed's place.
+
+```tsx
+;<Stylo
+  value={doc}
+  onChange={setDoc}
+  embedSource={(ref) => {
+    const [path, size] = ref.split("|") // "Note#Heading", "diagram.png|320"
+    if (/\.(png|jpe?g|svg|webp)$/i.test(path)) {
+      return <img src={vault.assetUrl(path)} width={size ? Number(size) : undefined} alt="" />
+    }
+    const note = vault.resolve(path)
+    return note ? <Stylo mode="preview" value={note.body} onChange={() => {}} /> : null
+  }}
+/>
+```
+
+- The **raw reference** goes to `embedSource` verbatim — `#heading`, `#^blockid`,
+  and `|size` suffixes intact. Stylo does not parse them (in an embed `|` is a
+  size hint, not a label, so `WIKILINK_PATTERN` does not apply). Parse what you
+  need.
+- May be `async` (a vault lookup, a `fetch`). While it resolves — and if it
+  rejects or resolves to `null` — the literal `![[ref]]` text stands in, so a
+  reference is never silently dropped.
+- **`preview` and `split` only** for now. The in-place canvas is a later
+  increment; there `![[…]]` stays plain source.
+- Recognised **only when the `![[…]]` is alone on its line** (the whole
+  paragraph). An `![[…]]` inside a sentence stays literal — treating it as a
+  block would nest a host `<div>` inside a `<p>`.
+- Renders into `<div class="stylo-embed"><div class="stylo-embed-content">…`.
+  Both classes are stable override points; set `--stylo-embed-accent` for the
+  rail colour, or zero the padding and border to drop the frame.
+- Off entirely when `embedSource` is omitted — `![[ref]]` then renders as it did
+  before (the leading `!` as text, `[[ref]]` as a wikilink).
 
 ## Ref — imperative handle
 

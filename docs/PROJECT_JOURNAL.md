@@ -15,21 +15,23 @@ milestones and Architectural Decision Records, newest first.
 
 ## Architectural Decision Records
 
-| ADR                                                                            | Title                                                                 | Status   | Date       |
-| ------------------------------------------------------------------------------ | --------------------------------------------------------------------- | -------- | ---------- |
-| [ADR-008](./journal/2026-09/2026-09-04_adr-008-codemirror-peer-dependency.md)  | CodeMirror and Lezer as peer dependencies                             | Accepted | 2026-09-04 |
-| [ADR-007](./journal/2026-09/2026-09-03_adr-007-seamless-in-place.md)           | Seamless in-place: Markdown markers never shown                       | Accepted | 2026-09-03 |
-| [ADR-006](./journal/2026-09/2026-09-02_adr-006-interactive-table-editing.md)   | Interactive rendered-table editing                                    | Accepted | 2026-09-02 |
-| [ADR-005](./journal/2026-09/2026-09-01_adr-005-in-place-decoration-toggles.md) | In-place decoration toggles                                           | Accepted | 2026-09-01 |
-| [ADR-004](./journal/2026-09/2026-09-01_adr-004-in-place-decoration-canvas.md)  | In-place decoration canvas                                            | Accepted | 2026-09-01 |
-| [ADR-003](./journal/2026-09/2026-09-01_adr-003-katex-math-rendering.md)        | Math rendering engine and KaTeX asset delivery                        | Accepted | 2026-09-01 |
-| [ADR-002](./journal/2026-09/2026-09-01_adr-002-editor-ux-and-customization.md) | Editor UX, Customization API, and Design System                       | Accepted | 2026-09-01 |
-| [ADR-001](./journal/2026-09/2026-09-01_adr-001-editor-architecture.md)         | Editor architecture: compose from primitives, plain text is canonical | Accepted | 2026-09-01 |
+| ADR                                                                                   | Title                                                                 | Status   | Date       |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | -------- | ---------- |
+| [ADR-009](./journal/2026-09/2026-09-11_adr-009-react-nodes-in-the-in-place-canvas.md) | Rendering host React nodes in the in-place canvas                     | Proposed | 2026-09-11 |
+| [ADR-008](./journal/2026-09/2026-09-04_adr-008-codemirror-peer-dependency.md)         | CodeMirror and Lezer as peer dependencies                             | Accepted | 2026-09-04 |
+| [ADR-007](./journal/2026-09/2026-09-03_adr-007-seamless-in-place.md)                  | Seamless in-place: Markdown markers never shown                       | Accepted | 2026-09-03 |
+| [ADR-006](./journal/2026-09/2026-09-02_adr-006-interactive-table-editing.md)          | Interactive rendered-table editing                                    | Accepted | 2026-09-02 |
+| [ADR-005](./journal/2026-09/2026-09-01_adr-005-in-place-decoration-toggles.md)        | In-place decoration toggles                                           | Accepted | 2026-09-01 |
+| [ADR-004](./journal/2026-09/2026-09-01_adr-004-in-place-decoration-canvas.md)         | In-place decoration canvas                                            | Accepted | 2026-09-01 |
+| [ADR-003](./journal/2026-09/2026-09-01_adr-003-katex-math-rendering.md)               | Math rendering engine and KaTeX asset delivery                        | Accepted | 2026-09-01 |
+| [ADR-002](./journal/2026-09/2026-09-01_adr-002-editor-ux-and-customization.md)        | Editor UX, Customization API, and Design System                       | Accepted | 2026-09-01 |
+| [ADR-001](./journal/2026-09/2026-09-01_adr-001-editor-architecture.md)                | Editor architecture: compose from primitives, plain text is canonical | Accepted | 2026-09-01 |
 
 ## Milestones
 
 | Date       | Entry                                                                                                                                                     |
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-10 | [`![[embed]]` transclusion — Stylo detects, the host renders (`embedSource`)](./journal/2026-09/2026-09-10_embed-transclusion.md)                         |
 | 2026-09-10 | [`[[wikilink]]` autocomplete — the host indexes, Stylo triggers and inserts](./journal/2026-09/2026-09-10_wikilink-autocomplete.md)                       |
 | 2026-09-10 | [A browser test harness — Playwright over the in-place canvas](./journal/2026-09/2026-09-10_browser-test-harness.md)                                      |
 | 2026-09-10 | [Font-family tokens — the prose and mono stacks move onto the contract](./journal/2026-09/2026-09-10_font-family-tokens.md)                               |

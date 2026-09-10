@@ -3,6 +3,7 @@ export { Stylo } from "./Stylo"
 export { splitFrontmatter } from "./frontmatter"
 export type {
   CodeLanguages,
+  EmbedSource,
   FrontmatterDisplay,
   InPlaceConfig,
   InPlaceDecorationToggles,

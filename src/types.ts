@@ -143,6 +143,22 @@ export type WikiLinkSource = (
 ) => readonly WikiLinkCompletion[] | Promise<readonly WikiLinkCompletion[]>
 
 /**
+ * Resolves an `![[ref]]` embed (transclusion) to something to render. Called
+ * with the raw reference — everything between `![[` and `]]`, trimmed, with any
+ * `#heading` / `#^blockid` / `|size` suffix left intact for the host to parse.
+ * Stylo has no vault, so it cannot resolve the reference itself; it detects the
+ * `![[…]]` and renders whatever node you return in its place. May be async (a
+ * vault lookup, a fetch). Return `null` to leave the reference as literal text.
+ *
+ * Pass it to enable embeds; omit it and `![[…]]` stays literal. Affects
+ * `preview` and `split`'s preview pane only — the in-place canvas is a later
+ * increment. An embed is recognised only when it is alone on its own line (the
+ * whole paragraph); an `![[…]]` inside other text stays literal. Give it a
+ * stable reference — the render pipeline rebuilds when its identity changes.
+ */
+export type EmbedSource = (ref: string) => ReactNode | Promise<ReactNode>
+
+/**
  * Per-construct on/off switches for the in-place canvas. Each key defaults to
  * `true`; setting one `false` leaves that construct as plain source — no
  * decoration, no cursor-reveal behaviour. See ADR-005.
@@ -286,6 +302,13 @@ export interface StyloProps {
    * omitted. Read once, at mount. See `WikiLinkSource`.
    */
   wikiLinkSource?: WikiLinkSource
+  /**
+   * Resolves `![[ref]]` embeds (transclusion) for `preview` and `split`. Called
+   * with the raw reference; return a node to render in its place, or `null` to
+   * leave it as literal text. May be async. Off when omitted. See
+   * {@link EmbedSource}.
+   */
+  embedSource?: EmbedSource
   /**
    * Formatting toolbar above the editing surface (`source`, `in-place`,
    * `split`; never `preview`). Omit or `true` for the default bar, `false` to

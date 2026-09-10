@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import Markdown, { type Components } from "react-markdown"
 import rehypeKatex from "rehype-katex"
 import remarkFrontmatter from "remark-frontmatter"
@@ -5,23 +6,47 @@ import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
 import { splitFrontmatter } from "../frontmatter"
 import styles from "../styles/stylo.module.css"
-import type { FrontmatterDisplay } from "../types"
+import type { EmbedSource, FrontmatterDisplay } from "../types"
+import { Embed } from "./Embed"
 import { remarkCallout } from "./remark-callout"
+import { remarkEmbed } from "./remark-embed"
 import { remarkWikilink } from "./remark-wikilink"
 
-const REMARK_PLUGINS = [remarkFrontmatter, remarkGfm, remarkMath, remarkWikilink, remarkCallout]
 const REHYPE_PLUGINS = [rehypeKatex]
 
 export interface PreviewProps {
   value: string
   onWikiLinkClick?: (target: string) => void
+  /** Resolves `![[ref]]` embeds. Omit and `![[…]]` stays literal. */
+  embedSource?: EmbedSource
   /** `"code"` renders the `---` block as a styled `<pre>`; `"hidden"` (default) drops it. */
   frontmatter?: FrontmatterDisplay
 }
 
 /** Rendered Markdown + KaTeX view. A pure function of the string. */
-export function Preview({ value, onWikiLinkClick, frontmatter = "hidden" }: PreviewProps) {
+export function Preview({
+  value,
+  onWikiLinkClick,
+  embedSource,
+  frontmatter = "hidden",
+}: PreviewProps) {
   const fm = frontmatter === "code" ? splitFrontmatter(value) : null
+
+  // `remarkEmbed` must precede `remarkWikilink` (it consumes the `![[…]]` before
+  // the inner `[[…]]` is rewritten) and is only in the pipeline when the host
+  // opts in, so a bare `![[x]]` renders unchanged otherwise.
+  const remarkPlugins = useMemo(
+    () => [
+      remarkFrontmatter,
+      remarkGfm,
+      remarkMath,
+      ...(embedSource ? [remarkEmbed] : []),
+      remarkWikilink,
+      remarkCallout,
+    ],
+    [embedSource],
+  )
+
   const components: Components = {
     a({ node: _node, children, ...rest }) {
       const target = (rest as Record<string, unknown>)["data-wikilink"]
@@ -45,13 +70,24 @@ export function Preview({ value, onWikiLinkClick, frontmatter = "hidden" }: Prev
         </a>
       )
     },
+    div({ node: _node, children, ...rest }) {
+      const reference = (rest as Record<string, unknown>)["data-stylo-embed"]
+      if (typeof reference === "string" && embedSource) {
+        return (
+          <div {...rest}>
+            <Embed reference={reference} source={embedSource} />
+          </div>
+        )
+      }
+      return <div {...rest}>{children}</div>
+    },
   }
 
   return (
     <div className={styles.preview}>
       {fm && <div className="stylo-frontmatter">{fm.frontmatter}</div>}
       <Markdown
-        remarkPlugins={REMARK_PLUGINS}
+        remarkPlugins={remarkPlugins}
         rehypePlugins={REHYPE_PLUGINS}
         components={components}
       >

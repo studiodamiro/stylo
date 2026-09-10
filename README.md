@@ -28,6 +28,9 @@ built in.
 - **`[[wikilinks]]`** — recognised, styled, and clickable, with an
   `onWikiLinkClick` callback and opt-in `[[` autocomplete from an index you
   supply (`wikiLinkSource`).
+- **`![[embed]]` transclusion** — opt-in in `preview` / `split`: pass
+  `embedSource` and Stylo hands you the reference, you return the node to render
+  in its place.
 - **Interactive tables** — edit a rendered table cell by cell in the in-place
   canvas, with row / column controls; or keep plain source pipes.
 - **Callouts** — `> [!note]` blockquotes render as tinted admonition blocks
@@ -109,6 +112,7 @@ truth.** The editor is a thin, composable surface over it.
 | Find / replace   | `@codemirror/search` — `Mod-f` on every editing surface                     |
 | Render / preview | `react-markdown` + `remark-gfm` + `remark-math` + `rehype-katex` + `katex`  |
 | `[[wikilinks]]`  | small custom `remark` plugin                                                |
+| `![[embeds]]`    | custom `remark` plugin + host-supplied `embedSource` (preview / split)      |
 | Frontmatter      | `remark-frontmatter` — fences recognised; key/value parsing deferred        |
 | Styling          | CSS Modules + `--stylo-*` CSS custom properties — no Tailwind, no CSS-in-JS |
 | Icons            | inline SVG, swappable via the `icons` prop — no icon-package dependency     |
@@ -158,6 +162,11 @@ change. Every other prop is fully reactive. See
 Pass `wikiLinkSource` — `(query) => { target, label? }[]`, sync or async — to
 turn on `[[wikilink]]` autocomplete backed by your own index. See
 [Wikilink autocomplete](./docs/wiki/reference/props.md#wikilink-autocomplete).
+
+Pass `embedSource` — `(ref) => ReactNode`, sync or async — to resolve
+`![[embed]]` transclusion in `preview` / `split`. Stylo detects the `![[…]]`
+(when it is alone on its line) and renders whatever you return. See
+[Embeds](./docs/wiki/reference/props.md#embeds).
 
 Fenced code blocks render in plain monospace — no token colours — until you pass
 `codeLanguages` with the grammars you want. Stylo bundles none by design (the

@@ -19,3 +19,21 @@ test("split mode renders both the source surface and the preview, with no warnin
 
   warn.mockRestore()
 })
+
+test('split forwards frontmatter="code" to its preview pane', async () => {
+  const { container } = render(
+    <Stylo
+      value={"---\ntitle: Shown\n---\n\n# body"}
+      onChange={() => {}}
+      mode="split"
+      frontmatter="code"
+    />,
+  )
+
+  // The source pane also shows the raw block; assert the preview pane's styled
+  // <div class="stylo-frontmatter"> appears, which it only does when the prop
+  // reaches LazyPreview.
+  await screen.findByRole("heading", { name: "body" })
+  const block = container.querySelector(".stylo-frontmatter")
+  expect(block?.textContent).toBe("title: Shown")
+})
