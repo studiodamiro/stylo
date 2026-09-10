@@ -178,6 +178,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
             inPlace={inPlace}
             codeLanguages={codeLanguages}
             wikiLinkSource={wikiLinkSource}
+            embedSource={embedSource}
             onSave={onSave}
             onViewChange={setView}
           />

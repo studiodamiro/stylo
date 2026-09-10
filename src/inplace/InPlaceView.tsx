@@ -1,8 +1,11 @@
-import { useRef, useState } from "react"
+import { useRef, useState, useSyncExternalStore } from "react"
+import { createPortal } from "react-dom"
 import type { EditorView } from "@codemirror/view"
 import { useCodeMirror } from "../editor/useCodeMirror"
+import { Embed } from "../render/Embed"
 import styles from "../styles/stylo.module.css"
-import type { CodeLanguages, InPlaceConfig, WikiLinkSource } from "../types"
+import type { CodeLanguages, EmbedSource, InPlaceConfig, WikiLinkSource } from "../types"
+import { EmbedRegistry } from "./embed-registry"
 import { inPlaceExtension } from "./extension"
 
 export interface InPlaceViewProps {
@@ -19,6 +22,8 @@ export interface InPlaceViewProps {
   codeLanguages?: CodeLanguages
   /** `[[wikilink]]` autocomplete source. Read once. */
   wikiLinkSource?: WikiLinkSource
+  /** Resolves `![[ref]]` embeds. Read once, at mount — see ADR-009. */
+  embedSource?: EmbedSource
   /** Called with the doc string on `Mod-s`. */
   onSave?: (value: string) => void
   /** Called with the `EditorView` once created, and with `null` on teardown. */
@@ -33,6 +38,11 @@ export interface InPlaceViewProps {
  * The extension array (and the `inPlace` config baked into it) is built once;
  * `onWikiLinkClick` is reached through a ref so a changed handler does not force
  * the editor to be rebuilt.
+ *
+ * `![[ref]]` embeds (ADR-009): each off-caret lone-line embed contributes an
+ * inert slot `<div>` via `EmbedWidget`; this component subscribes to the
+ * `EmbedRegistry` and portals a host `<Embed>` into every live slot, so one
+ * React tree — reusing `Embed` verbatim — serves the canvas and `preview` alike.
  */
 export function InPlaceView({
   value,
@@ -44,6 +54,7 @@ export function InPlaceView({
   inPlace,
   codeLanguages,
   wikiLinkSource,
+  embedSource,
   onSave,
   onViewChange,
 }: InPlaceViewProps) {
@@ -52,12 +63,16 @@ export function InPlaceView({
   const linkRef = useRef(onLinkClick)
   linkRef.current = onLinkClick
 
+  const [registry] = useState(() => new EmbedRegistry())
+  const slots = useSyncExternalStore(registry.subscribe, registry.getSnapshot, registry.getSnapshot)
+
   // Built once; a changed handler is picked up through the ref, not a rebuild.
   const [extensions] = useState(() => [
     inPlaceExtension({
       onWikiLinkClick: (target) => clickRef.current?.(target),
       onLinkClick: (href) => linkRef.current?.(href),
       inPlace,
+      embedRegistry: embedSource ? registry : undefined,
     }),
   ])
 
@@ -72,5 +87,16 @@ export function InPlaceView({
     onSave,
     onViewChange,
   })
-  return <div className={styles.inplace} ref={ref} />
+  return (
+    <div className={styles.inplace} ref={ref}>
+      {embedSource &&
+        slots.map((slot) =>
+          createPortal(
+            <Embed reference={slot.ref} source={embedSource} />,
+            slot.el,
+            String(slot.id),
+          ),
+        )}
+    </div>
+  )
 }

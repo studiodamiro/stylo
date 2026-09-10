@@ -2,6 +2,7 @@ import { StrictMode, useState } from "react"
 import { createRoot } from "react-dom/client"
 import {
   Stylo,
+  type EmbedSource,
   type RevealMode,
   type SelectionUI,
   type StyloMode,
@@ -22,8 +23,9 @@ import "katex/dist/katex.min.css"
  *   ?sticky=top|bottom                    (default none)
  *   ?toolbar=0                            (default on)
  *   ?theme=dark                           (default light)
- *   ?doc=basic|math|table|long            (default basic)
+ *   ?doc=basic|math|table|long|embed      (default basic)
  *   ?wikilinks=1                          (canned wikiLinkSource; default off)
+ *   ?embed=1                              (canned embedSource; default off)
  */
 
 /** A fixed candidate list, filtered by prefix — enough to exercise the popup. */
@@ -32,6 +34,13 @@ const cannedWikiLinkSource: WikiLinkSource = (query) => {
   const q = query.trim().toLowerCase()
   return WIKI_TARGETS.filter((t) => t.toLowerCase().includes(q)).map((target) => ({ target }))
 }
+
+/** Resolves any `![[ref]]` to a marked node — enough to prove the portal path. */
+const cannedEmbedSource: EmbedSource = (ref) => (
+  <div className="fixture-embed">
+    embed: {ref} <button type="button">act</button>
+  </div>
+)
 
 const DOCS: Record<string, string> = {
   basic: [
@@ -66,6 +75,15 @@ const DOCS: Record<string, string> = {
       (_, i) => `Paragraph ${i + 1}. Enough lines that the window scrolls.`,
     ),
   ].join("\n"),
+  embed: [
+    "# Embeds",
+    "",
+    "Text before the embed.",
+    "",
+    "![[Weekly note]]",
+    "",
+    "Text after the embed.",
+  ].join("\n"),
 }
 
 const params = new URLSearchParams(location.search)
@@ -76,6 +94,7 @@ const reveal = (params.get("reveal") as RevealMode) ?? "caret"
 const sticky = params.get("sticky") as "top" | "bottom" | null
 const toolbar = params.get("toolbar") !== "0"
 const wikiLinkSource = params.get("wikilinks") === "1" ? cannedWikiLinkSource : undefined
+const embedSource = params.get("embed") === "1" ? cannedEmbedSource : undefined
 const doc = DOCS[params.get("doc") ?? "basic"] ?? DOCS.basic!
 
 if (params.get("theme") === "dark") document.documentElement.dataset.theme = "dark"
@@ -90,6 +109,7 @@ function Fixture() {
       inPlace={{ selectionUI, table, reveal }}
       toolbar={sticky ? { sticky } : toolbar}
       wikiLinkSource={wikiLinkSource}
+      embedSource={embedSource}
     />
   )
 }

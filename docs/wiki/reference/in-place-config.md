@@ -47,6 +47,7 @@ Every key is optional and defaults to `true`.
 | `code`           | inline `` `code` `` styling and the fenced / indented code container |
 | `frontmatter`    | the recessed in-place styling of the leading YAML block              |
 | `tables`         | the rendered `<table>`                                               |
+| `embeds`         | `![[ref]]` transclusion blocks (needs `embedSource`; see ADR-009)    |
 
 With `headings` on, a heading line also carries `role="heading"` and
 `aria-level` so screen readers and outline tools see the structure — the `#`

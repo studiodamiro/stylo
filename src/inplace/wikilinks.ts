@@ -1,6 +1,7 @@
 import type { Range } from "@codemirror/state"
 import { Decoration, type EditorView } from "@codemirror/view"
 import { WIKILINK_PATTERN } from "../wikilink"
+import { embedRegistryFacet } from "./config"
 import { inCodeContext, type Tree } from "./scan"
 
 /**
@@ -19,11 +20,16 @@ export function scanWikilinks(
   const text = view.state.doc.sliceString(from, to)
   if (!text.includes("[[")) return
 
+  // With `embedSource` set, a `![[ref]]` belongs to the embed pass — leave its
+  // inner `[[ref]]` alone so the two never decorate the same span (ADR-009).
+  const embedsActive = view.state.facet(embedRegistryFacet) != null
+
   for (const match of text.matchAll(WIKILINK_PATTERN)) {
     const [raw = "", rawTarget = "", rawLabel] = match
     const target = rawTarget.trim()
     const start = from + (match.index ?? 0)
     if (!target || inCodeContext(tree, start + 1)) continue
+    if (embedsActive && start > 0 && view.state.doc.sliceString(start - 1, start) === "!") continue
 
     const end = start + raw.length
     const labelStart = rawLabel != null ? start + 2 + rawTarget.length + 1 : start + 2
