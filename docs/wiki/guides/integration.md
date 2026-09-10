@@ -10,10 +10,33 @@ tags:
 
 # Integrating Stylo
 
-Practical notes for dropping `<Stylo>` into an app: which props are live, how
-persistence is meant to work, the stylesheet and peer-dependency setup, and the
-theming contract. Each section links to the reference page that covers it in
-full.
+Practical notes for dropping `<Stylo>` into an app: the module format and setup
+it expects, which props are live, how persistence is meant to work, the
+stylesheet and peer-dependency setup, and the theming contract. Each section
+links to the reference page that covers it in full.
+
+## Requirements
+
+- **A bundler, or a native-ESM runtime.** Stylo ships **ES modules only** —
+  there is no CommonJS (`require`) build and no `main` entry. Any current bundler
+  (Vite, Next.js, Rspack, webpack 5, Parcel) handles it; a project that still
+  `require()`s its dependencies does not.
+- **React 18 or 19**, as peer dependencies — `react` and `react-dom`. Stylo
+  shares the host's copy (see
+  [Peer dependencies](#peer-dependencies--one-copy-each)).
+- **CodeMirror 6 and Lezer**, as peer dependencies — the package list is in that
+  same section.
+- **Node 18+** for the build tooling; nothing Stylo needs at runtime in the
+  browser.
+
+Two stylesheet imports, once, anywhere in your app entry:
+
+```tsx
+import "@damiro/stylo/styles.css" // required — structural CSS
+import "@damiro/stylo/katex.css" // only if you render math
+```
+
+Each of these is expanded on below.
 
 ## `<Stylo>` is fully controlled
 

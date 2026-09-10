@@ -31,6 +31,7 @@ milestones and Architectural Decision Records, newest first.
 
 | Date       | Entry                                                                                                                                                     |
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-11 | [Tracker — making Stylo dependable for downstream projects](./journal/2026-09/2026-09-11_dependable-tracker.md)                                           |
 | 2026-09-11 | [`![[embed]]` reaches the in-place canvas — a portal registry](./journal/2026-09/2026-09-11_inplace-embeds.md)                                            |
 | 2026-09-10 | [`![[embed]]` transclusion — Stylo detects, the host renders (`embedSource`)](./journal/2026-09/2026-09-10_embed-transclusion.md)                         |
 | 2026-09-10 | [`[[wikilink]]` autocomplete — the host indexes, Stylo triggers and inserts](./journal/2026-09/2026-09-10_wikilink-autocomplete.md)                       |
