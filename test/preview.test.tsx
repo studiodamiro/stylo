@@ -122,6 +122,21 @@ test("an ![[ref]] inside other text is not treated as an embed (v1 boundary)", (
   expect(container.querySelector(".stylo-embed")).toBeNull()
 })
 
+test("embedSource is resolved once across a remount, and re-mounts show no loading flash", async () => {
+  const embedSource = vi.fn((ref: string) => <p data-testid="cached">once: {ref}</p>)
+  const doc = "![[cache me]]"
+
+  const first = render(<Preview value={doc} embedSource={embedSource} />)
+  await screen.findByTestId("cached")
+  first.unmount()
+
+  const second = render(<Preview value={doc} embedSource={embedSource} />)
+  // Served synchronously from cache — present on the first paint, no `aria-busy`.
+  expect(second.container.querySelector("[data-testid='cached']")).not.toBeNull()
+  expect(second.container.querySelector("[aria-busy='true']")).toBeNull()
+  expect(embedSource).toHaveBeenCalledTimes(1)
+})
+
 test("a normal link is left alone and does not trigger the wikilink handler", () => {
   const onWikiLinkClick = vi.fn()
   const { container } = render(

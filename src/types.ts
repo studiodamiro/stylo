@@ -156,6 +156,11 @@ export type WikiLinkSource = (
  * `![[…]]` inside other text stays literal. Give it a stable reference — the
  * render pipeline rebuilds when its identity changes, and the in-place canvas
  * reads it once at mount.
+ *
+ * Results are memoised by `ref` per function identity (so a scroll or a
+ * re-render does not re-resolve). If your source's output for a given `ref` can
+ * change over time, vary the `ref` or pass a new `embedSource` to invalidate.
+ * Rejections are not cached.
  */
 export type EmbedSource = (ref: string) => ReactNode | Promise<ReactNode>
 

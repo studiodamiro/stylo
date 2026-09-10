@@ -121,6 +121,10 @@ reference; return a React node to render in the embed's place.
 - May be `async` (a vault lookup, a `fetch`). While it resolves — and if it
   rejects or resolves to `null` — the literal `![[ref]]` text stands in, so a
   reference is never silently dropped.
+- **Resolutions are cached by `ref`** (per `embedSource` identity), so an embed
+  scrolled out of the canvas and back is not re-fetched and does not flash. Vary
+  the `ref` or pass a new `embedSource` if a reference's content can change;
+  rejections are not cached.
 - Works on **`preview`, `split`, and the in-place canvas** (ADR-009). On the
   canvas the resolved node is portalled into the rendered line; put the caret on
   the line to reveal the raw `![[ref]]` for editing. Interactive host content

@@ -40,6 +40,8 @@ wikilink-autocomplete increments. Check items off here as they land.
 
 ### 1 — Document the ESM-only constraint · size XS · deps: none
 
+**Done** — #27.
+
 `package.json` `exports` has no `require` condition: Stylo is ESM-only and needs a
 bundler (Vite, Next, …). Say so plainly in the README, and put the minimum React
 version and the two CSS imports (`styles.css`, `katex.css`) in one place in
@@ -47,16 +49,21 @@ version and the two CSS imports (`styles.css`, `katex.css`) in one place in
 
 ### 2 — Integration-guide accuracy pass · size S · deps: none
 
+**Done** — #28. Main fix: the "props read at mount" list was two, is three
+(`wikiLinkSource` too), plus `embedSource` on the canvas.
+
 Re-read `docs/wiki/guides/integration.md` end to end against the current prop set
 — embeds on all three surfaces, `wikiLinkSource`, the `@damiro/stylo/toolbar-settings`
 secondary entry — and fix drift. Pairs naturally with item 1.
 
 ### 3 — `ref`-keyed embed memo · size S · deps: none
 
-An embed scrolled out of the viewport and back re-invokes `embedSource` (the
-widget is rebuilt, the portal remounts). Add a small `ref`-keyed cache of
-resolved nodes, invalidated on `ref` change, shared by `preview` and the canvas.
-Cap its size so it can't grow unbounded. (ADR-009 deferred item.)
+**Done.** `src/render/embed-cache.ts` — a `WeakMap<EmbedSource, Map<ref, entry>>`
+shared by `preview` and the canvas through `Embed.tsx`. In-flight promises
+deduped, rejections not cached, capped at 64 refs per resolver. A settled entry
+renders on first paint (no loading flash). Behaviour note added to the
+`EmbedSource` doc and CHANGELOG: content is memoised by `ref`. (Closes the
+ADR-009 deferred item.)
 
 ### 4 — `onResolveError` for `embedSource` / `wikiLinkSource` · size S–M · deps: none
 

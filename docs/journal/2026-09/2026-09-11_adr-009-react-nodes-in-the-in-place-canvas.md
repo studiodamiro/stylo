@@ -101,9 +101,11 @@ contributes an inert slot element, and a single React subtree owned by
   anywhere. A small cleanup, but it is a visible change for consumers not using
   embeds, so it waits for a deliberate minor-version note rather than riding in
   on this feature.
-- **Memoising resolved nodes across scroll.** Without a cache, an embed
-  re-scrolled into view re-invokes `embedSource`. Ship without it; add a
-  `ref`-keyed cache if profiling or a network-backed source shows it matters.
+- ~~**Memoising resolved nodes across scroll.**~~ Landed after 0.9.0:
+  `src/render/embed-cache.ts`, a `WeakMap<EmbedSource, Map<ref, entry>>` shared by
+  `preview` and the canvas, in-flight promises deduped, rejections not cached,
+  capped at 64 refs per resolver. An embed re-scrolled into view is served from
+  cache with no re-`embedSource` call and no loading flash.
 - **A recursion guard** for `embedSource` returning a nested
   `<Stylo mode="in-place">`. The host's responsibility for now, documented.
 
@@ -200,8 +202,8 @@ document shows the portal bridge is a bottleneck.
   `![[ref]]` is by caret-on-line, or by clicking the slot's own box / a pending
   or failed embed's literal text. `.cm-inplace-embed` is in `REVEAL_WIDGET` for
   that second path.
-- **Scroll memoisation still deferred.** An embed scrolled out and back
-  re-invokes `embedSource`, as the ADR anticipated.
+- **Scroll memoisation** was deferred at 0.9.0 and landed just after — see the
+  struck-through entry under _Deferred_ above (`src/render/embed-cache.ts`).
 - Coverage: `test/embed-registry.test.ts` (the class),
   `test/inplace-embed.test.tsx` (the field — widget off-caret, withheld
   on-caret, gated by the prop, `!`-yield), `test/browser/embed.spec.ts` (the
