@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react"
 import { Annotation, Compartment, EditorState, type Extension, Prec } from "@codemirror/state"
 import { EditorView, keymap } from "@codemirror/view"
-import type { CodeLanguages, WikiLinkSource } from "../types"
+import type { CodeLanguages, ResolveErrorInfo, WikiLinkSource } from "../types"
 import { baseExtensions, dynamicConfig } from "./extensions"
 import { runSave } from "./save"
 
@@ -26,6 +26,8 @@ export interface UseCodeMirrorOptions {
   codeLanguages?: CodeLanguages
   /** `[[wikilink]]` autocomplete source. Read once. */
   wikiLinkSource?: WikiLinkSource
+  /** Notified when `wikiLinkSource` rejects. Reached through a stable wrapper. */
+  onResolveError?: (error: unknown, info: ResolveErrorInfo) => void
 }
 
 /**
@@ -42,6 +44,7 @@ export function useCodeMirror({
   extensions,
   codeLanguages,
   wikiLinkSource,
+  onResolveError,
 }: UseCodeMirrorOptions) {
   const parent = useRef<HTMLDivElement | null>(null)
   const viewRef = useRef<EditorView | null>(null)
@@ -52,6 +55,12 @@ export function useCodeMirror({
   // Stable wrapper: the facet holds this, it reads the latest handler. The
   // compartment only reconfigures when the handler's *presence* flips.
   const saveFn = useRef((value: string) => onSaveRef.current?.(value)).current
+  const onResolveErrorRef = useRef(onResolveError)
+  onResolveErrorRef.current = onResolveError
+  // Stable wrapper captured once by the completion source at construction.
+  const resolveErrorFn = useRef((error: unknown, info: ResolveErrorInfo) => {
+    onResolveErrorRef.current?.(error, info)
+  }).current
   const hasSave = onSave != null
   const onViewChangeRef = useRef(onViewChange)
   onViewChangeRef.current = onViewChange
@@ -68,7 +77,7 @@ export function useCodeMirror({
       state: EditorState.create({
         doc: value,
         extensions: [
-          baseExtensions(codeLanguages, wikiLinkSource),
+          baseExtensions(codeLanguages, wikiLinkSource, resolveErrorFn),
           dynamic.current.of(
             dynamicConfig({ readOnly, placeholder, save: hasSave ? saveFn : undefined }),
           ),

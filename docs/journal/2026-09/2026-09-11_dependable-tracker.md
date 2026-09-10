@@ -67,10 +67,11 @@ ADR-009 deferred item.)
 
 ### 4 — `onResolveError` for `embedSource` / `wikiLinkSource` · size S–M · deps: none
 
-Today a thrown or rejected resolver silently falls back to literal text. A
-consumer wiring these to a network source has no hook to log or surface the
-failure. Add one optional callback prop; thread it `Stylo → Preview /
-InPlaceView → Embed`; call it on `catch`. New optional prop, no behaviour change
+**Done.** `onResolveError?: (error, { source, input }) => void` on `StyloProps`,
+exported type `ResolveErrorInfo`. Fires on a thrown/rejected resolver only — a
+`null` return is a valid result. Embed path: `Embed.tsx` reject branch. Wikilink
+path: try/catch in `wikilinkCompletionSource`. Reactive via a stable wrapper in
+`Stylo` (embed side) and `useCodeMirror` (wikilink side). No behaviour change
 when omitted.
 
 ### 5 — React 18 type-surface guard · size M · deps: dev-only

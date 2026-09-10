@@ -7,6 +7,7 @@ export type {
   FrontmatterDisplay,
   InPlaceConfig,
   InPlaceDecorationToggles,
+  ResolveErrorInfo,
   RevealMode,
   SelectionUI,
   StyloHandle,

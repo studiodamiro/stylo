@@ -1,8 +1,8 @@
-import { expect, test } from "vitest"
+import { expect, test, vi } from "vitest"
 import { CompletionContext } from "@codemirror/autocomplete"
 import { EditorState, type TransactionSpec } from "@codemirror/state"
 import { wikilinkCompletionSource } from "../src/editor/wikilink-complete"
-import type { WikiLinkCompletion } from "../src/types"
+import type { WikiLinkCompletion, WikiLinkSource } from "../src/types"
 
 const src =
   (list: WikiLinkCompletion[]) =>
@@ -80,4 +80,17 @@ test("a candidate whose label differs writes [[target|label]]", async () => {
   const { result, state } = await complete("[[refere|", PAGES)
   const opt = result!.options.find((o) => o.label === "API Reference")!
   expect(applied(state, opt, result!.from, result!.to)).toBe("[[api/reference|API Reference]]")
+})
+
+test("a rejected source shows no completions and reports through onResolveError", async () => {
+  const onError = vi.fn()
+  const boom = new Error("index offline")
+  const source: WikiLinkSource = () => Promise.reject(boom)
+  const state = EditorState.create({ doc: "see [[Gui", selection: { anchor: 9 } })
+  const ctx = new CompletionContext(state, 9, false)
+
+  const result = await wikilinkCompletionSource(source, onError)(ctx)
+
+  expect(result).toBeNull()
+  expect(onError).toHaveBeenCalledWith(boom, { source: "wikiLinkSource", input: "Gui" })
 })

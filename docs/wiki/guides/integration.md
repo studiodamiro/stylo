@@ -101,6 +101,16 @@ from the exported `splitFrontmatter(md)`, which returns
 controls only how the block appears on the `preview` / `split` surfaces. See
 [props · frontmatter](../reference/props.md#frontmatter-in-preview).
 
+## Resolver failures are quiet — `onResolveError` to hear them
+
+`embedSource` and `wikiLinkSource` swallow their own failures: a rejected embed
+falls back to literal `![[ref]]`, a rejected wikilink search shows no
+completions. When either is network-backed, wire **`onResolveError(error, info)`**
+so a backend outage is a log line or a toast, not a silent blank. It is
+observation only — the fallback is unchanged — and a resolver returning `null`
+is a valid result, not an error. See
+[props · resolver errors](../reference/props.md#resolver-errors).
+
 ## Stylesheets — import once
 
 ```tsx

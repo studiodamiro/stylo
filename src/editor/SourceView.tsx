@@ -1,6 +1,6 @@
 import type { EditorView } from "@codemirror/view"
 import styles from "../styles/stylo.module.css"
-import type { CodeLanguages, WikiLinkSource } from "../types"
+import type { CodeLanguages, ResolveErrorInfo, WikiLinkSource } from "../types"
 import { useCodeMirror } from "./useCodeMirror"
 
 export interface SourceViewProps {
@@ -12,6 +12,8 @@ export interface SourceViewProps {
   codeLanguages?: CodeLanguages
   /** `[[wikilink]]` autocomplete source. Read once. */
   wikiLinkSource?: WikiLinkSource
+  /** Notified when `wikiLinkSource` rejects. */
+  onResolveError?: (error: unknown, info: ResolveErrorInfo) => void
   /** Called with the doc string on `Mod-s`. */
   onSave?: (value: string) => void
   /** Called with the `EditorView` once created, and with `null` on teardown. */
@@ -26,6 +28,7 @@ export function SourceView({
   placeholder,
   codeLanguages,
   wikiLinkSource,
+  onResolveError,
   onSave,
   onViewChange,
 }: SourceViewProps) {
@@ -36,6 +39,7 @@ export function SourceView({
     placeholder,
     codeLanguages,
     wikiLinkSource,
+    onResolveError,
     onSave,
     onViewChange,
   })

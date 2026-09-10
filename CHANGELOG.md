@@ -8,6 +8,13 @@ Notable changes to Stylo. The format follows
 
 ### Added
 
+- **`onResolveError`** — an optional callback fired when `embedSource` or
+  `wikiLinkSource` throws or returns a rejected promise. `(error, info)` where
+  `info` is `{ source: "embedSource" | "wikiLinkSource"; input: string }`. Pure
+  observation: the resolver still falls back (literal `![[ref]]` text, or no
+  completions), and a `null` return is not treated as an error. Reactive. The
+  exported type is `ResolveErrorInfo`.
+
 - **`![[ref]]` resolution is cached.** A shared, per-`embedSource` cache keyed by
   `ref` means an embed scrolled out of the in-place canvas and back — or
   re-mounted by a `preview` re-render — is served without re-invoking

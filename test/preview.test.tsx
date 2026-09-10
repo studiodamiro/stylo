@@ -122,6 +122,31 @@ test("an ![[ref]] inside other text is not treated as an embed (v1 boundary)", (
   expect(container.querySelector(".stylo-embed")).toBeNull()
 })
 
+test("a rejected embedSource falls back to literal text and reports through onResolveError", async () => {
+  const onResolveError = vi.fn()
+  const boom = new Error("vault offline")
+  render(
+    <Preview
+      value="![[Broken ref]]"
+      embedSource={() => Promise.reject(boom)}
+      onResolveError={onResolveError}
+    />,
+  )
+
+  expect(await screen.findByText("![[Broken ref]]")).toBeDefined()
+  expect(onResolveError).toHaveBeenCalledWith(boom, {
+    source: "embedSource",
+    input: "Broken ref",
+  })
+})
+
+test("embedSource returning null does not fire onResolveError", async () => {
+  const onResolveError = vi.fn()
+  render(<Preview value="![[q]]" embedSource={() => null} onResolveError={onResolveError} />)
+  expect(await screen.findByText("![[q]]")).toBeDefined()
+  expect(onResolveError).not.toHaveBeenCalled()
+})
+
 test("embedSource is resolved once across a remount, and re-mounts show no loading flash", async () => {
   const embedSource = vi.fn((ref: string) => <p data-testid="cached">once: {ref}</p>)
   const doc = "![[cache me]]"
