@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from "vitest"
-import { cleanup, render } from "@testing-library/react"
+import { cleanup, render, screen } from "@testing-library/react"
 import { Preview } from "../src/render/Preview"
 
 afterEach(cleanup)
@@ -83,6 +83,43 @@ test("[[target|label]] shows the label, reports the target", () => {
 
   link?.click()
   expect(onWikiLinkClick).toHaveBeenCalledWith("Real Target")
+})
+
+test("a lone ![[ref]] renders the node embedSource returns, called with the raw ref", async () => {
+  const embedSource = vi.fn((ref: string) => <p data-testid="embed">resolved: {ref}</p>)
+  render(<Preview value={"intro\n\n![[Weekly note#Tasks]]\n\nafter"} embedSource={embedSource} />)
+
+  const slot = await screen.findByTestId("embed")
+  expect(slot.textContent).toBe("resolved: Weekly note#Tasks")
+  expect(embedSource).toHaveBeenCalledWith("Weekly note#Tasks")
+  expect(slot.closest(".stylo-embed")).not.toBeNull()
+})
+
+test("an async embedSource is awaited", async () => {
+  const embedSource = (ref: string) =>
+    Promise.resolve(<span data-testid="late">{ref.toUpperCase()}</span>)
+  render(<Preview value="![[note]]" embedSource={embedSource} />)
+
+  expect((await screen.findByTestId("late")).textContent).toBe("NOTE")
+})
+
+test("without embedSource, ![[ref]] is not turned into an embed", () => {
+  const { container } = render(<Preview value="![[note]]" />)
+  expect(container.querySelector(".stylo-embed")).toBeNull()
+  expect(container.querySelector(".stylo-embed-content")).toBeNull()
+})
+
+test("embedSource returning null leaves the literal reference in place", async () => {
+  const { container } = render(<Preview value="![[note]]" embedSource={() => null} />)
+  expect(await screen.findByText("![[note]]")).toBeDefined()
+  expect(container.querySelector(".stylo-embed-content")).toBeNull()
+})
+
+test("an ![[ref]] inside other text is not treated as an embed (v1 boundary)", () => {
+  const embedSource = vi.fn(() => <span>x</span>)
+  const { container } = render(<Preview value="see ![[note]] inline" embedSource={embedSource} />)
+  expect(embedSource).not.toHaveBeenCalled()
+  expect(container.querySelector(".stylo-embed")).toBeNull()
 })
 
 test("a normal link is left alone and does not trigger the wikilink handler", () => {

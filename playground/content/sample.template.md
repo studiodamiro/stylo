@@ -34,6 +34,16 @@ $$
 \int_0^1 x^2 \, dx = \frac{1}{3}
 $$
 
+## Embeds
+
+Transclusion with `![[ref]]`. It only counts when it is alone on its line; the
+playground's `embedSource` resolves a name to a stub card and a `.png` to a
+placeholder image.
+
+![[Getting Started]]
+
+![[architecture/diagram.png|320]]
+
 ## A table
 
 | Surface    | Renders live       | Loads render chunk |

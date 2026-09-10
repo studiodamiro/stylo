@@ -6,6 +6,23 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-10
+
+### Added
+
+- **`embedSource`** — a prop that resolves `![[ref]]` transclusion in `preview`
+  and `split`. It takes `(ref: string) => ReactNode | Promise<ReactNode>`; Stylo
+  has no vault, so it detects the `![[…]]` and renders whatever node the host
+  returns in its place. The reference is passed verbatim, `#heading` /
+  `#^blockid` / `|size` suffixes intact (in an embed `|` is a size hint, not a
+  label, so `WIKILINK_PATTERN` is not reused). While the resolver is pending, and
+  if it rejects or returns `null`, the literal `![[ref]]` text stands in.
+  Recognised only when the `![[…]]` is alone on its line — an inline `![[…]]`
+  stays literal to avoid nesting a host `<div>` inside a `<p>`. Off unless the
+  prop is passed; the in-place canvas is unaffected for now. Renders into
+  `<div class="stylo-embed"><div class="stylo-embed-content">`, with a
+  `--stylo-embed-accent` variable. No new dependency.
+
 ## [0.7.0] - 2026-09-10
 
 ### Added

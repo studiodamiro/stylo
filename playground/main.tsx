@@ -48,6 +48,47 @@ const demoWikiLinkSource = (query: string) => {
   return DEMO_PAGES.filter((p) => p.toLowerCase().includes(q)).map((target) => ({ target }))
 }
 
+// Demo `embedSource` — resolves `![[ref]]` to a node. A real host would look the
+// reference up in its vault: return the note's rendered body, an <img>, a PDF
+// viewer, a "not found" card. Here: a placeholder image for a `.png` ref, a stub
+// card for anything else. The `|size` suffix is the host's to parse — we honour
+// it on images only.
+const PLACEHOLDER_SVG =
+  "data:image/svg+xml," +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360">` +
+      `<rect width="100%" height="100%" fill="#e2e8f0"/>` +
+      `<text x="50%" y="50%" fill="#64748b" font-family="sans-serif" font-size="24" ` +
+      `text-anchor="middle" dominant-baseline="middle">embedded image</text></svg>`,
+  )
+const demoEmbedSource = (ref: string) => {
+  const [path = "", size] = ref.split("|")
+  if (/\.(png|jpe?g|gif|svg|webp)$/i.test(path.trim())) {
+    return (
+      <img
+        src={PLACEHOLDER_SVG}
+        alt={path.trim()}
+        style={{ width: size ? `${Number(size)}px` : "100%", borderRadius: 6, display: "block" }}
+      />
+    )
+  }
+  return (
+    <div
+      style={{
+        border: "1px solid var(--pg-border)",
+        borderRadius: 8,
+        padding: "0.75rem 1rem",
+        background: "var(--pg-surface)",
+      }}
+    >
+      <strong>{path.trim()}</strong>
+      <p style={{ margin: "0.4rem 0 0", color: "var(--pg-muted)", fontSize: "0.9rem" }}>
+        Stub transclusion of “{path.trim()}”. A real host would render the note body here.
+      </p>
+    </div>
+  )
+}
+
 type StickyPick = "off" | "top" | "bottom"
 type StickyVisibilityPick = "consistent" | "dynamic"
 
@@ -494,6 +535,7 @@ function App() {
           frontmatter={frontmatter}
           codeLanguages={languages}
           wikiLinkSource={demoWikiLinkSource}
+          embedSource={demoEmbedSource}
           className={mode === "split" ? "playground-editor is-split" : "playground-editor"}
         />
       )}

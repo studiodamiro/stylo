@@ -37,6 +37,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
     inPlace,
     codeLanguages,
     wikiLinkSource,
+    embedSource,
     toolbar,
     icons,
     frontmatter,
@@ -140,7 +141,12 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
 
       {resolved === "preview" && (
         <Suspense fallback={<div className={styles.preview} aria-busy="true" />}>
-          <LazyPreview value={value} onWikiLinkClick={onWikiLinkClick} frontmatter={frontmatter} />
+          <LazyPreview
+            value={value}
+            onWikiLinkClick={onWikiLinkClick}
+            embedSource={embedSource}
+            frontmatter={frontmatter}
+          />
         </Suspense>
       )}
 
@@ -153,6 +159,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
           placeholder={placeholder}
           codeLanguages={codeLanguages}
           wikiLinkSource={wikiLinkSource}
+          embedSource={embedSource}
           frontmatter={frontmatter}
           onSave={onSave}
           onViewChange={setView}

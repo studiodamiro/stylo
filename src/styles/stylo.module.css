@@ -448,6 +448,23 @@
   --stylo-callout-accent: var(--stylo-callout-example, #a855f7);
 }
 
+/* `![[embed]]` transclusion. `remark-embed` swaps a lone-`![[ref]]` paragraph
+   for `<div class="stylo-embed">`, and `Embed` nests the host-rendered content
+   in `.stylo-embed-content`. Both classes are stable override points; set
+   `--stylo-embed-accent` to reskin the rail, or zero the padding / border to
+   opt out of the frame entirely. */
+.preview :global(.stylo-embed) {
+  margin: 1.6em 0;
+  padding-left: 1em;
+  border-left: 0.25rem solid var(--stylo-embed-accent, var(--stylo-border));
+}
+.preview :global(.stylo-embed-content) > :first-child {
+  margin-top: 0;
+}
+.preview :global(.stylo-embed-content) > :last-child {
+  margin-bottom: 0;
+}
+
 .preview table {
   display: block;
   margin: 2em 0;
