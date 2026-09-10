@@ -23,7 +23,7 @@ import "katex/dist/katex.min.css"
  *   ?sticky=top|bottom                    (default none)
  *   ?toolbar=0                            (default on)
  *   ?theme=dark                           (default light)
- *   ?doc=basic|math|table|long|embed      (default basic)
+ *   ?doc=basic|math|code|table|long|embed (default basic)
  *   ?wikilinks=1                          (canned wikiLinkSource; default off)
  *   ?embed=1                              (canned embedSource; default off)
  */
@@ -62,6 +62,17 @@ const DOCS: Record<string, string> = {
     "$$",
     "\\int_0^1 x^2 \\, dx = \\frac{1}{3}",
     "$$",
+  ].join("\n"),
+  code: [
+    "# Code",
+    "",
+    "A paragraph before the block.",
+    "",
+    "```ts",
+    "const answer = 42",
+    "```",
+    "",
+    "A paragraph after the block.",
   ].join("\n"),
   table: [
     "# Table",

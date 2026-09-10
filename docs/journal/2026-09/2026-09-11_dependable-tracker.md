@@ -120,6 +120,19 @@ on their line: inline `$…$` math, fenced code, and `---` / `***` rules. Each
 needs a source-edit affordance that isn't "reveal the markers" — the parallel of
 the Stage-4 link editor. Touches the decoration core; land one construct per PR.
 
+**Order (smallest first):**
+
+- **9a — fenced code.** _Done._ The Language field + Remove code block already
+  covered the info string and unwrap, so this was just flipping `nodes.ts` from
+  `caretRevealed` to `revealed`. A body-less block keeps the caret-reveal
+  escape hatch. ADR-007 rollout log, 2026-09-11.
+- **9b — `---` / `***` rules.** A remove affordance (Backspace/Delete on the
+  collapsed rule line + a "Remove divider" menu row), then flip
+  `HorizontalRule` to `revealed`.
+- **9c — inline `$…$` / one-line `$$…$$` math.** Full link treatment: a
+  `mathRow` menu field, click-the-widget-to-edit, and a hover tooltip showing
+  the raw LaTeX. Then flip `scanInlineMath` to `revealed`.
+
 ### 10 — (optional) split the files over 200 LOC · size L in aggregate · deps: none
 
 Not consumer-facing — nobody downstream imports these. `inplace/table-widget.ts`

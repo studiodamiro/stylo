@@ -35,4 +35,20 @@ test.describe("in-place canvas", () => {
     await expect(bold).toHaveText("bold")
     await expect(line(page, 2)).not.toContainText("**")
   })
+
+  test("reveal='never' keeps a fenced block's ``` hidden with the caret inside it", async ({
+    page,
+  }) => {
+    await openFixture(page, { mode: "in-place", doc: "code", reveal: "never" })
+
+    // Caret on the code line — the fences on 4 and 6 stay collapsed.
+    await line(page, 5).click()
+    await expect(line(page, 5)).toHaveText("const answer = 42")
+    await expect(line(page, 4)).not.toContainText("```")
+    await expect(line(page, 6)).not.toContainText("```")
+
+    // The info string is still reachable through the right-click menu.
+    await line(page, 5).click({ button: "right" })
+    await expect(page.locator(".cm-inplace-menu-panel")).toContainText("Language")
+  })
 })
