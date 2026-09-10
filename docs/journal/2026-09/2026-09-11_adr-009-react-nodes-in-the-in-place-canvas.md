@@ -97,7 +97,14 @@ contributes an inert slot element, and a single React subtree owned by
   `split`; `embedField` emits a non-`block` `EmbedWidget` (a `<span>` slot) for a
   non-lone `![[ref]]` on the canvas. `Embed` gains an `inline` prop. The host
   should return phrasing content for these.
-- **`![[…]]` inside editable table cells.**
+- ~~**`![[…]]` inside editable table cells.**~~ Resolved after 0.9.0 as a
+  documented non-goal: on the in-place canvas a `![[ref]]` in a table cell
+  (`TableWidget` / `EditableTableWidget`, both via `renderInline`) renders
+  **literally**, not transcluded — the cell surface is for editing tabular text,
+  and wiring the imperative table widgets to the React embed registry was judged
+  not worth the coupling. `preview` / `split` transclude in cells normally.
+  `embed.ts` skips `![[…]]` inside a `Table` node so the two passes never
+  overlap.
 - **The unconditional `scanWikilinks` lookbehind** — skipping `![[ref]]` even
   when `embedSource` is unset, so a bare `![[ref]]` never renders as a link chip
   anywhere. A small cleanup, but it is a visible change for consumers not using

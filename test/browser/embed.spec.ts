@@ -35,6 +35,16 @@ test.describe("![[embed]] on the in-place canvas", () => {
     await expect(paraLine.locator(".cm-inplace-embed-inline")).toHaveCount(1)
   })
 
+  test("![[ref]] in an editable table cell stays literal — no embed, no chip", async ({ page }) => {
+    await openFixture(page, { mode: "in-place", doc: "embed", embed: "1", table: "cells" })
+    await line(page, 0).click()
+
+    const cell = page.locator(".cm-inplace-table-edit td", { hasText: "see" })
+    await expect(cell).toContainText("see ![[Cell ref]] here")
+    await expect(cell.locator(".fixture-embed")).toHaveCount(0)
+    await expect(cell.locator(".cm-inplace-wikilink")).toHaveCount(0)
+  })
+
   test("interactive host content keeps its own clicks", async ({ page }) => {
     await openFixture(page, { mode: "in-place", doc: "embed", embed: "1" })
     await line(page, 0).click()

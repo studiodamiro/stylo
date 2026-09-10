@@ -104,9 +104,14 @@ content for these (documented). (Closes the ADR-009 deferred item.)
 
 ### 8 — `![[…]]` inside editable table cells · size M–L · deps: none
 
-Builds on item 7. The in-place editable-cell path (`inPlace.table: "cells"`,
-`table-cell-dom.ts` / `table-widget.ts`) does not run the embed pass. Decide
-inline render vs. a clear "not here" fallback, then implement. (ADR-009 deferred.)
+**Done — resolved as a documented non-goal.** A `![[ref]]` in an in-place table
+cell renders **literally** (both `TableWidget` and `EditableTableWidget`, via a
+new `embeds` flag on `renderInline`), not transcluded and not as a `!` + chip.
+Wiring the imperative table widgets to the React embed registry was judged not
+worth the coupling; `preview` / `split` transclude in cells normally.
+`embed.ts` now skips `![[…]]` inside a `Table` node (`inTableContext` in
+`scan.ts`) — this also fixes a stray overlapping decoration on table lines that
+item 7 introduced. (Closes the ADR-009 deferred item.)
 
 ### 9 — ADR-007 seamless exceptions · size L · deps: none
 

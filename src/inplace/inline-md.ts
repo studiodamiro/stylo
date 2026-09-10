@@ -11,16 +11,24 @@ import { WIKILINK_PATTERN } from "../wikilink"
  *
  * `code` and `math` win first and keep their contents literal; everything else
  * recurses so `**a `code` b**` styles the bold and the code.
+ *
+ * With `embeds` set (the host passed `embedSource`), a `![[ref]]` is shown as
+ * literal text — the in-place editable/rendered table cell does not transclude;
+ * `preview` / `split` do. The literal keeps the `[[ref]]` inside from being
+ * picked up as a wikilink chip.
  */
-export function renderInline(text: string): DocumentFragment {
+export function renderInline(text: string, embeds = false): DocumentFragment {
   const frag = document.createDocumentFragment()
-  fill(frag, text)
+  fill(frag, text, embeds)
   return frag
 }
 
+/** A `![[ref]]` — non-global, so `exec` gives a fresh `index` each call. */
+const EMBED_RE = /!\[\[[^\]\n]+?\]\]/
+
 interface Rule {
   re: RegExp
-  build: (m: RegExpMatchArray) => Node
+  build: (m: RegExpMatchArray, embeds: boolean) => Node
 }
 
 const RULES: Rule[] = [
@@ -48,28 +56,29 @@ const RULES: Rule[] = [
   },
   {
     re: /\[([^\]\n]*)\]\(([^)\n]*)\)/,
-    build: (m) => {
+    build: (m, embeds) => {
       const a = el("a", "cm-inplace-link") as HTMLAnchorElement
       a.href = m[2] ?? ""
-      a.append(inlineFrag(m[1] ?? ""))
+      a.append(inlineFrag(m[1] ?? "", embeds))
       return a
     },
   },
   {
     re: /\*\*\*([^*\n]+?)\*\*\*/,
-    build: (m) => el("strong", "cm-inplace-strong", el("em", "cm-inplace-em", inlineFrag(m[1]!))),
+    build: (m, embeds) =>
+      el("strong", "cm-inplace-strong", el("em", "cm-inplace-em", inlineFrag(m[1]!, embeds))),
   },
   {
     re: /\*\*([^\n]+?)\*\*/,
-    build: (m) => el("strong", "cm-inplace-strong", inlineFrag(m[1]!)),
+    build: (m, embeds) => el("strong", "cm-inplace-strong", inlineFrag(m[1]!, embeds)),
   },
   {
     re: /~~([^\n]+?)~~/,
-    build: (m) => el("span", "cm-inplace-strike", inlineFrag(m[1]!)),
+    build: (m, embeds) => el("span", "cm-inplace-strike", inlineFrag(m[1]!, embeds)),
   },
   {
     re: /(?<!\*)\*(?!\*|\s)([^\n]+?)(?<!\s)\*(?!\*)/,
-    build: (m) => el("em", "cm-inplace-em", inlineFrag(m[1]!)),
+    build: (m, embeds) => el("em", "cm-inplace-em", inlineFrag(m[1]!, embeds)),
   },
 ]
 
@@ -80,17 +89,26 @@ function el(tag: string, className: string, ...children: Node[]): Element {
   return node
 }
 
-function inlineFrag(text: string): DocumentFragment {
+function inlineFrag(text: string, embeds: boolean): DocumentFragment {
   const frag = document.createDocumentFragment()
-  fill(frag, text)
+  fill(frag, text, embeds)
   return frag
 }
 
 /** Tokenise `text` into `parent`, honouring the earliest-matching rule. */
-function fill(parent: Node, text: string): void {
+function fill(parent: Node, text: string, embeds: boolean): void {
   while (text) {
     let at = -1
-    let hit: { rule: Rule; m: RegExpMatchArray } | null = null
+    let hit: { rule: Rule; m: RegExpMatchArray } | { literal: string } | null = null
+
+    // A `![[ref]]` is kept literal, and consumed whole so the wikilink rule
+    // never sees the `[[ref]]` inside it.
+    const embed = embeds ? EMBED_RE.exec(text) : null
+    if (embed) {
+      at = embed.index!
+      hit = { literal: embed[0] }
+    }
+
     for (const rule of RULES) {
       const m = rule.re.exec(text)
       if (m && (at < 0 || m.index! < at)) {
@@ -98,12 +116,18 @@ function fill(parent: Node, text: string): void {
         hit = { rule, m }
       }
     }
+
     if (!hit) {
       parent.appendChild(document.createTextNode(text))
       return
     }
     if (at > 0) parent.appendChild(document.createTextNode(text.slice(0, at)))
-    parent.appendChild(hit.rule.build(hit.m))
-    text = text.slice(at + hit.m[0].length)
+    if ("literal" in hit) {
+      parent.appendChild(document.createTextNode(hit.literal))
+      text = text.slice(at + hit.literal.length)
+    } else {
+      parent.appendChild(hit.rule.build(hit.m, embeds))
+      text = text.slice(at + hit.m[0].length)
+    }
   }
 }

@@ -154,8 +154,11 @@ export type WikiLinkSource = (
  * `preview`, `split`, and the in-place canvas (ADR-009). A `![[…]]` alone on its
  * line renders as a **block**; one mid-sentence renders **inline** — return
  * phrasing content (not a block element) for the inline case. `![[…]]` inside
- * code stays literal. Give it a stable reference — the render pipeline rebuilds
- * when its identity changes, and the in-place canvas reads it once at mount.
+ * code stays literal, and inside an **in-place table cell** it stays literal too
+ * (a table cell there is for editing tabular text; `preview` / `split` do
+ * transclude in cells). Give it a stable reference — the render pipeline
+ * rebuilds when its identity changes, and the in-place canvas reads it once at
+ * mount.
  *
  * Results are memoised by `ref` per function identity (so a scroll or a
  * re-render does not re-resolve). If your source's output for a given `ref` can
