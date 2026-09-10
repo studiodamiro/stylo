@@ -115,11 +115,26 @@ test("embedSource returning null leaves the literal reference in place", async (
   expect(container.querySelector(".stylo-embed-content")).toBeNull()
 })
 
-test("an ![[ref]] inside other text is not treated as an embed (v1 boundary)", () => {
+test("an ![[ref]] inside other text renders as an inline embed, text preserved around it", async () => {
+  const embedSource = vi.fn((ref: string) => <b data-testid="inl">{ref}</b>)
+  const { container } = render(
+    <Preview value="see ![[note]] and ![[two]] inline" embedSource={embedSource} />,
+  )
+
+  const inls = await screen.findAllByTestId("inl")
+  expect(inls.map((n) => n.textContent)).toEqual(["note", "two"])
+  // Rendered inside a <span>, not a block <div>, with surrounding text intact.
+  const span = container.querySelector("span[data-stylo-embed-inline='note']")
+  expect(span?.querySelector(".stylo-embed-inline")).not.toBeNull()
+  expect(container.querySelector("p")?.textContent).toBe("see note and two inline")
+  expect(embedSource).toHaveBeenCalledWith("note")
+})
+
+test("![[ref]] inside inline code stays literal", () => {
   const embedSource = vi.fn(() => <span>x</span>)
-  const { container } = render(<Preview value="see ![[note]] inline" embedSource={embedSource} />)
+  const { container } = render(<Preview value={"a `![[note]]` b"} embedSource={embedSource} />)
   expect(embedSource).not.toHaveBeenCalled()
-  expect(container.querySelector(".stylo-embed")).toBeNull()
+  expect(container.querySelector("[data-stylo-embed-inline]")).toBeNull()
 })
 
 test("a rejected embedSource falls back to literal text and reports through onResolveError", async () => {

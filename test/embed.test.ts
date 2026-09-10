@@ -34,18 +34,34 @@ test("a lone-embed paragraph becomes an empty stylo-embed div carrying the ref",
   expect(node.data?.hProperties?.className).toEqual(["stylo-embed"])
 })
 
-test("an embed mixed into other text is left untouched", () => {
+test("an embed mixed into other text splits into text + an inline span + text", () => {
   const node = runOn([{ type: "text", value: "see ![[Note]] here" }])
-  expect(node.data?.hName).toBeUndefined()
-  expect(node.children).toHaveLength(1)
+  expect(node.data?.hName).toBeUndefined() // the paragraph itself is not a block embed
+  expect(node.children).toHaveLength(3)
+  expect(node.children[0]).toMatchObject({ type: "text", value: "see " })
+  expect(node.children[1]?.data).toMatchObject({
+    hName: "span",
+    hProperties: { "data-stylo-embed-inline": "Note", className: ["stylo-embed"] },
+  })
+  expect(node.children[2]).toMatchObject({ type: "text", value: " here" })
 })
 
-test("a paragraph with a non-text sibling is left untouched", () => {
+test("multiple inline embeds in one text node all split out", () => {
+  const node = runOn([{ type: "text", value: "a ![[One]] b ![[Two]] c" }])
+  const inline = node.children.filter((c) => c.data?.hName === "span")
+  expect(inline.map((c) => c.data?.hProperties?.["data-stylo-embed-inline"])).toEqual([
+    "One",
+    "Two",
+  ])
+})
+
+test("a lone embed still wins over the inline split when a sibling makes it non-lone", () => {
   const node = runOn([
     { type: "emphasis", children: [{ type: "text", value: "x" }] },
     { type: "text", value: " ![[Note]]" },
   ])
-  expect(node.data?.hName).toBeUndefined()
+  expect(node.data?.hName).toBeUndefined() // not a block embed — inline instead
+  expect(node.children.some((c) => c.data?.hName === "span")).toBe(true)
 })
 
 test("a plain wikilink paragraph is not treated as an embed", () => {

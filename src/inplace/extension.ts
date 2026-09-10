@@ -54,7 +54,8 @@ export interface InPlaceOptions {
  * so nothing reveals — this hands it to the widget's edge instead. Everything
  * else, text and line padding alike, stays with CodeMirror.
  */
-const REVEAL_WIDGET = ".cm-inplace-math, .cm-inplace-hr, .cm-inplace-table, .cm-inplace-embed"
+const REVEAL_WIDGET =
+  ".cm-inplace-math, .cm-inplace-hr, .cm-inplace-table, .cm-inplace-embed, .cm-inplace-embed-inline"
 
 /**
  * Character offset of a screen point within a rendered table cell's text,

@@ -132,14 +132,18 @@ reference; return a React node to render in the embed's place.
   keeps its own clicks — click the slot's own margin (or a pending / failed
   embed's literal text) to reveal instead. Toggle it with
   `inPlace={{ decorations: { embeds: false } }}`.
-- Recognised **only when the `![[…]]` is alone on its line** (the whole
-  paragraph / line). An `![[…]]` inside a sentence stays literal — treating it as
-  a block would nest a host `<div>` inside a `<p>`.
-- Renders into `<div class="stylo-embed"><div class="stylo-embed-content">…` in
-  `preview` / `split`, and `<div class="cm-inplace-embed"><div
-class="stylo-embed-content">…` on the canvas. `.stylo-embed-content` and
-  `--stylo-embed-accent` are the shared override points; zero the padding and
-  border to drop the frame.
+- A `![[…]]` **alone on its line** renders as a **block**; one **mid-sentence**
+  renders **inline**, flowing with the surrounding text. Return phrasing content
+  (a `<span>`, an `<img>`, a chip — not a block `<div>`) for the inline case, or
+  the browser nests block inside inline. `![[…]]` inside inline or fenced code
+  stays literal.
+- Block renders into `<div class="stylo-embed"><div class="stylo-embed-content">…`
+  (`preview` / `split`) or `<div class="cm-inplace-embed">…` (canvas); inline
+  into `<span class="stylo-embed"><span class="stylo-embed-content
+stylo-embed-inline">…` (`preview` / `split`) or `<span
+class="cm-inplace-embed-inline">…` (canvas). `.stylo-embed-content`,
+  `.stylo-embed-inline`, and `--stylo-embed-accent` are the shared override
+  points; zero the padding and border to drop the block frame.
 - Off entirely when `embedSource` is omitted — `![[ref]]` then renders as it did
   before (the leading `!` as text, `[[ref]]` as a wikilink).
 

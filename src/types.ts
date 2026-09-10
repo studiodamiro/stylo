@@ -151,11 +151,11 @@ export type WikiLinkSource = (
  * vault lookup, a fetch). Return `null` to leave the reference as literal text.
  *
  * Pass it to enable embeds; omit it and `![[…]]` stays literal. Works on
- * `preview`, `split`, and the in-place canvas (ADR-009). An embed is recognised
- * only when it is alone on its own line (the whole paragraph / line); an
- * `![[…]]` inside other text stays literal. Give it a stable reference — the
- * render pipeline rebuilds when its identity changes, and the in-place canvas
- * reads it once at mount.
+ * `preview`, `split`, and the in-place canvas (ADR-009). A `![[…]]` alone on its
+ * line renders as a **block**; one mid-sentence renders **inline** — return
+ * phrasing content (not a block element) for the inline case. `![[…]]` inside
+ * code stays literal. Give it a stable reference — the render pipeline rebuilds
+ * when its identity changes, and the in-place canvas reads it once at mount.
  *
  * Results are memoised by `ref` per function identity (so a scroll or a
  * re-render does not re-resolve). If your source's output for a given `ref` can

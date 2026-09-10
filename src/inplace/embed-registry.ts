@@ -11,6 +11,8 @@ export interface EmbedSlot {
   id: number
   /** Raw `![[ref]]` reference, passed straight to `embedSource`. */
   ref: string
+  /** `true` for a `![[ref]]` mid-sentence — rendered as phrasing content. */
+  inline: boolean
   /** The slot element CodeMirror owns; the portal target. */
   el: HTMLElement
 }

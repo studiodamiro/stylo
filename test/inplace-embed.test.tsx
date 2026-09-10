@@ -30,6 +30,18 @@ function embedRefs(view: EditorView): string[] {
   return out
 }
 
+/** The embed widgets as `{ ref, inline, block }` tuples, in document order. */
+function embedWidgets(view: EditorView): Array<{ ref: string; inline: boolean; block: boolean }> {
+  const out: Array<{ ref: string; inline: boolean; block: boolean }> = []
+  view.state.field(embedField, false)?.between(0, view.state.doc.length, (_f, _t, deco) => {
+    const w = deco.spec.widget as { ref?: string; inline?: boolean } | undefined
+    if (w && typeof w.ref === "string") {
+      out.push({ ref: w.ref, inline: Boolean(w.inline), block: Boolean(deco.spec.block) })
+    }
+  })
+  return out
+}
+
 /** Is the inner `[[ref]]` of a `![[ref]]` decorated as a wikilink? */
 function hasWikilinkDecoration(view: EditorView): boolean {
   let found = false
@@ -70,8 +82,26 @@ test("the embed is withheld while the caret is on its line", async () => {
   expect(embedRefs(view)).toEqual(["Note"])
 })
 
-test("an ![[ref]] mixed into a sentence stays literal", async () => {
-  const { view } = await mount("see ![[Note]] here\n", canned)
+test("a lone ![[ref]] is a block widget; one mid-sentence is an inline widget", async () => {
+  // Leading line so the default caret at 0 is not on an embed line.
+  const { view } = await mount("intro\n\n![[Alone]]\n\nsee ![[One]] and ![[Two]] here\n", canned)
+  expect(embedWidgets(view)).toEqual([
+    { ref: "Alone", inline: false, block: true },
+    { ref: "One", inline: true, block: false },
+    { ref: "Two", inline: true, block: false },
+  ])
+})
+
+test("an inline embed is withheld while the caret is on its line", async () => {
+  const { view } = await mount("para\n\nsee ![[Note]] here\n", canned)
+  expect(embedWidgets(view).map((w) => w.ref)).toEqual(["Note"])
+
+  view.dispatch({ selection: { anchor: view.state.doc.line(3).from + 2 } })
+  expect(embedWidgets(view)).toEqual([])
+})
+
+test("![[ref]] inside inline code is left literal", async () => {
+  const { view } = await mount("a `![[Note]]` b\n", canned)
   expect(embedRefs(view)).toEqual([])
 })
 

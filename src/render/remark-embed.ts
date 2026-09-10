@@ -1,20 +1,22 @@
-import type { Paragraph, Root } from "mdast"
-import { visit } from "unist-util-visit"
+import type { Paragraph, PhrasingContent, Root, Text } from "mdast"
+import { SKIP, visit } from "unist-util-visit"
 import { EMBED_PATTERN, isLoneEmbed } from "../embed"
 
 /**
- * Turns a paragraph that is nothing but `![[ref]]` into an empty
- * `<div class="stylo-embed" data-stylo-embed="ref">`. The `Embed` component
- * (wired in `Preview`) reads `data-stylo-embed` and renders whatever the host's
- * `embedSource` resolves the reference to.
+ * Turns `![[ref]]` transclusion syntax into empty carrier elements the `Embed`
+ * component (wired in `Preview`) fills from the host's `embedSource`.
  *
- * Only a lone embed — the whole paragraph, trimmed — is recognised. An
- * `![[ref]]` sitting inside other text is left as literal text; treating it as a
- * block would nest a host-supplied `<div>` inside a `<p>`. Must run before
- * `remarkWikilink`, or the inner `[[ref]]` is rewritten to a link first.
+ * - A **lone** `![[ref]]` — the whole paragraph, trimmed — becomes a block
+ *   `<div class="stylo-embed" data-stylo-embed="ref">`.
+ * - A `![[ref]]` **inside other text** becomes an inline
+ *   `<span class="stylo-embed" data-stylo-embed-inline="ref">`, and the
+ *   surrounding text is preserved around it. The host node should be phrasing
+ *   content in this case.
  *
- * Off unless the consumer passes `embedSource` — `Preview` only adds this plugin
- * to the pipeline then, so a paragraph like `![[x]]` renders unchanged otherwise.
+ * `![[…]]` inside inline or fenced code is left literal (it is not a `text`
+ * node). Must run before `remarkWikilink`, or the inner `[[ref]]` is rewritten
+ * to a link first. Off unless the consumer passes `embedSource` — `Preview` only
+ * adds this plugin then.
  */
 export function remarkEmbed() {
   return (tree: Root) => {
@@ -30,6 +32,38 @@ export function remarkEmbed() {
       node.data ??= {}
       node.data.hName = "div"
       node.data.hProperties = { className: ["stylo-embed"], "data-stylo-embed": ref }
+    })
+
+    visit(tree, "text", (node: Text, index, parent) => {
+      if (index == null || parent == null || !node.value.includes("![[")) return
+
+      const parts: PhrasingContent[] = []
+      let cursor = 0
+      // `matchAll` seeds its internal copy from the shared regex's `lastIndex`;
+      // reset it so the scan starts at 0 (the lone-paragraph pass above left it
+      // mid-string).
+      EMBED_PATTERN.lastIndex = 0
+      for (const match of node.value.matchAll(EMBED_PATTERN)) {
+        const ref = (match[1] ?? "").trim()
+        if (!ref) continue
+        const start = match.index ?? 0
+        if (start > cursor) parts.push({ type: "text", value: node.value.slice(cursor, start) })
+        parts.push({
+          type: "text",
+          value: "",
+          data: {
+            hName: "span",
+            hProperties: { className: ["stylo-embed"], "data-stylo-embed-inline": ref },
+            hChildren: [],
+          },
+        })
+        cursor = start + match[0].length
+      }
+
+      if (!parts.length) return
+      if (cursor < node.value.length) parts.push({ type: "text", value: node.value.slice(cursor) })
+      parent.children.splice(index, 1, ...parts)
+      return [SKIP, index + parts.length]
     })
   }
 }

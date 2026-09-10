@@ -84,6 +84,17 @@ export function Preview({
       }
       return <div {...rest}>{children}</div>
     },
+    span({ node: _node, children, ...rest }) {
+      const reference = (rest as Record<string, unknown>)["data-stylo-embed-inline"]
+      if (typeof reference === "string" && embedSource) {
+        return (
+          <span {...rest}>
+            <Embed reference={reference} source={embedSource} onError={onResolveError} inline />
+          </span>
+        )
+      }
+      return <span {...rest}>{children}</span>
+    },
   }
 
   return (

@@ -102,7 +102,12 @@ export function InPlaceView({
       {embedSource &&
         slots.map((slot) =>
           createPortal(
-            <Embed reference={slot.ref} source={embedSource} onError={onResolveError} />,
+            <Embed
+              reference={slot.ref}
+              source={embedSource}
+              onError={onResolveError}
+              inline={slot.inline}
+            />,
             slot.el,
             String(slot.id),
           ),

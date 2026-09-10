@@ -8,32 +8,34 @@ import { revealedLines } from "./reveal"
 import { inCodeContext } from "./scan"
 
 /**
- * Inert slot for one lone-line `![[ref]]`. `toDOM` builds an empty `<div>` and
- * registers it with the per-canvas `EmbedRegistry`; `InPlaceView` portals a
- * host `<Embed>` into it. No React, no resolution here — cheap to build and
- * rebuild. `eq` compares `ref`, so CodeMirror keeps the slot across scrolls and
- * selection changes and only rebuilds it when the reference changes. See ADR-009.
+ * Inert slot for one `![[ref]]`. `toDOM` builds an empty element — a `<div>` for
+ * a lone-line embed, a `<span>` for one mid-sentence — and registers it with the
+ * per-canvas `EmbedRegistry`; `InPlaceView` portals a host `<Embed>` into it. No
+ * React, no resolution here — cheap to build and rebuild. `eq` compares `ref`
+ * and `inline`, so CodeMirror keeps the slot across scrolls and selection
+ * changes and only rebuilds it when one of those changes. See ADR-009.
  */
 class EmbedWidget extends WidgetType {
   private id = -1
 
   constructor(
     readonly ref: string,
+    readonly inline: boolean,
     private readonly registry: EmbedRegistry,
   ) {
     super()
   }
 
   override eq(other: EmbedWidget) {
-    return other.ref === this.ref
+    return other.ref === this.ref && other.inline === this.inline
   }
 
   toDOM() {
-    const el = document.createElement("div")
-    el.className = "cm-inplace-embed"
+    const el = document.createElement(this.inline ? "span" : "div")
+    el.className = this.inline ? "cm-inplace-embed-inline" : "cm-inplace-embed"
     this.id = this.registry.allocate()
     el.dataset.styloEmbedSlot = String(this.id)
-    this.registry.add({ id: this.id, ref: this.ref, el })
+    this.registry.add({ id: this.id, ref: this.ref, inline: this.inline, el })
     return el
   }
 
@@ -47,12 +49,13 @@ class EmbedWidget extends WidgetType {
 }
 
 /**
- * Whole-document scan for lone-line `![[ref]]` blocks — the CodeMirror grammar
- * has no embed node, and a lone embed is always a single line, so a state field
- * (not the view plugin) keeps it beside `blockMathField`. Off unless the host
- * set `embedSource` (the registry facet is then non-null) and the `embeds`
- * toggle is on. A line the caret touches is withheld, so the raw `![[ref]]`
- * source shows for editing — the block-math reveal path.
+ * Whole-document scan for `![[ref]]` transclusion — the CodeMirror grammar has
+ * no embed node, so a state field (not the view plugin) keeps it beside
+ * `blockMathField`. A lone-line `![[ref]]` becomes a block widget; a `![[ref]]`
+ * with other text on the line becomes an inline widget in situ. Off unless the
+ * host set `embedSource` (the registry facet is then non-null) and the `embeds`
+ * toggle is on. A line the caret touches is withheld — block or inline alike —
+ * so the raw `![[ref]]` source shows for editing (the block-math reveal path).
  */
 function buildEmbeds(state: EditorState): DecorationSet {
   const registry = state.facet(embedRegistryFacet)
@@ -65,18 +68,34 @@ function buildEmbeds(state: EditorState): DecorationSet {
 
   for (let n = 1; n <= state.doc.lines; n++) {
     const line = state.doc.line(n)
-    if (!isLoneEmbed(line.text)) continue
+    if (!line.text.includes("![[") || revealed.has(n)) continue
+
+    if (isLoneEmbed(line.text)) {
+      EMBED_PATTERN.lastIndex = 0
+      const ref = (EMBED_PATTERN.exec(line.text.trim())?.[1] ?? "").trim()
+      if (!ref || inCodeContext(tree, line.from + line.text.indexOf("!["))) continue
+      out.push(
+        Decoration.replace({ widget: new EmbedWidget(ref, false, registry), block: true }).range(
+          line.from,
+          line.to,
+        ),
+      )
+      continue
+    }
+
     EMBED_PATTERN.lastIndex = 0
-    const ref = (EMBED_PATTERN.exec(line.text.trim())?.[1] ?? "").trim()
-    if (!ref) continue
-    if (inCodeContext(tree, line.from + line.text.indexOf("!["))) continue
-    if (revealed.has(n)) continue
-    out.push(
-      Decoration.replace({ widget: new EmbedWidget(ref, registry), block: true }).range(
-        line.from,
-        line.to,
-      ),
-    )
+    for (const m of line.text.matchAll(EMBED_PATTERN)) {
+      const ref = (m[1] ?? "").trim()
+      if (!ref) continue
+      const start = line.from + (m.index ?? 0)
+      if (inCodeContext(tree, start + 2)) continue
+      out.push(
+        Decoration.replace({ widget: new EmbedWidget(ref, true, registry) }).range(
+          start,
+          start + m[0].length,
+        ),
+      )
+    }
   }
 
   return Decoration.set(out, true)

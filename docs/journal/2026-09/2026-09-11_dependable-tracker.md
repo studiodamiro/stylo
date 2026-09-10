@@ -94,11 +94,13 @@ Stylo's own dependencies. Documented in `CONTRIBUTING.md`.
 
 ### 7 — Inline `![[…]]` mid-paragraph · size M–L · deps: none
 
-An embed is recognised only when it is the whole line/paragraph; inside a
-sentence it stays literal on every surface, because a block `<div>` can't nest in
-a `<p>`. Add an inline wrapper (a `<span>`-hosted embed) on the `preview`
-pipeline and an inline (non-`block`) widget + slot on the in-place canvas. The
-portal bridge extends to inline slots. Tests on both surfaces. (ADR-009 deferred.)
+**Done.** `remark-embed` splits text nodes into `<span data-stylo-embed-inline>`
+for `preview` / `split`; `embedField` emits a non-`block` `EmbedWidget` (`<span>`
+slot) for a non-lone `![[ref]]` on the canvas; `Embed` gains an `inline` prop
+that wraps in `<span class="stylo-embed-inline">`. `![[…]]` inside code stays
+literal; caret-on-line reveals raw source, same as inline math. New hooks
+`.stylo-embed-inline`, `.cm-inplace-embed-inline`. The host returns phrasing
+content for these (documented). (Closes the ADR-009 deferred item.)
 
 ### 8 — `![[…]]` inside editable table cells · size M–L · deps: none
 
