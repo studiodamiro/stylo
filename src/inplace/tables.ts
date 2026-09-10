@@ -3,7 +3,7 @@ import { type EditorState, type Range, StateField, type Text } from "@codemirror
 import { Decoration, type DecorationSet, EditorView, WidgetType } from "@codemirror/view"
 import type { SyntaxNode } from "@lezer/common"
 import { type Align, parseGrid } from "../toolbar/table-grid"
-import { inPlaceConfigFacet, tableEditingFacet } from "./config"
+import { embedRegistryFacet, inPlaceConfigFacet, tableEditingFacet } from "./config"
 import { frontmatterRange } from "./frontmatter"
 import { renderInline } from "./inline-md"
 import { revealedLines } from "./reveal"
@@ -16,7 +16,10 @@ import { EditableTableWidget, fromTableWidget, type ParsedTable } from "./table-
  * the full source.
  */
 class TableWidget extends WidgetType {
-  constructor(readonly table: ParsedTable) {
+  constructor(
+    readonly table: ParsedTable,
+    readonly embeds: boolean,
+  ) {
     super()
   }
 
@@ -30,7 +33,7 @@ class TableWidget extends WidgetType {
     el.className = "cm-inplace-table"
 
     // `\|` is a literal pipe inside a GFM cell — unescape before inline parsing.
-    const cell = (raw: string) => renderInline(raw.replace(/\\\|/g, "|"))
+    const cell = (raw: string) => renderInline(raw.replace(/\\\|/g, "|"), this.embeds)
 
     const hr = el.createTHead().insertRow()
     head.forEach((text, i) => {
@@ -85,6 +88,7 @@ function parseTable(node: SyntaxNode, doc: Text): ParsedTable | null {
 function build(state: EditorState): DecorationSet {
   if (!state.facet(inPlaceConfigFacet).tables) return Decoration.none
   const editable = state.facet(tableEditingFacet) === "cells"
+  const embeds = state.facet(embedRegistryFacet) != null && state.facet(inPlaceConfigFacet).embeds
   const tree = syntaxTree(state)
   const fm = frontmatterRange(state.doc)
   const revealed = editable ? null : revealedLines(state)
@@ -107,7 +111,9 @@ function build(state: EditorState): DecorationSet {
 
       const parsed = parseTable(node.node, state.doc)
       if (parsed) {
-        const widget = editable ? new EditableTableWidget(parsed) : new TableWidget(parsed)
+        const widget = editable
+          ? new EditableTableWidget(parsed, embeds)
+          : new TableWidget(parsed, embeds)
         out.push(Decoration.replace({ widget, block: true }).range(node.from, node.to))
       }
       return false

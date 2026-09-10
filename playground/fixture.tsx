@@ -88,6 +88,10 @@ const DOCS: Record<string, string> = {
     "",
     "A paragraph that mentions ![[Inline ref]] partway through the line.",
     "",
+    "| Col | Note |",
+    "| --- | ---- |",
+    "| a | see ![[Cell ref]] here |",
+    "",
     "Text after the embed.",
   ].join("\n"),
 }

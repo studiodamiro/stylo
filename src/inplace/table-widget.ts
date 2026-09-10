@@ -61,7 +61,11 @@ export class EditableTableWidget extends WidgetType {
    *  swallowed rather than re-opening it. */
   private longPressAt = 0
 
-  constructor(readonly data: ParsedTable) {
+  constructor(
+    readonly data: ParsedTable,
+    /** `embedSource` is set: render `![[ref]]` literally in a cell (no chip). */
+    private readonly embeds = false,
+  ) {
     super()
     this.rows = gridOf(data)
     this.current = trimGrid(this.rows)
@@ -118,7 +122,7 @@ export class EditableTableWidget extends WidgetType {
     const { r, c } = this.coords(cell)
     const text = this.rows[r]?.[c] ?? ""
     cell.replaceChildren(
-      raw ? cell.ownerDocument.createTextNode(text) : renderInline(unescapePipe(text)),
+      raw ? cell.ownerDocument.createTextNode(text) : renderInline(unescapePipe(text), this.embeds),
     )
   }
 

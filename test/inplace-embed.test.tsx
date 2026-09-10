@@ -105,6 +105,12 @@ test("![[ref]] inside inline code is left literal", async () => {
   expect(embedRefs(view)).toEqual([])
 })
 
+test("![[ref]] inside a table cell is left to the table widget — no embedField widget", async () => {
+  const doc = "intro\n\n| a | b |\n| - | - |\n| see ![[Note]] x | ![[Solo]] |\n"
+  const { view } = await mount(doc, canned)
+  expect(embedRefs(view)).toEqual([])
+})
+
 // The slot DOM and the portalled host node are layout-dependent (CodeMirror
 // renders no widgets into a zero-height jsdom viewport); that path is covered
 // by test/browser/embed.spec.ts.

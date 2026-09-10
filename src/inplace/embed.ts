@@ -5,7 +5,7 @@ import { EMBED_PATTERN, isLoneEmbed } from "../embed"
 import { embedRegistryFacet, inPlaceConfigFacet } from "./config"
 import type { EmbedRegistry } from "./embed-registry"
 import { revealedLines } from "./reveal"
-import { inCodeContext } from "./scan"
+import { inCodeContext, inTableContext } from "./scan"
 
 /**
  * Inert slot for one `![[ref]]`. `toDOM` builds an empty element — a `<div>` for
@@ -88,7 +88,9 @@ function buildEmbeds(state: EditorState): DecorationSet {
       const ref = (m[1] ?? "").trim()
       if (!ref) continue
       const start = line.from + (m.index ?? 0)
-      if (inCodeContext(tree, start + 2)) continue
+      // A code span keeps it literal; a table cell's content belongs to the
+      // table widget, which renders `![[ref]]` literally there (`renderInline`).
+      if (inCodeContext(tree, start + 2) || inTableContext(tree, start + 2)) continue
       out.push(
         Decoration.replace({ widget: new EmbedWidget(ref, true, registry) }).range(
           start,

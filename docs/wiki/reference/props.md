@@ -136,7 +136,9 @@ reference; return a React node to render in the embed's place.
   renders **inline**, flowing with the surrounding text. Return phrasing content
   (a `<span>`, an `<img>`, a chip — not a block `<div>`) for the inline case, or
   the browser nests block inside inline. `![[…]]` inside inline or fenced code
-  stays literal.
+  stays literal, and — on the **in-place canvas only** — so does a `![[…]]`
+  inside a table cell (that surface is for editing tabular text; `preview` /
+  `split` transclude in cells normally).
 - Block renders into `<div class="stylo-embed"><div class="stylo-embed-content">…`
   (`preview` / `split`) or `<div class="cm-inplace-embed">…` (canvas); inline
   into `<span class="stylo-embed"><span class="stylo-embed-content

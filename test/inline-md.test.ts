@@ -2,9 +2,9 @@ import { expect, test } from "vitest"
 import { renderInline } from "../src/inplace/inline-md"
 
 /** Serialise the rendered fragment to a compact tag+text string for asserting. */
-function shape(md: string): string {
+function shape(md: string, embeds = false): string {
   const host = document.createElement("div")
-  host.append(renderInline(md))
+  host.append(renderInline(md, embeds))
   const walk = (n: Node): string => {
     if (n.nodeType === Node.TEXT_NODE) return n.textContent ?? ""
     const el = n as Element
@@ -58,4 +58,16 @@ test("inline math renders KaTeX; currency does not", () => {
 test("unclosed marks stay literal", () => {
   expect(shape("a **b c")).toBe("a **b c")
   expect(shape("2 * 3 = 6")).toBe("2 * 3 = 6")
+})
+
+test("without embeds, ![[ref]] still renders as ! + a wikilink chip (unchanged)", () => {
+  expect(shape("see ![[Note]] here")).toBe("see !<span>Note</span> here")
+})
+
+test("with embeds, ![[ref]] in a cell is kept literal — no chip, no transclusion", () => {
+  expect(shape("see ![[Note]] here", true)).toBe("see ![[Note]] here")
+  // the inner [[ref]] is consumed by the embed literal, not the wikilink rule
+  expect(shape("a ![[x]] and [[y]] b", true)).toBe("a ![[x]] and <span>y</span> b")
+  // still recurses through marks
+  expect(shape("**bold ![[x]]**", true)).toBe("<strong>bold ![[x]]</strong>")
 })

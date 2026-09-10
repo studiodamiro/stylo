@@ -15,6 +15,11 @@ Notable changes to Stylo. The format follows
   stays literal. New style hooks `.stylo-embed-inline` (preview / split) and
   `.cm-inplace-embed-inline` (canvas).
 
+- **`![[ref]]` in an in-place table cell renders literally** rather than as a
+  misleading `!` + wikilink chip. That surface is for editing tabular text;
+  `preview` / `split` transclude in cells as normal. Also fixes a stray
+  overlapping embed decoration on table lines introduced with inline embeds.
+
 - **`onResolveError`** — an optional callback fired when `embedSource` or
   `wikiLinkSource` throws or returns a rejected promise. `(error, info)` where
   `info` is `{ source: "embedSource" | "wikiLinkSource"; input: string }`. Pure
