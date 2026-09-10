@@ -30,6 +30,7 @@ pnpm-debug.log*
 .agents/
 .claude/
 CLAUDE.md
+NOTES.md
 
 # test / coverage
 coverage/

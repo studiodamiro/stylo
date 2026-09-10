@@ -74,7 +74,11 @@ npm install @codemirror/state @codemirror/view @codemirror/commands \
   @codemirror/language @codemirror/lang-markdown @lezer/common @lezer/highlight
 ```
 
-React 18+ is also a peer dependency. Import lines are in [Usage](#usage).
+React 18 or 19 is also a peer dependency (`react` + `react-dom`). Stylo ships
+**ES modules only** — there is no CommonJS build — so it needs a bundler (Vite,
+Next.js, …) or a native-ESM runtime. Stylesheet imports are in [Usage](#usage);
+the full setup checklist is in the
+[integration guide](./docs/wiki/guides/integration.md#requirements).
 
 The optional `@damiro/stylo/toolbar-settings` component (an end-user toolbar
 customizer) additionally needs `@dnd-kit/core @dnd-kit/sortable
