@@ -10,8 +10,8 @@ tags:
 
 # ADR-009 — Rendering host React nodes in the in-place canvas
 
-- **Status:** Proposed — draft for review. Not implemented. Motivated by
-  extending `![[embed]]` (0.8.0, preview / split) to the in-place canvas.
+- **Status:** Accepted — implemented in 0.9.0. Motivated by extending
+  `![[embed]]` (0.8.0, preview / split) to the in-place canvas.
 - **Date:** 2026-09-11
 - **Deciders:** damiro, Grace
 
@@ -80,9 +80,13 @@ contributes an inert slot element, and a single React subtree owned by
   `![[ref]]` gets `Decoration.replace({ widget, block: true })`; when the caret
   is on the line the decoration is withheld and the raw source shows. This is
   exactly the block-math path (`revealedLines` / `rangeRevealed`).
-- **`scanWikilinks` yields to `!`.** A one-character lookbehind: skip a `[[ref]]`
-  immediately preceded by `!`, so the embed pass and the wikilink pass never both
-  decorate the same span. This also removes today's stray `!` + chip rendering.
+- **`scanWikilinks` yields to `!` when embeds are active.** A one-character
+  lookbehind: skip a `[[ref]]` immediately preceded by `!` — but only when
+  `embedSource` is set (the pass reads `embedRegistryFacet != null`), so the
+  embed pass and the wikilink pass never both decorate the same span. A consumer
+  not using the feature sees no change: `![[ref]]` still renders as a literal `!`
+  plus a collapsed `[[ref]]` chip, consistent with the opt-in discipline the
+  0.8.0 work set for `preview`.
 - **Gated by `inPlace.decorations.embeds`** (new toggle, default `true`),
   consistent with ADR-005.
 
@@ -92,6 +96,11 @@ contributes an inert slot element, and a single React subtree owned by
   `preview`, plus an inline (non-`block`) widget. Needs an inline wrapper
   element; not required for the common case.
 - **`![[…]]` inside editable table cells.**
+- **The unconditional `scanWikilinks` lookbehind** — skipping `![[ref]]` even
+  when `embedSource` is unset, so a bare `![[ref]]` never renders as a link chip
+  anywhere. A small cleanup, but it is a visible change for consumers not using
+  embeds, so it waits for a deliberate minor-version note rather than riding in
+  on this feature.
 - **Memoising resolved nodes across scroll.** Without a cache, an embed
   re-scrolled into view re-invokes `embedSource`. Ship without it; add a
   `ref`-keyed cache if profiling or a network-backed source shows it matters.
@@ -168,3 +177,33 @@ document shows the portal bridge is a bottleneck.
   canvas. Rejected as the end state: it is the gap being closed. But noted as the
   documented fallback — if the portal registry proves too costly in practice,
   raw-source-in-canvas is the honest degradation, not a broken half-render.
+
+## Rollout log
+
+**0.9.0 — implemented as specified**, with these settlements made during the build:
+
+- **The registry is a small class, not a `StateField`.** `EmbedRegistry`
+  ([`src/inplace/embed-registry.ts`](../../../src/inplace/embed-registry.ts))
+  holds `{ id, ref, el }` per slot with `subscribe` / `getSnapshot` for
+  `useSyncExternalStore`; `EmbedWidget.toDOM` / `destroy` write to it. The
+  decoration set stays a field (`embedField`) beside `blockMathField`, but the
+  slot⇒DOM mapping lives in the class — a `StateField` value cannot hold a DOM
+  node that only exists once the widget mounts. Registry notifications are
+  coalesced through one `queueMicrotask`, so a CodeMirror update that touches
+  several slots is one React render.
+- **`embedSource` presence is the gate.** `InPlaceView` passes the registry into
+  the extension only when `embedSource` is set; `embedField` and the
+  `scanWikilinks` `!`-yield both read `embedRegistryFacet != null`. A consumer
+  without the prop sees no change.
+- **Interactive host content wins over reveal-on-click.** A click inside a
+  resolved `.stylo-embed-content` is left to the host node. Revealing the raw
+  `![[ref]]` is by caret-on-line, or by clicking the slot's own box / a pending
+  or failed embed's literal text. `.cm-inplace-embed` is in `REVEAL_WIDGET` for
+  that second path.
+- **Scroll memoisation still deferred.** An embed scrolled out and back
+  re-invokes `embedSource`, as the ADR anticipated.
+- Coverage: `test/embed-registry.test.ts` (the class),
+  `test/inplace-embed.test.tsx` (the field — widget off-caret, withheld
+  on-caret, gated by the prop, `!`-yield), `test/browser/embed.spec.ts` (the
+  portal into the slot, caret reveal, interactive content, the no-prop
+  fallback).

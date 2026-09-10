@@ -102,6 +102,18 @@ export const inPlaceTheme = EditorView.theme({
   },
   ".cm-inplace-math-block .katex-display": { margin: "0" },
 
+  // The inert slot an `![[ref]]` embed renders into; the host node is portalled
+  // in by `InPlaceView`. Block flow, a little breathing room, and the shared
+  // `--stylo-embed-accent` edge so a canvas embed matches the `preview` one.
+  ".cm-inplace-embed": {
+    display: "block",
+    margin: "0.9em 0",
+  },
+  ".cm-inplace-embed .stylo-embed-content": {
+    borderLeft: "3px solid var(--stylo-embed-accent, var(--stylo-border))",
+    paddingLeft: "1rem",
+  },
+
   // The `---` line's own text row is zeroed (same recipe as the fenced-code
   // fence rows) so it does not stack under the widget's height — that stacking
   // was the extra space above and below the rule.

@@ -4,6 +4,7 @@ import { cellSourcePos } from "../toolbar/table"
 import type { InPlaceConfig } from "../types"
 import {
   contextMenuEnabled,
+  embedRegistryFacet,
   inPlaceConfigFacet,
   linkOpenFacet,
   menuGroupsFacet,
@@ -22,6 +23,8 @@ import { inPlaceLinePrefixEdit } from "./edit-line-prefix"
 import { frontmatterField } from "./frontmatter"
 import { linkClickEditor } from "./link-click"
 import { linkHoverTooltip } from "./link-hover"
+import { embedField } from "./embed"
+import type { EmbedRegistry } from "./embed-registry"
 import { blockMathField } from "./math"
 import { menuOpenField } from "./menu-open"
 import { contextMenuLayer } from "./menu-plugin"
@@ -38,6 +41,11 @@ export interface InPlaceOptions {
   onLinkClick?: (href: string) => void
   /** Which decoration types render; see ADR-005. Applied once, at construction. */
   inPlace?: InPlaceConfig
+  /**
+   * The canvas's `EmbedRegistry`, passed only when the host set `embedSource`.
+   * Its presence turns the `![[ref]]` pass on; see ADR-009.
+   */
+  embedRegistry?: EmbedRegistry
 }
 
 /**
@@ -46,7 +54,7 @@ export interface InPlaceOptions {
  * so nothing reveals — this hands it to the widget's edge instead. Everything
  * else, text and line padding alike, stays with CodeMirror.
  */
-const REVEAL_WIDGET = ".cm-inplace-math, .cm-inplace-hr, .cm-inplace-table"
+const REVEAL_WIDGET = ".cm-inplace-math, .cm-inplace-hr, .cm-inplace-table, .cm-inplace-embed"
 
 /**
  * Character offset of a screen point within a rendered table cell's text,
@@ -90,6 +98,7 @@ export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
   const menu = resolveContextMenu(opts.inPlace?.contextMenu)
   return [
     inPlaceConfigFacet.of(resolveToggles(opts.inPlace)),
+    embedRegistryFacet.of(opts.embedRegistry ?? null),
     tableEditingFacet.of(opts.inPlace?.table ?? "source"),
     revealModeFacet.of(opts.inPlace?.reveal ?? "caret"),
     linkOpenFacet.of(opts.onLinkClick ?? null),
@@ -106,6 +115,7 @@ export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
     inPlaceInsertAssociation,
     inPlaceAutoformat,
     blockMathField,
+    embedField,
     frontmatterField,
     tableField,
     menuOpenField,
@@ -120,6 +130,10 @@ export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
         // An editable table (`inPlace.table: "cells"`) owns its own clicks —
         // the mousedown places the caret in a contentEditable cell.
         if (target?.closest(".cm-inplace-table-edit")) return false
+        // A resolved `![[ref]]` embed owns its own clicks, so interactive host
+        // content works. Clicking the slot's own box (or a pending / failed
+        // embed's literal text) still falls through to reveal the source.
+        if (target?.closest(".stylo-embed-content")) return false
         const widget = target?.closest<HTMLElement>(REVEAL_WIDGET)
         if (!widget) return false // text or padding — CodeMirror places the caret
         let pos = view.posAtDOM(widget)

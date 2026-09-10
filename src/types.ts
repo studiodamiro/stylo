@@ -150,11 +150,12 @@ export type WikiLinkSource = (
  * `![[…]]` and renders whatever node you return in its place. May be async (a
  * vault lookup, a fetch). Return `null` to leave the reference as literal text.
  *
- * Pass it to enable embeds; omit it and `![[…]]` stays literal. Affects
- * `preview` and `split`'s preview pane only — the in-place canvas is a later
- * increment. An embed is recognised only when it is alone on its own line (the
- * whole paragraph); an `![[…]]` inside other text stays literal. Give it a
- * stable reference — the render pipeline rebuilds when its identity changes.
+ * Pass it to enable embeds; omit it and `![[…]]` stays literal. Works on
+ * `preview`, `split`, and the in-place canvas (ADR-009). An embed is recognised
+ * only when it is alone on its own line (the whole paragraph / line); an
+ * `![[…]]` inside other text stays literal. Give it a stable reference — the
+ * render pipeline rebuilds when its identity changes, and the in-place canvas
+ * reads it once at mount.
  */
 export type EmbedSource = (ref: string) => ReactNode | Promise<ReactNode>
 
@@ -176,6 +177,8 @@ export interface InPlaceDecorationToggles {
   code?: boolean
   frontmatter?: boolean
   tables?: boolean
+  /** `![[ref]]` transclusion blocks. Needs `embedSource` set; see ADR-009. */
+  embeds?: boolean
 }
 
 /**

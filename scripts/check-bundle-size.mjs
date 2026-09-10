@@ -24,6 +24,7 @@ const BUDGETS = {
   "toolbar-settings": 5_000, // the opt-in <StyloToolbarSettings /> entry (@damiro/stylo/toolbar-settings)
   wikilink: 2_000,
   callout: 2_000,
+  embed: 2_000, // <Embed> — the ![[ref]] resolver shared by preview and the in-place canvas
 }
 
 // CodeMirror and Lezer are peer dependencies (ADR-008) — externalised from the

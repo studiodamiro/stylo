@@ -17,7 +17,7 @@ milestones and Architectural Decision Records, newest first.
 
 | ADR                                                                                   | Title                                                                 | Status   | Date       |
 | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | -------- | ---------- |
-| [ADR-009](./journal/2026-09/2026-09-11_adr-009-react-nodes-in-the-in-place-canvas.md) | Rendering host React nodes in the in-place canvas                     | Proposed | 2026-09-11 |
+| [ADR-009](./journal/2026-09/2026-09-11_adr-009-react-nodes-in-the-in-place-canvas.md) | Rendering host React nodes in the in-place canvas                     | Accepted | 2026-09-11 |
 | [ADR-008](./journal/2026-09/2026-09-04_adr-008-codemirror-peer-dependency.md)         | CodeMirror and Lezer as peer dependencies                             | Accepted | 2026-09-04 |
 | [ADR-007](./journal/2026-09/2026-09-03_adr-007-seamless-in-place.md)                  | Seamless in-place: Markdown markers never shown                       | Accepted | 2026-09-03 |
 | [ADR-006](./journal/2026-09/2026-09-02_adr-006-interactive-table-editing.md)          | Interactive rendered-table editing                                    | Accepted | 2026-09-02 |
@@ -31,6 +31,7 @@ milestones and Architectural Decision Records, newest first.
 
 | Date       | Entry                                                                                                                                                     |
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-11 | [`![[embed]]` reaches the in-place canvas — a portal registry](./journal/2026-09/2026-09-11_inplace-embeds.md)                                            |
 | 2026-09-10 | [`![[embed]]` transclusion — Stylo detects, the host renders (`embedSource`)](./journal/2026-09/2026-09-10_embed-transclusion.md)                         |
 | 2026-09-10 | [`[[wikilink]]` autocomplete — the host indexes, Stylo triggers and inserts](./journal/2026-09/2026-09-10_wikilink-autocomplete.md)                       |
 | 2026-09-10 | [A browser test harness — Playwright over the in-place canvas](./journal/2026-09/2026-09-10_browser-test-harness.md)                                      |

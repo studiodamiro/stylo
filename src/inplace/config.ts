@@ -8,6 +8,7 @@ import type {
   TableEditing,
   ToolbarCommandId,
 } from "../types"
+import type { EmbedRegistry } from "./embed-registry"
 
 /** `InPlaceDecorationToggles` with every key resolved to a concrete boolean. */
 export type ResolvedToggles = Required<InPlaceDecorationToggles>
@@ -25,6 +26,7 @@ const DEFAULT_TOGGLES: ResolvedToggles = {
   code: true,
   frontmatter: true,
   tables: true,
+  embeds: true,
 }
 
 export function resolveToggles(config?: InPlaceConfig): ResolvedToggles {
@@ -38,6 +40,16 @@ export function resolveToggles(config?: InPlaceConfig): ResolvedToggles {
  */
 export const inPlaceConfigFacet = Facet.define<ResolvedToggles, ResolvedToggles>({
   combine: (values) => values[0] ?? DEFAULT_TOGGLES,
+})
+
+/**
+ * The per-canvas `EmbedRegistry`, or `null` when the host passed no
+ * `embedSource`. Seeded once by `inPlaceExtension`; read by `embed.ts` (to gate
+ * the pass and hand the widget its registry) and `wikilinks.ts` (to yield the
+ * `[[ref]]` inside a `![[ref]]` to the embed pass). See ADR-009.
+ */
+export const embedRegistryFacet = Facet.define<EmbedRegistry | null, EmbedRegistry | null>({
+  combine: (values) => values[0] ?? null,
 })
 
 /** Table editing mode, seeded once by `inPlaceExtension`; read by `tables.ts`. */
