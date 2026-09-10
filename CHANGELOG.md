@@ -35,6 +35,16 @@ Notable changes to Stylo. The format follows
   references per resolver. Content is now memoised by `ref`: vary the `ref` or
   pass a new `embedSource` if a reference's content can change.
 
+### Changed
+
+- **`inPlace.reveal: "never"` — a fenced code block no longer shows its ` ``` `
+  fences when the caret is inside it.** The block's body stays plain editable
+  source; the language is set through the right-click **Language** field and
+  **Remove code block** unwraps it, so the fences had no editing role left. A
+  body-less block (` ``` ` / ` ``` ` with nothing between) still reveals its
+  fences on caret entry, as the only way to see or delete it. No effect under
+  the default `reveal: "caret"`.
+
 ## [0.9.0] - 2026-09-11
 
 ### Added

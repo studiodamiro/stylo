@@ -461,6 +461,27 @@ n }` to the line decoration they already emit. No new dependency; `role` +
   and whether the iOS selection callout still shows through — is a device pass
   that has not been run. No `-webkit-touch-callout` suppression was added.
 
+- **2026-09-11 — Seamless exceptions, 1 of 3: fenced code.** Three constructs
+  still fell back to the caret-reveal set under `reveal: "never"` — a fenced
+  block's ` ``` ` fences, inline `$…$` math, and `---` / `***` rules — because
+  they had no edit affordance that was not "show the raw source". Closing them
+  one construct per change (dependable-tracker item 9). First: a fenced block
+  no longer reveals its fences on caret entry. Its body lines are already plain
+  editable source, the info string is edited through the right-click **Language**
+  field, and **Remove code block** unwraps it — all already present since the
+  2026-09-03 Language-field entry — so the fences had nothing left to reveal
+  _for_. `nodes.ts` now reads `revealed` rather than `caretRevealed` for the
+  fenced-code block; under `reveal: "caret"` the two sets are equal so that mode
+  is untouched. The one hold-out is a **body-less** block (` ``` ` / ` ``` `
+  with nothing between): with no content line to land on it keeps the
+  caret-reveal escape hatch, so an empty block can always be seen and deleted.
+  Known sharp edge, left for a follow-up: the collapsed fence lines stay
+  caret-landable and typeable (a full-line replace is kept non-atomic), so
+  typing while parked on one can still break the fence silently — the same as
+  parking on any off-caret fence line today. Coverage in `inplace.test.tsx`
+  (fences stay hidden with the caret in the block; body-less block still
+  reveals) and `in-place-canvas.spec.ts`.
+
 ## Consequences
 
 ### Positive

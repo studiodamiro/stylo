@@ -363,7 +363,7 @@ test("fenced code: mono container, fences emptied off-block and shown on-caret",
   expect(hasClass(view, "cm-inplace-fence")).toBe(true) // fences shown, muted, on-caret
 })
 
-test("reveal: 'never' still shows a fenced block's ``` on caret entry", async () => {
+test("reveal: 'never' keeps a fenced block's ``` hidden even with the caret in it", async () => {
   const { view } = await mount("text\n\n```ts\nconst a = 1\n```\n\ntail", { reveal: "never" })
 
   const emptiedFenceLines = () => {
@@ -378,7 +378,29 @@ test("reveal: 'never' still shows a fenced block's ``` on caret entry", async ()
   expect(emptiedFenceLines()).toBe(2) // ``` hidden while the caret is away
 
   view.dispatch({ selection: { anchor: view.state.doc.line(4).from } }) // caret in the block
-  expect(emptiedFenceLines()).toBe(0)
+  expect(emptiedFenceLines()).toBe(2) // still hidden — edited through the menu now
+  expect(hasClass(view, "cm-inplace-fence")).toBe(false)
+
+  view.dispatch({ selection: { anchor: view.state.doc.line(3).from } }) // caret on the ``` line
+  expect(emptiedFenceLines()).toBe(2)
+})
+
+test("reveal: 'never' still reveals a body-less fenced block on caret entry", async () => {
+  const { view } = await mount("text\n\n```\n```\n\ntail", { reveal: "never" })
+
+  const emptiedFenceLines = () => {
+    let n = 0
+    view.plugin(inPlacePlugin)!.decorations.between(0, view.state.doc.length, (from, to, deco) => {
+      if (from < to && !deco.spec.class && !deco.spec.widget) n += 1
+    })
+    return n
+  }
+
+  view.dispatch({ selection: { anchor: view.state.doc.length } }) // caret away
+  expect(emptiedFenceLines()).toBe(2) // both fences collapsed off-caret
+
+  view.dispatch({ selection: { anchor: view.state.doc.line(3).from } }) // caret on the block
+  expect(emptiedFenceLines()).toBe(0) // fences shown — nothing else to land on
   expect(hasClass(view, "cm-inplace-fence")).toBe(true)
 })
 

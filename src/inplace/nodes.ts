@@ -23,8 +23,9 @@ export interface NodeCtx {
   revealed: Set<number>
   /** Lines the caret actually touches. Equals `revealed` except under
    *  `reveal: "never"`, where `revealed` is empty but this is not — a few
-   *  constructs (fenced code) still reveal their delimiters on caret entry
-   *  because there is no other way to see or remove them. */
+   *  constructs (setext underline, blockquote markers, a body-less fenced
+   *  block) still reveal their delimiters on caret entry because there is no
+   *  other way to see or remove them. */
   caretRevealed: Set<number>
   out: Range<Decoration>[]
   toggles: ResolvedToggles
@@ -246,14 +247,22 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
     const fenced = node.name === "FencedCode"
     const first = doc.lineAt(node.from).number
     const last = doc.lineAt(node.to > node.from ? node.to - 1 : node.to).number
+    // A block with at least one line between its fences. A body-less block
+    // (` ``` ` / ` ``` ` with nothing between) has no content line for the
+    // caret to land on, so it keeps the caret-reveal escape hatch below.
+    const hasBody = last > first + 1
 
-    // `caretRevealed`, not `revealed`: a fenced block shows its ``` on caret
-    // entry even under `reveal: "never"`, because the fence has no on-screen
-    // affordance for editing — hiding it for good would trap the block (you
-    // could never delete a fence to unwrap it). Parallels the `$$` math block.
+    // `revealed`, not `caretRevealed`: under `reveal: "never"` a fenced block
+    // no longer shows its ``` on caret entry — the info string is edited and
+    // the block unwrapped through the right-click menu's Language field, the
+    // parallel of the Stage 4 link field (ADR-007). Under `reveal: "caret"`
+    // `revealed` already equals the caret set, so this is unchanged there.
+    // The one hold-out is a body-less block: with nothing to land on inside
+    // it, the caret still reveals its fences as the only way to see or delete
+    // it.
     let blockRevealed = false
     for (let n = first; n <= last && !blockRevealed; n++) {
-      if (caretRevealed.has(n)) blockRevealed = true
+      if (revealed.has(n) || (!hasBody && caretRevealed.has(n))) blockRevealed = true
     }
     // Off-caret, a fence line's ``` text is replaced with nothing and the row
     // collapsed to zero line-height, so the container reads as just its padding
