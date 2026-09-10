@@ -74,20 +74,23 @@ path: try/catch in `wikilinkCompletionSource`. Reactive via a stable wrapper in
 `Stylo` (embed side) and `useCodeMirror` (wikilink side). No behaviour change
 when omitted.
 
-### 5 — React 18 type-surface guard · size M · deps: dev-only
+### 5 — React 18 type-surface guard · size M · deps: none
 
-`@types/react` is v19 in `devDependencies` while the peer range is `>=18`. A
-React 18 consumer `tsc` passed in the audit, but nothing stops a v19-only type
-from leaking into an emitted `.d.ts`. Add a CI step that type-checks a tiny
-consumer against `@types/react@18`. Can be folded into item 6's job.
+**Done, folded into item 6.** The existing `react18` CI job already type-checks
+Stylo's _source_ against `@types/react@18`; the residual gap — a v19-only type in
+the _published `.d.ts`_ as consumed through the `exports` map — is closed by
+item 6's consumer, which pins `@types/react@18` and runs `tsc` with
+`skipLibCheck: false`. No `package.json` change was needed after all.
 
 ### 6 — Packaging smoke in CI · size M · deps: none
 
-Add a job: `npm pack` → install the tarball into a throwaway consumer → `tsc` +
-a build. Catches a broken `exports` map, a missing `.d.ts`, or an accidental hard
-dependency before it reaches a downstream project. Done once by hand in the
-audit; this makes it a gate. The throwaway consumer installs its own dev tools —
-nothing added to Stylo.
+**Done.** `scripts/smoke-package.mjs` (`npm run check:package`, new `package` CI
+job): `npm pack` → install the tarball into a throwaway consumer → `tsc` →
+`vite build`. The committed consumer fixture is `scripts/consumer/` — it imports
+every export, renders all four modes, uses the imperative handle, and pins
+`@types/react@18`. Catches a broken `exports` map, a missing `.d.ts`, an
+accidental hard dependency, or a React-19-only shipped type. Nothing added to
+Stylo's own dependencies. Documented in `CONTRIBUTING.md`.
 
 ### 7 — Inline `![[…]]` mid-paragraph · size M–L · deps: none
 

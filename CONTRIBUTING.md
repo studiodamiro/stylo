@@ -46,7 +46,13 @@ install, so every change is weighed against the cost it imposes on consumers.
 - Verify before opening a PR: `npm run format:check`, `npm run check:theme`,
   `npm run typecheck`, `npm run test`, `npm run build`, and `npm run check:size`
   must all pass. CI runs the same set, plus a React 18 and a TypeScript-6 job
-  against the peer/consumer floor.
+  against the peer/consumer floor, and `npm run check:package`.
+- `npm run check:package` packs the tarball, installs it into a throwaway
+  consumer, and runs `tsc` + `vite build` against it — so a broken `exports`
+  map, a missing `.d.ts`, an accidental hard dependency, or a React-19-only type
+  in the shipped types fails locally instead of in a downstream project. The
+  consumer fixture lives in `scripts/consumer/`. Run it after any change to
+  `package.json` `exports`, the build config, or the public type surface.
 - `npm run test:browser` (Playwright, in `test/browser/`) covers the in-place
   canvas in a real Chromium — marker reveal, popup positioning, the sticky
   toolbar, KaTeX. It needs the browser once (`npx playwright install chromium`);
@@ -170,24 +176,25 @@ These are strict, not aspirational.
 
 Vite in library mode; TypeScript emits the declarations.
 
-| Task                 | Command                |
-| -------------------- | ---------------------- |
-| Dev / playground     | `npm run dev`          |
-| Format               | `npm run format`       |
-| Check formatting     | `npm run format:check` |
-| Theme-token guard    | `npm run check:theme`  |
-| Typecheck            | `npm run typecheck`    |
-| Run tests            | `npm run test`         |
-| Browser tests        | `npm run test:browser` |
-| Build library bundle | `npm run build`        |
-| Bundle-size guard    | `npm run check:size`   |
+| Task                 | Command                 |
+| -------------------- | ----------------------- |
+| Dev / playground     | `npm run dev`           |
+| Format               | `npm run format`        |
+| Check formatting     | `npm run format:check`  |
+| Theme-token guard    | `npm run check:theme`   |
+| Typecheck            | `npm run typecheck`     |
+| Run tests            | `npm run test`          |
+| Browser tests        | `npm run test:browser`  |
+| Build library bundle | `npm run build`         |
+| Bundle-size guard    | `npm run check:size`    |
+| Packaging smoke      | `npm run check:package` |
 
 ## Releasing
 
 Pre-1.0, so every release may carry breaking changes; bump the **minor** for
 features and breaks, the **patch** for fixes only.
 
-1. `npm run format:check && npm run check:theme && npm run typecheck && npm run test && npm run build && npm run check:size`.
+1. `npm run format:check && npm run check:theme && npm run typecheck && npm run test && npm run build && npm run check:size && npm run check:package`.
 2. Give the pending `CHANGELOG.md` section a `## [x.y.z] - YYYY-MM-DD` heading
    and add the release link at the bottom.
 3. Bump `version` in `package.json`.

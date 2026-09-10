@@ -47,6 +47,7 @@
     "typecheck": "tsc --noEmit",
     "check:theme": "node scripts/check-theme-tokens.mjs",
     "check:size": "node scripts/check-bundle-size.mjs",
+    "check:package": "node scripts/smoke-package.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:browser": "playwright test",
