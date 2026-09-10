@@ -64,3 +64,18 @@ jobs:
       - run: npm i --no-save typescript@~6
       - run: npm run typecheck
       - run: npm run build
+
+  # Prove a real downstream project can install and use the published package:
+  # npm pack -> install the tarball into a throwaway consumer -> tsc -> vite build.
+  # The consumer is pinned to @types/react@18, so a React-19-only type in the
+  # shipped .d.ts fails here.
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run check:package
