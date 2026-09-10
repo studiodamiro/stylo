@@ -53,15 +53,16 @@ An "unsaved changes" indicator, undo history beyond the editor session, conflict
 resolution — all of that is app state you layer on top, because only the app
 knows the persistence policy.
 
-## Most props are reactive; two are read at mount
+## Most props are reactive; three are read at mount
 
-`value`, `onChange`, `onSave`, `mode`, `toolbar`, `frontmatter`, the click
-callbacks, and the styling tokens all update live.
+`value`, `onChange`, `onSave`, `mode`, `toolbar`, `frontmatter`, `icons`,
+`readOnly`, `placeholder`, `className`, the click callbacks, and the styling
+tokens all update live.
 
-**`inPlace` and `codeLanguages` are read once, when the editing surface
-mounts.** Changing them after mount has no effect until the surface is
-recreated. Give `<Stylo>` a `key` derived from the config when you need a change
-to apply:
+**`inPlace`, `codeLanguages`, and `wikiLinkSource` are read once, when the
+editing surface mounts.** They feed the CodeMirror extension configuration, which
+is built at construction. Changing one after mount has no effect until the
+surface is recreated — give `<Stylo>` a `key` derived from the config:
 
 ```tsx
 <Stylo
@@ -70,8 +71,12 @@ to apply:
   onChange={setDoc}
   inPlace={inPlaceConfig}
   codeLanguages={languages}
+  wikiLinkSource={wikiLinkSource}
 />
 ```
+
+`embedSource` is reactive on `preview` / `split` but **also read once at mount on
+the in-place canvas** — keep its identity stable there and remount to change it.
 
 See [props · applied at mount](../reference/props.md#config-applied-at-mount) for
 the rationale and the full list.
@@ -89,9 +94,11 @@ status — copy it rather than re-deriving the edge cases.
 ## Frontmatter is handed back raw
 
 `onFrontmatter(raw)` gives you the YAML block between the leading `---` fences as
-a string. Stylo bundles **no YAML parser** — parse it with whatever your app
-already uses. The `frontmatter` prop (`"hidden"` | `"code"`) controls only how
-the block appears on the `preview` / `split` surfaces. See
+a string, on mount and on every change. Stylo bundles **no YAML parser** — parse
+it with whatever your app already uses. The same split is available synchronously
+from the exported `splitFrontmatter(md)`, which returns
+`{ frontmatter, body } | null`. The `frontmatter` prop (`"hidden"` | `"code"`)
+controls only how the block appears on the `preview` / `split` surfaces. See
 [props · frontmatter](../reference/props.md#frontmatter-in-preview).
 
 ## Stylesheets — import once
@@ -138,8 +145,8 @@ The palette is CSS custom properties on `.stylo` or any ancestor. Two rules:
   `next-themes` / shadcn convention) — Stylo does **not** switch on
   `prefers-color-scheme`, so your theme layer toggles the class. Override a
   token and you own both states.
-- `--stylo-radius` and `--stylo-font-size` are single-value — one setting
-  serves both themes.
+- `--stylo-radius`, `--stylo-font-size`, `--stylo-font-family`, and
+  `--stylo-font-family-mono` are not colours — one setting serves both themes.
 
 The full token tables (palette, table/guide, syntax colours) are in
 [props · styling tokens](../reference/props.md#styling-tokens).
@@ -148,6 +155,7 @@ The full token tables (palette, table/guide, syntax colours) are in
 
 Stylo bundles no language grammars — the full set is ~110 lazy chunks. Fenced
 code renders in flat monospace until you pass `codeLanguages`: either
-`@codemirror/language-data`'s `languages` array or a curated subset. It is a
+`@codemirror/language-data`'s `languages` array, a curated subset of it, or a
+resolver function `(info) => Language | LanguageDescription | null`. It is a
 mount-time prop (see above). Details in
 [Fenced-code highlighting](../reference/code-languages.md).
