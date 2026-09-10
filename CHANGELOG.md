@@ -23,6 +23,13 @@ Notable changes to Stylo. The format follows
   `<div class="stylo-embed"><div class="stylo-embed-content">`, with a
   `--stylo-embed-accent` variable. No new dependency.
 
+### Fixed
+
+- **`split` now honours `frontmatter`.** `SplitView` accepted the prop but never
+  passed it to its preview pane, so `frontmatter="code"` did nothing in `split`
+  mode (it worked in `preview`). The pane now renders the
+  `<div class="stylo-frontmatter">` block like `preview` does.
+
 ## [0.7.0] - 2026-09-10
 
 ### Added

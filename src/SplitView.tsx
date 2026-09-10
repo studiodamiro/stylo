@@ -91,7 +91,12 @@ export function SplitView({
       </div>
       <div className={styles.splitPane} ref={previewPane}>
         <Suspense fallback={<div className={styles.preview} aria-busy="true" />}>
-          <LazyPreview value={value} onWikiLinkClick={onWikiLinkClick} embedSource={embedSource} />
+          <LazyPreview
+            value={value}
+            onWikiLinkClick={onWikiLinkClick}
+            embedSource={embedSource}
+            frontmatter={frontmatter}
+          />
         </Suspense>
       </div>
     </div>
