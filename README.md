@@ -171,6 +171,11 @@ function Editor() {
 your own `ToolbarCustomItem` buttons, and a `render` slot to wrap it. See the
 [toolbar reference](./docs/wiki/reference/toolbar.md).
 
+`canvasHeader` docks your own content — a frontmatter card, say — inside the
+editing surface itself, below the find/replace panel and above the document
+body, a seam `toolbar.render` can't reach since it wraps content before the
+whole canvas. See [Canvas header](./docs/wiki/reference/props.md#canvas-header).
+
 `inPlace`, `codeLanguages`, and `wikiLinkSource` are read once, when the editing
 surface mounts — give `<Stylo>` a `key` derived from the config to apply a
 change. Every other prop is fully reactive. See
