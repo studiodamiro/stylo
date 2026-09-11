@@ -42,3 +42,6 @@ playwright/.cache/
 
 # playground scratch doc (seeded from sample.template.md)
 playground/content/sample.md
+
+# incoming request drafts, not part of the published docs
+docs/requests/
