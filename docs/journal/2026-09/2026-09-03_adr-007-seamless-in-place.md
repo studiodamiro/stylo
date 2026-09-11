@@ -501,6 +501,49 @@ n }` to the line decoration they already emit. No new dependency; `role` +
   caret on it; `removeHiddenRule` removes; no-op under `reveal: "caret"`),
   `context-menu.test.tsx`, `in-place-canvas.spec.ts`.
 
+- **2026-09-11 — Seamless exceptions, 3 of 3: inline math.** Inline `$…$` and
+  one-line `$$…$$` math no longer reveal their LaTeX on caret entry under
+  `reveal: "never"` — `decorate.ts` passes `scanInlineMath` the mode-aware
+  `revealed` set instead of the raw caret set, so the KaTeX widget stays put.
+  This one gets the full Stage-4 link treatment, not just a menu row:
+  - **A `mathRow` menu field** (`context-menu-actions.ts`), the same shape as
+    `linkRow` / `wikiLinkRow` — prefilled with the LaTeX and a **Remove math**
+    action when the caret sits in an existing span, otherwise an empty field
+    that wraps a selection as `$…$` on submit. It replaces the old plain
+    toggle-wrap "math" row in the Format submenu on the canvas (a table cell
+    keeps the toggle — cells don't get their own math source editor, matching
+    how links never got one either).
+  - **Click and hover**, both new (`math-edit.ts`, combined into one file —
+    the `InPlaceView` chunk was already near its `check:size` budget). Clicking
+    a rendered widget opens `mathRow` at the pointer, the write half; hovering
+    shows the raw LaTeX in the same `.cm-inplace-href-tip` bubble links use,
+    the read half. Both resolve position with `posAtDOM` on the widget element
+    (`posAtCoords` over a widget is unreliable, per the divider fix above) and
+    then confirm a match with the new `mathAtIn(text, head)` helper (exported
+    from `math.ts`, alongside the existing `INLINE_MATH` / `ONE_LINE_BLOCK`
+    regexes it reuses) before doing anything — the guard that keeps a
+    multi-line `$$` block's widget inert: its DOM resolves to the opening
+    fence's line, whose text is just `$$`, where `mathAtIn` finds nothing.
+    Multi-line `$$` blocks are unaffected by this item — `blockMathField` keeps
+    its own caret-reveal, out of scope here the same way it was out of scope
+    for fenced code before item 9a.
+  - A Playwright quirk, not a product bug: a locator's coordinate-based
+    `.click()` / `.hover()` (even with `force: true`) can miss a KaTeX widget's
+    actual paint area because of its nested inline markup: Playwright's
+    hit-test lands on the surrounding `.cm-line` instead. `page.mouse.click()`
+    / `.move()` at the widget's own bounding-box center, bypassing locator
+    actionability entirely, is reliable — used throughout `math.spec.ts`.
+  - Coverage: `math.test.ts` (`mathAtIn`), `context-menu-actions.test.ts`
+    (`mathRow` — add / edit / remove, the one-line-`$$`-block case, the
+    multi-line-block no-match case), `math-edit.test.tsx` (click opens the
+    field, prefilled; a multi-line block's widget doesn't), `inplace.test.tsx`
+    (widget kept with the caret on it; unchanged under `reveal: "caret"`),
+    `math.spec.ts` (click edits, hover shows the source, a multi-line block's
+    fence click no-ops).
+
+  This closes dependable-tracker item 9 — the last of the three ADR-007
+  seamless exceptions.
+
 ## Consequences
 
 ### Positive

@@ -11,6 +11,32 @@ const INLINE_MATH = /(?<![\w$])\$(?!\s)([^\n$]+?)(?<!\s)\$(?![\w$])/g
 const ONE_LINE_BLOCK = /(?<![\w$])\$\$([^\n$]+?)\$\$(?![\w$])/g
 const ANY_BLOCK = /(?<![\w$])\$\$([^]+?)\$\$/g
 
+export interface MathAt {
+  from: number
+  to: number
+  src: string
+  block: boolean
+}
+
+/**
+ * The one-line `$$…$$` or `$…$` math span of `text` covering `head`, or `null`.
+ * Used by the right-click **Math** field to find what the caret is inside —
+ * multi-line `$$` blocks are out of scope, a menu field is one line.
+ */
+export function mathAtIn(text: string, head: number): MathAt | null {
+  for (const m of text.matchAll(ONE_LINE_BLOCK)) {
+    const from = m.index ?? 0
+    const to = from + (m[0] ?? "").length
+    if (head >= from && head <= to) return { from, to, src: (m[1] ?? "").trim(), block: true }
+  }
+  for (const m of text.matchAll(INLINE_MATH)) {
+    const from = m.index ?? 0
+    const to = from + (m[0] ?? "").length
+    if (head >= from && head <= to) return { from, to, src: (m[1] ?? "").trim(), block: false }
+  }
+  return null
+}
+
 class MathWidget extends WidgetType {
   constructor(
     readonly src: string,

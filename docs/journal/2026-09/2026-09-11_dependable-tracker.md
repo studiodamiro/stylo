@@ -115,10 +115,11 @@ item 7 introduced. (Closes the ADR-009 deferred item.)
 
 ### 9 — ADR-007 seamless exceptions · size L · deps: none
 
-Under `reveal: "never"`, three constructs still show raw source when the caret is
-on their line: inline `$…$` math, fenced code, and `---` / `***` rules. Each
-needs a source-edit affordance that isn't "reveal the markers" — the parallel of
-the Stage-4 link editor. Touches the decoration core; land one construct per PR.
+**Done.** Under `reveal: "never"`, three constructs still showed raw source when
+the caret was on their line: inline `$…$` math, fenced code, and `---` / `***`
+rules. Each needed a source-edit affordance that isn't "reveal the markers" —
+the parallel of the Stage-4 link editor. Touched the decoration core; landed one
+construct per PR.
 
 **Order (smallest first):**
 
@@ -130,9 +131,12 @@ the Stage-4 link editor. Touches the decoration core; land one construct per PR.
   `edit-divider.ts` adds a Backspace/Delete keymap (`removeHiddenRule`) and the
   menu gains a "Remove divider" row. Both reuse `toggleHorizontalRule`. ADR-007
   rollout log, 2026-09-11.
-- **9c — inline `$…$` / one-line `$$…$$` math.** Full link treatment: a
-  `mathRow` menu field, click-the-widget-to-edit, and a hover tooltip showing
-  the raw LaTeX. Then flip `scanInlineMath` to `revealed`.
+- **9c — inline `$…$` / one-line `$$…$$` math.** _Done._ Full link treatment: a
+  `mathRow` menu field (replacing the old toggle in the canvas Format submenu),
+  click-the-widget-to-edit and a hover tooltip (`math-edit.ts`), both gated by
+  the new `mathAtIn` helper so a multi-line `$$` block (out of scope, unchanged)
+  never matches. `decorate.ts` flipped `scanInlineMath` to `revealed`. ADR-007
+  rollout log, 2026-09-11.
 
 ### 10 — (optional) split the files over 200 LOC · size L in aggregate · deps: none
 

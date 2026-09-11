@@ -17,6 +17,7 @@ import { linkPartsIn, wikiLinkAtIn, wikiLinkPartsIn } from "../toolbar/inline-op
 import { linkOpenFacet, menuGroupsFacet, selectionUIFacet } from "./config"
 import type { MenuAction, MenuField, MenuRow, MenuSubmenu } from "./context-menu"
 import { onHiddenRule } from "./edit-divider"
+import { mathAtIn } from "./math"
 import { selectionOffsets } from "./table-cell-dom"
 
 /** Menu glyph for a command id — headings share one, the rest map by id. */
@@ -294,6 +295,67 @@ export function wikiLinkRow(view: EditorView): MenuField {
   }
 }
 
+/**
+ * The **Math** row: an editable LaTeX field. Prefilled, with **Remove math**,
+ * when the caret sits in an existing `$…$` or one-line `$$…$$` span — its
+ * source has no other on-screen home under `reveal: "never"`, the rendered
+ * KaTeX widget replaces the whole thing. Otherwise an empty field that wraps
+ * the selection as `$…$` on submit, the same shape as the link rows.
+ */
+export function mathRow(view: EditorView): MenuField {
+  const { state } = view
+  const sel = state.selection.main
+  const line = state.doc.lineAt(sel.head)
+  const parts = mathAtIn(line.text, sel.head - line.from)
+
+  if (parts) {
+    const from = line.from + parts.from
+    const to = line.from + parts.to
+    const fence = parts.block ? "$$" : "$"
+    return {
+      field: true,
+      label: "Edit math",
+      icon: ICON_PATHS.math,
+      value: parts.src,
+      placeholder: "e^{i\\pi} + 1 = 0",
+      onSubmit: (src) => {
+        const trimmed = src.trim()
+        if (trimmed) view.dispatch({ changes: { from, to, insert: `${fence}${trimmed}${fence}` } })
+        view.focus()
+      },
+      actions: [
+        {
+          label: "Remove math",
+          onSelect: () => {
+            view.dispatch({
+              changes: { from, to, insert: parts.src },
+              selection: { anchor: from, head: from + parts.src.length },
+            })
+            view.focus()
+          },
+        },
+      ],
+    }
+  }
+
+  const label = state.sliceDoc(sel.from, sel.to)
+  return {
+    field: true,
+    label: "Add math",
+    icon: ICON_PATHS.math,
+    value: "",
+    placeholder: "e^{i\\pi} + 1 = 0",
+    onSubmit: (src) => {
+      const t = src.trim() || label || "x"
+      view.dispatch({
+        changes: { from: sel.from, to: sel.to, insert: `$${t}$` },
+        selection: { anchor: sel.from + 1, head: sel.from + 1 + t.length },
+      })
+      view.focus()
+    },
+  }
+}
+
 const submenu = (
   label: string,
   icon: string | undefined,
@@ -347,11 +409,18 @@ export function dividerRow(view: EditorView): MenuAction {
   }
 }
 
-/** Bold / Italic / Strikethrough, then inline code + inline math. */
+/**
+ * Bold / Italic / Strikethrough, then inline code + inline math. In a table
+ * cell math stays a plain wrap toggle (`FORMAT_CODE_IDS`); on the canvas it is
+ * the `mathRow` field instead, so an existing `$…$` / `$$…$$` span can be
+ * rewritten in place — the parallel of the link rows.
+ */
 const formatGroup = (view: EditorView, inCell = false): MenuRow[] => [
   ...actions(view, FORMAT_MARK_IDS, false, inCell),
   "separator",
-  ...actions(view, FORMAT_CODE_IDS, false, inCell),
+  ...(inCell
+    ? actions(view, FORMAT_CODE_IDS, false, true)
+    : [toAction(view, "code", false)!, mathRow(view)]),
 ]
 
 /**

@@ -32,12 +32,6 @@ export interface InPlaceDecorations {
  */
 export function buildDecorations(view: EditorView): InPlaceDecorations {
   const out: Range<Decoration>[] = []
-  // `reveal: "never"` (ADR-007) — no line reveals its markers. Inline / one-line
-  // `$…$` math is the deliberate exception: the widget replaces the whole span,
-  // so the LaTeX source has no on-screen home, and the caret line is the only
-  // way to reach it. It keeps the real reveal set until a dedicated math-source
-  // affordance lands (the parallel of the Stage 4 link field). Tracked in
-  // ADR-007's rollout log.
   const caretRevealed = revealedLines(view.state)
   const revealed = view.state.facet(revealModeFacet) === "never" ? NO_LINES : caretRevealed
   const tree = syntaxTree(view.state)
@@ -60,7 +54,14 @@ export function buildDecorations(view: EditorView): InPlaceDecorations {
       enter: (node) => decorateNode(node, ctx),
     })
     if (toggles.wikilinks) scanWikilinks(view, range.from, range.to, revealed, tree, out)
-    if (toggles.math) scanInlineMath(view, range.from, range.to, caretRevealed, tree, out)
+    // `revealed`, not `caretRevealed`: under `reveal: "never"` inline / one-line
+    // math no longer shows its `$…$` / `$$…$$` on caret entry — the right-click
+    // Math field edits it in place instead (the parallel of the Stage 4 link
+    // field). Under `reveal: "caret"` the two sets are equal, so that mode is
+    // unchanged. Multi-line `$$` blocks are unaffected — `blockMathField` keeps
+    // its own caret-reveal, the same standing exception fenced code had before
+    // ADR-007 item 9a.
+    if (toggles.math) scanInlineMath(view, range.from, range.to, revealed, tree, out)
     scanListGuides(range.from, range.to, tree, doc, toggles, out)
   }
 

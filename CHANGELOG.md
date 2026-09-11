@@ -51,6 +51,14 @@ Notable changes to Stylo. The format follows
   **Remove divider**. Clicking the rule places the caret on it, so Backspace
   works straight after. No effect under the default `reveal: "caret"`.
 
+- **`inPlace.reveal: "never"` — inline `$…$` / one-line `$$…$$` math no longer
+  shows its LaTeX when the caret is on it.** Instead: a right-click **Math**
+  field edits the source in place (prefilled, with **Remove math**, when the
+  caret sits in an existing span); clicking a rendered widget opens the same
+  field at the pointer; hovering one shows the raw LaTeX in a tooltip. A
+  multi-line `$$` block is unaffected — it keeps its existing caret-reveal. No
+  effect under the default `reveal: "caret"`.
+
 ## [0.9.0] - 2026-09-11
 
 ### Added
