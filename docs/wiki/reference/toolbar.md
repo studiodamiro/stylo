@@ -38,6 +38,17 @@ pressed state is read back from the document around the selection.
 `items` is a list of built-in command ids with `"|"` for a separator, and — mixed
 in anywhere — [custom item](#custom-items) objects. Unknown ids are skipped.
 
+### Wrapping on narrow hosts
+
+The bar wraps onto multiple lines rather than overflow when it doesn't fit —
+no `overflow` config needed for this part. Each `"|"`-delimited run of items
+(the same grouping the default bar already uses to read as history · headings
+· inline text · lists · block structure · code/math) wraps as one unit, so a
+line break lands between two groups, never inside one. A consumer's own
+`items` list gets this for free from however it already places its `"|"`s; no
+separate grouping array to author. A dedicated "collapse into a `…` menu"
+overflow mode instead of wrapping is deferred (ADR-002 §2 follow-ups).
+
 ## Custom items
 
 An entry in `items` can be an object instead of a built-in id. It runs against
@@ -247,7 +258,12 @@ is always active, and `Mod-f` opens it on every editing surface (`source`,
 `split`, `in-place`) whether or not the bar is mounted. `Mod-g` / `Mod-Shift-g`
 step through matches, `Mod-Alt-g` replaces, `Escape` closes. `preview` has no
 editor, so nothing happens there. Add `"search"` to `items` if you want a
-visible button as well.
+visible button as well — it shows pressed (`aria-pressed`, `data-active`)
+while the panel is open, the same convention as every other toggle button.
+It's also just another id in the palette `<StyloToolbarSettings>` offers, so a
+host letting end users customise their own bar needs no extra wiring to make
+find/replace one of the choices — see [the toolbar
+customizer](./toolbar-settings.md).
 
 `underline` is opt-in for a different reason: Markdown has no underline, so the
 command writes a raw `<u>…</u>` HTML pair. That renders underlined wherever the

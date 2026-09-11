@@ -36,6 +36,29 @@ interface Btn {
   disabled?: (state: EditorState) => boolean
 }
 
+/**
+ * Splits `items` into the runs a `"|"` already delimits, keeping each
+ * separator as its own entry. A run renders as one flex child so wrapping
+ * (on narrow hosts) breaks between groups, never in the middle of one — the
+ * default bar's `undo, redo | h1, h2, h3 | ...` shape becomes the wrap unit
+ * for free, no separate grouping config needed.
+ */
+function groupItems(items: ToolbarItem[]): (Exclude<ToolbarItem, "|">[] | "|")[] {
+  const groups: (Exclude<ToolbarItem, "|">[] | "|")[] = []
+  let run: Exclude<ToolbarItem, "|">[] = []
+  for (const item of items) {
+    if (item !== "|") {
+      run.push(item)
+      continue
+    }
+    if (run.length) groups.push(run)
+    run = []
+    groups.push("|")
+  }
+  if (run.length) groups.push(run)
+  return groups
+}
+
 /** Resolve one non-separator item to a renderable button, or `null` to skip it. */
 function toButton(item: Exclude<ToolbarItem, "|">, icons: ToolbarProps["icons"]): Btn | null {
   if (typeof item !== "string") {
@@ -124,34 +147,40 @@ export function Toolbar({ view, items, icons, disabled, sticky, stickyVisibility
       aria-hidden={dynamicHidden || undefined}
       style={stickyStyle}
     >
-      {items.map((item, i) => {
-        if (item === "|") {
+      {groupItems(items).map((group, i) => {
+        if (group === "|") {
           return <span key={`sep-${i}`} className={styles.toolbarSep} aria-hidden="true" />
         }
-        const btn = toButton(item, icons)
-        if (!btn) return null
-        const off = disabled || !view || Boolean(btn.disabled?.(view.state))
-        const active = Boolean(!off && view && btn.isActive?.(view.state))
         return (
-          <button
-            key={btn.key}
-            type="button"
-            className={styles.toolbarButton}
-            data-command={btn.key}
-            title={btn.title}
-            aria-label={btn.title}
-            aria-pressed={btn.isActive ? active : undefined}
-            data-active={active ? "" : undefined}
-            disabled={off}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => {
-              if (!view) return
-              btn.run(view)
-              refresh()
-            }}
-          >
-            {btn.icon}
-          </button>
+          <div key={`group-${i}`} className={styles.toolbarGroup}>
+            {group.map((item) => {
+              const btn = toButton(item, icons)
+              if (!btn) return null
+              const off = disabled || !view || Boolean(btn.disabled?.(view.state))
+              const active = Boolean(!off && view && btn.isActive?.(view.state))
+              return (
+                <button
+                  key={btn.key}
+                  type="button"
+                  className={styles.toolbarButton}
+                  data-command={btn.key}
+                  title={btn.title}
+                  aria-label={btn.title}
+                  aria-pressed={btn.isActive ? active : undefined}
+                  data-active={active ? "" : undefined}
+                  disabled={off}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    if (!view) return
+                    btn.run(view)
+                    refresh()
+                  }}
+                >
+                  {btn.icon}
+                </button>
+              )
+            })}
+          </div>
         )
       })}
     </div>

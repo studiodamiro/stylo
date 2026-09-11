@@ -70,6 +70,14 @@
   border-bottom: 1px solid var(--stylo-border);
 }
 
+/* One flex child per `"|"`-delimited run of items, so `.toolbar`'s wrap
+   breaks between groups instead of inside one. */
+.toolbarGroup {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .toolbarButton {
   display: inline-flex;
   align-items: center;

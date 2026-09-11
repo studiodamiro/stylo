@@ -1,4 +1,5 @@
 import { redo, undo } from "@codemirror/commands"
+import { searchPanelOpen } from "@codemirror/search"
 import type { ToolbarCommandId } from "../types"
 import { runInlineInCell } from "./cell-inline"
 import {
@@ -62,6 +63,7 @@ export const BUILTIN_COMMANDS: ToolbarCommand[] = [
     id: "search",
     title: "Find / replace",
     run: (view) => toggleSearchPanel(view),
+    isActive: (state) => searchPanelOpen(state),
     keys: ["Mod-f"],
   },
   heading(1),
