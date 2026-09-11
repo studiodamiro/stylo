@@ -218,3 +218,19 @@ document shows the portal bridge is a bottleneck.
   on-caret, gated by the prop, `!`-yield), `test/browser/embed.spec.ts` (the
   portal into the slot, caret reveal, interactive content, the no-prop
   fallback).
+
+**2026-09-12 amendment — "interactive host content wins" hardened.** The
+original mechanism for that bullet was `extension.ts`'s mousedown handler
+returning `false` when the click target matched `.closest(".stylo-embed-content")`.
+That turned out to be fragile: a custom `EditorView.domEventHandlers` hook
+returning `false` only skips its own logic, not CodeMirror's _built-in_
+mousedown handling (registered in the same dispatch list), which still runs
+its own click-to-place-caret logic on an atomic range regardless. It happened
+to not visibly fail until `.cm-inplace-embed`'s box model changed (see the
+2026-09-12 caret/layout journal entry), at which point it did. Fixed at the
+source: `Embed.tsx` now calls `stopPropagation()` on `.stylo-embed-content`'s
+own `mousedown`, the same technique `table-widget.ts` already used for the
+identical problem — the event never reaches CodeMirror's listener at all,
+independent of any box-model detail. `extension.ts`'s `.closest()` check is
+harmless dead weight now (unreachable, since such an event can no longer get
+there) but left in place rather than expanding this fix's footprint further.

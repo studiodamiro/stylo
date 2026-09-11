@@ -23,6 +23,7 @@ import {
   insertRow,
   setAlign,
 } from "./table-structure"
+import { tableField } from "./tables"
 
 /** Marks a transaction that came from an editable table widget's own DOM. */
 export const fromTableWidget = Annotation.define<boolean>()
@@ -43,8 +44,8 @@ export interface ParsedTable {
  * so `tableField` remaps rather than rebuilds and DOM focus survives.
  *
  * The widget never stores its document range — a serialize dispatch shifts it —
- * so `bounds()` re-derives it from `posAtDOM` plus a scan of contiguous pipe
- * lines every time it is needed.
+ * so `bounds()` re-derives it every time from `tableField`, the same
+ * syntax-tree-backed decoration `table-enter.ts` reads for keyboard entry.
  */
 export class EditableTableWidget extends WidgetType {
   private table: HTMLTableElement | null = null
@@ -90,21 +91,23 @@ export class EditableTableWidget extends WidgetType {
   }
 
   /**
-   * The table's current `[from, to]` in the document, derived from the DOM.
-   * `posAtDOM` may land on any line of the widget, so the scan grows the span in
-   * both directions across contiguous non-blank pipe lines.
+   * The table's current `[from, to]` in the document, derived from the DOM via
+   * `tableField` — the same Lezer-tree-backed decoration CodeMirror treats as
+   * atomic. A prior version re-derived this with its own "contiguous pipe
+   * lines" scan, which disagreed with the real GFM parse whenever a table was
+   * followed with no blank line by a plain-prose line containing no `|`: GFM
+   * still swallows that line into the table, but the pipe scan stopped short
+   * of it, so `exitBelow()` (below) landed the caret one line short of past
+   * the table — still inside the atomic range it was meant to escape.
    */
   private bounds(view: EditorView): { from: number; to: number } {
-    const doc = view.state.doc
-    const pipe = (n: number) => {
-      const t = doc.line(n).text
-      return t.trim() !== "" && t.includes("|")
-    }
-    let first = doc.lineAt(view.posAtDOM(this.table!)).number
-    let last = first
-    while (first > 1 && pipe(first - 1)) first--
-    while (last < doc.lines && pipe(last + 1)) last++
-    return { from: doc.line(first).from, to: doc.line(last).to }
+    const pos = view.posAtDOM(this.table!)
+    let range: { from: number; to: number } | null = null
+    view.state.field(tableField).between(pos, pos, (from, to) => {
+      range = { from, to }
+      return false
+    })
+    return range ?? view.state.doc.lineAt(pos)
   }
 
   private cellAt(r: number, c: number): HTMLTableCellElement | null {

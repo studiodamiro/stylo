@@ -96,14 +96,37 @@ export const canvasTheme = {
   // The inert slot an `![[ref]]` embed renders into; the host node is portalled
   // in by `InPlaceView`. Block flow, a little breathing room, and the shared
   // `--stylo-embed-accent` edge so a canvas embed matches the `preview` one.
+  // Padding, not margin — same rule as the block/rule/table/math block above:
+  // margin sits outside the border box CodeMirror's height map measures, so it
+  // drifts click-to-position for every line below the embed. (Padding here
+  // used to also break interactive host content — clicking a button inside
+  // the embed revealed raw source instead of reaching it. Root cause:
+  // CodeMirror's *own* built-in mousedown handling runs in the same handler
+  // list as `extension.ts`'s custom one, so that handler returning `false`
+  // for embed content only skips its own logic, not CodeMirror's default
+  // click-to-place-caret — which the padding change apparently tipped into
+  // resolving inside the atomic range. Fixed at the source instead:
+  // `Embed.tsx` now stops mousedown propagation on `.stylo-embed-content`
+  // itself, the same technique the editable table widget already used for
+  // the identical problem, so the event never reaches CodeMirror's listener
+  // at all — regardless of this element's own box model.)
   ".cm-inplace-embed": {
     display: "block",
-    margin: "0.9em 0",
+    padding: "0.9em 0",
   },
   ".cm-inplace-embed .stylo-embed-content": {
     borderLeft: "3px solid var(--stylo-embed-accent, var(--stylo-border))",
     paddingLeft: "1rem",
   },
+  // A host node with its own `margin-top` / `margin-bottom` (a self-styled
+  // card, say) collapses that margin straight through `.stylo-embed-content` —
+  // it carries no vertical padding/border of its own to stop it — so the
+  // border-left rail (drawn at `.stylo-embed-content`'s own box edge) ends up
+  // not matching where the card actually renders. `preview`'s stylesheet
+  // already zeroes this (`stylo.module.css`); the canvas theme never got the
+  // same rule when embeds landed here.
+  ".cm-inplace-embed .stylo-embed-content > :first-child": { marginTop: "0" },
+  ".cm-inplace-embed .stylo-embed-content > :last-child": { marginBottom: "0" },
   // A `![[ref]]` mid-sentence: flows inline, no box — the host node carries its
   // own presentation, and `.stylo-embed-inline` is the consumer hook.
   ".cm-inplace-embed-inline": { display: "inline" },

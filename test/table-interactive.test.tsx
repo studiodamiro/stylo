@@ -517,6 +517,28 @@ test("ArrowDown walks the column, then leaves the table past the last row", asyn
   expect(caretCell(view)).toBeNull() // caret is back in the document
 })
 
+test("ArrowDown out of the last row lands past the table even with no blank line after it", async () => {
+  // GFM swallows a non-blank, pipe-less line right after a table into the same
+  // `Table` node when there's no blank line separating them — so "after"
+  // becomes (a malformed but real) extra row of the table itself, not a
+  // separate paragraph. That's a real GFM quirk, not a Stylo bug; what's under
+  // test is that `bounds()` agrees with it instead of stopping one line short.
+  const doc = `${T}\nafter`
+  const { view } = await mount(doc, { table: "cells" })
+  const table = await editCells(view)
+  const lastCell = [...table.querySelectorAll<HTMLTableCellElement>("tbody td")].at(-1)!
+  lastCell.focus()
+  lastCell.dispatchEvent(new FocusEvent("focusin", { bubbles: true }))
+
+  lastCell.dispatchEvent(arrow("ArrowDown"))
+
+  expect(caretCell(view)).toBeNull() // left the table
+  // Lands at the true end of the swallowed range, not one line short of it
+  // (which `bounds()`'s old pipe-only line scan produced — a position still
+  // inside the real, tree-backed atomic table decoration).
+  expect(view.state.selection.main.head).toBe(view.state.doc.length)
+})
+
 test("ArrowRight crosses to the next cell only from the end of the text", async () => {
   const { view } = await mount("| hello | b |\n| - | - |\n| 1 | 2 |", { table: "cells" })
   const cell = await focusCell(view, "thead th", 0) // "hello"

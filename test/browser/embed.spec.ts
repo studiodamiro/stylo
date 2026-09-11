@@ -55,6 +55,29 @@ test.describe("![[embed]] on the in-place canvas", () => {
     await expect(page.locator(".cm-inplace-embed .fixture-embed")).toBeVisible()
   })
 
+  test("clicking a line below the embed lands there", async ({ page }) => {
+    // `.cm-inplace-embed` uses `padding`, not `margin`, for its vertical
+    // spacing — the same rule every other block widget got in the
+    // 2026-09-02 click-mapping pass (margin sits outside the border box
+    // CodeMirror's height map measures, which drifts click-to-position for
+    // everything below). A real user report confirmed this drift; this is a
+    // basic regression guard for the fix.
+    await openFixture(page, { mode: "in-place", doc: "embed", embed: "1" })
+    await line(page, 0).click()
+    await expect(page.locator(".cm-inplace-embed .fixture-embed")).toBeVisible()
+
+    const after = page.locator(".cm-content .cm-line", { hasText: "Text after the embed." })
+    await after.click()
+
+    const landedInside = await after.evaluate((el) => {
+      const sel = el.ownerDocument.getSelection()
+      const node = sel?.anchorNode
+      if (!node) return false
+      return el.contains(node instanceof Element ? node : node.parentElement)
+    })
+    expect(landedInside).toBe(true)
+  })
+
   test("without embedSource the reference stays a literal ! plus a wikilink chip", async ({
     page,
   }) => {
