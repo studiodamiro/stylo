@@ -6,6 +6,35 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-09-11
+
+No code changes — docs and test coverage only.
+
+### Changed
+
+- **README's "Why" section names the actual alternatives** (TipTap, Milkdown,
+  BlockNote, Lexical, Toast UI Editor, EasyMDE/SimpleMDE, raw CodeMirror 6) and
+  why round-trip fidelity rules each one out, instead of gesturing at
+  "ProseMirror/Lexical" generically.
+- **`wikiLinkSource` / `embedSource` mount-time docs** now warn against a `key`
+  remount when their backing data changes often (a note index, a file tree) —
+  it drops cursor position, undo history, and scroll — and show the
+  ref-plus-stable-`useCallback` pattern instead. See
+  [props · applied at mount](docs/wiki/reference/props.md#config-applied-at-mount).
+- **Auto-save guide sketches conflict detection** (a version stamp checked
+  before write) as a possible host-layer approach, without adding any API for
+  it — persistence policy stays the app's call. See the
+  [Auto-save guide](docs/wiki/guides/autosave.md).
+
+### Added
+
+- A permanent Vitest round-trip fixture (`test/round-trip.test.tsx`) —
+  frontmatter, both wikilink forms, an embed reference, inline and block math,
+  a table, fenced code, a thematic break, and a callout — asserting the live
+  document comes back unchanged on both `source` and `in-place` mode. The only
+  prior verification for this property was a scratch-and-delete Playwright
+  pass.
+
 ## [0.9.0] - 2026-09-11
 
 ### Added
@@ -362,6 +391,7 @@ consumable from git.
 - `inPlace` config is read once at mount; changing it needs a remount. (Now
   documented as an intentional contract — see `[Unreleased]`.)
 
+[0.9.1]: https://github.com/studiodamiro/stylo/releases/tag/v0.9.1
 [0.4.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.4.0
 [0.3.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.3.0
 [0.2.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.2.0
