@@ -6,6 +6,22 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-12
+
+### Changed
+
+- **Find/replace panel is one toolbar-height row.** `@codemirror/search`'s
+  fixed panel markup (find field, next/previous/all, three checkboxes, then
+  the replace row) is reordered with flex `order` onto a single line — find,
+  next/previous/all, replace, replace/replace all, then match
+  case/regexp/by word — with borderless buttons matching the main toolbar's
+  own, so it reads as one more row of the toolbar rather than a separate
+  floating panel. Tab order still follows the library's underlying DOM
+  order, not the new visual layout.
+- **The panel slides open and closed.** The toolbar's "search" command now
+  toggles the panel instead of only opening it, and both the panel's own ×
+  button and `Escape` animate it shut instead of removing it instantly.
+
 ## [0.9.1] - 2026-09-11
 
 No code changes — docs and test coverage only.
@@ -391,6 +407,7 @@ consumable from git.
 - `inPlace` config is read once at mount; changing it needs a remount. (Now
   documented as an intentional contract — see `[Unreleased]`.)
 
+[0.10.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.10.0
 [0.9.1]: https://github.com/studiodamiro/stylo/releases/tag/v0.9.1
 [0.4.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.4.0
 [0.3.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.3.0
