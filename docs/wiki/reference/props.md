@@ -41,6 +41,7 @@ import "@damiro/stylo/katex.css" // only if you use math in preview
 | `readOnly`        | `boolean`                                                                                       | `false`      | Render the source surface read-only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `placeholder`     | `string`                                                                                        | —            | Shown when the document is empty (source surface).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `className`       | `string`                                                                                        | —            | Added to the root element alongside the internal classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `canvasHeader`    | `(ctx: { view: EditorView \| null }) => ReactNode`                                              | —            | Host content docked inside the editing surface (`source`, `in-place`, `split`'s source pane; never `preview`) — after the find / replace panel, before the document body. See [Canvas header](#canvas-header) ([ADR-010](../../journal/2026-09/2026-09-12_adr-010-canvas-header-panel.md)).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 ## Config applied at mount
 
@@ -166,6 +167,36 @@ class="cm-inplace-embed-inline">…` (canvas). `.stylo-embed-content`,
   points; zero the padding and border to drop the block frame.
 - Off entirely when `embedSource` is omitted — `![[ref]]` then renders as it did
   before (the leading `!` as text, `[[ref]]` as a wikilink).
+
+## Canvas header
+
+`toolbar.render` wraps content _before_ the whole editing surface — useful for
+chrome that sits above everything, but there's no way from there to land
+content _inside_ the canvas, below CodeMirror's own top panels (the find /
+replace panel) and above the document body. `canvasHeader` reaches that seam:
+
+```tsx
+<Stylo value={doc} onChange={setDoc} canvasHeader={({ view }) => <FrontmatterCard view={view} />} />
+```
+
+- Renders on `source`, `in-place`, and the source pane of `split`; never
+  `preview` (there is no CodeMirror surface to dock into).
+- Docks _under_ the find / replace panel, so it never moves when the panel
+  opens or closes — only the document body shifts down to make room. Compare
+  `toolbar`, which always sits above the panel regardless of what a
+  `toolbar.render` wrapper puts around it.
+- Built on the same `showPanel` mechanism as the search panel itself (ordered
+  after it), so host content lives in the same coordinate system, not a
+  separately positioned overlay.
+- `view` is the live `EditorView` once the surface has mounted. Read once, at
+  mount — like `inPlace` and `wikiLinkSource`, a changed function is not
+  picked up without a remount, though the function's own closures (state,
+  props it reads) are of course free to change on every call.
+- No default styling — the panel is a plain, unstyled container. Style
+  whatever `canvasHeader` returns yourself.
+
+See [ADR-010](../../journal/2026-09/2026-09-12_adr-010-canvas-header-panel.md)
+for the reasoning behind the seam and how it composes with `toolbar.render`.
 
 ## Resolver errors
 

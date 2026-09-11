@@ -1,6 +1,9 @@
 import { useRef, useState, useSyncExternalStore } from "react"
+import type { ReactNode } from "react"
 import { createPortal } from "react-dom"
+import { showPanel } from "@codemirror/view"
 import type { EditorView } from "@codemirror/view"
+import { CanvasHeaderHost } from "../editor/canvas-header-panel"
 import { useCodeMirror } from "../editor/useCodeMirror"
 import { Embed } from "../render/Embed"
 import styles from "../styles/stylo.module.css"
@@ -13,6 +16,9 @@ import type {
 } from "../types"
 import { EmbedRegistry } from "./embed-registry"
 import { inPlaceExtension } from "./extension"
+
+const noopSubscribe = () => () => {}
+const noopSnapshot = () => null
 
 export interface InPlaceViewProps {
   value: string
@@ -36,6 +42,8 @@ export interface InPlaceViewProps {
   onSave?: (value: string) => void
   /** Called with the `EditorView` once created, and with `null` on teardown. */
   onViewChange?: (view: EditorView | null) => void
+  /** Host content docked after the search panel, before the document. Read once. */
+  canvasHeader?: (ctx: { view: EditorView | null }) => ReactNode
 }
 
 /**
@@ -66,6 +74,7 @@ export function InPlaceView({
   onResolveError,
   onSave,
   onViewChange,
+  canvasHeader,
 }: InPlaceViewProps) {
   const clickRef = useRef(onWikiLinkClick)
   clickRef.current = onWikiLinkClick
@@ -75,6 +84,22 @@ export function InPlaceView({
   const [registry] = useState(() => new EmbedRegistry())
   const slots = useSyncExternalStore(registry.subscribe, registry.getSnapshot, registry.getSnapshot)
 
+  const [editorView, setEditorView] = useState<EditorView | null>(null)
+  const onViewChangeRef = useRef(onViewChange)
+  onViewChangeRef.current = onViewChange
+  const handleViewChange = useRef((view: EditorView | null) => {
+    setEditorView(view)
+    onViewChangeRef.current?.(view)
+  }).current
+
+  const canvasHeaderRef = useRef(canvasHeader)
+  canvasHeaderRef.current = canvasHeader
+  const [headerHost] = useState(() => (canvasHeader ? new CanvasHeaderHost() : null))
+  const headerDom = useSyncExternalStore(
+    headerHost?.subscribe ?? noopSubscribe,
+    headerHost?.getSnapshot ?? noopSnapshot,
+  )
+
   // Built once; a changed handler is picked up through the ref, not a rebuild.
   const [extensions] = useState(() => [
     inPlaceExtension({
@@ -83,6 +108,7 @@ export function InPlaceView({
       inPlace,
       embedRegistry: embedSource ? registry : undefined,
     }),
+    ...(headerHost ? [showPanel.of(headerHost.panel)] : []),
   ])
 
   const ref = useCodeMirror({
@@ -95,7 +121,7 @@ export function InPlaceView({
     wikiLinkSource,
     onResolveError,
     onSave,
-    onViewChange,
+    onViewChange: handleViewChange,
   })
   return (
     <div className={styles.inplace} ref={ref}>
@@ -112,6 +138,9 @@ export function InPlaceView({
             String(slot.id),
           ),
         )}
+      {headerDom &&
+        canvasHeaderRef.current &&
+        createPortal(canvasHeaderRef.current({ view: editorView }), headerDom)}
     </div>
   )
 }

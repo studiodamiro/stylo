@@ -353,6 +353,16 @@ export interface StyloProps {
   placeholder?: string
   /** Extra class on the root element, alongside the internal classes. */
   className?: string
+  /**
+   * Host content docked inside the editing surface (`source`, `in-place`,
+   * `split`'s source pane; never `preview`) — after the find/replace panel,
+   * before the document body. Unlike `toolbar.render`, which wraps content
+   * *before* the whole canvas, this reaches the seam between CodeMirror's own
+   * top panels and its scroller, so host chrome (e.g. a frontmatter card) can
+   * sit under find/replace instead of always above it. `view` is `null` until
+   * the surface has mounted. Read once, at mount.
+   */
+  canvasHeader?: (ctx: { view: EditorView | null }) => ReactNode
 }
 
 /**

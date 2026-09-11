@@ -17,6 +17,7 @@ milestones and Architectural Decision Records, newest first.
 
 | ADR                                                                                   | Title                                                                 | Status   | Date       |
 | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | -------- | ---------- |
+| [ADR-010](./journal/2026-09/2026-09-12_adr-010-canvas-header-panel.md)                | A canvas header panel, docked under find/replace                      | Accepted | 2026-09-12 |
 | [ADR-009](./journal/2026-09/2026-09-11_adr-009-react-nodes-in-the-in-place-canvas.md) | Rendering host React nodes in the in-place canvas                     | Accepted | 2026-09-11 |
 | [ADR-008](./journal/2026-09/2026-09-04_adr-008-codemirror-peer-dependency.md)         | CodeMirror and Lezer as peer dependencies                             | Accepted | 2026-09-04 |
 | [ADR-007](./journal/2026-09/2026-09-03_adr-007-seamless-in-place.md)                  | Seamless in-place: Markdown markers never shown                       | Accepted | 2026-09-03 |
