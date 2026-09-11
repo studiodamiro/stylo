@@ -79,14 +79,14 @@ Optional, defaults to `true`. A right-click inside the canvas opens Stylo's own
 menu instead of the browser's. It has **one shape everywhere** (Obsidian's
 layout), so nothing jumps around:
 
-| Row                    | Opens                                                                                                                                                |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Add link**           | A `[[target]]` field. Prefilled + **Remove link** and labelled **Edit link** when the caret is in one.                                               |
-| **Add external link**  | A `[text](url)` field. Prefilled + **Open link** (fires `onLinkClick`) + **Remove link**, labelled **Edit external link**, when the caret is in one. |
-| **Format** ›           | Bold · Italic · Strikethrough · Inline code · Inline math                                                                                            |
-| **Paragraph** ›        | Bulleted / Numbered / Task list · Heading 1–3 · **Body** (strip the heading) · Blockquote                                                            |
-| **Insert** ›           | Table · Divider · Code block · Block math · Frontmatter — **greyed unless the line is empty**                                                        |
-| **Cut / Copy / Paste** | Clipboard                                                                                                                                            |
+| Row                    | Opens                                                                                                                                                                              |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Add link**           | A `[[target]]` field. Prefilled + **Remove link** and labelled **Edit link** when the caret is in one.                                                                             |
+| **Add external link**  | A `[text](url)` field. Prefilled + **Open link** (fires `onLinkClick`) + **Remove link**, labelled **Edit external link**, when the caret is in one.                               |
+| **Format** ›           | Bold · Italic · Strikethrough · Inline code · a **Math** field (LaTeX for `$…$` / one-line `$$…$$`; prefilled + **Remove math**, labelled **Edit math**, when the caret is in one) |
+| **Paragraph** ›        | Bulleted / Numbered / Task list · Heading 1–3 · **Body** (strip the heading) · Blockquote                                                                                          |
+| **Insert** ›           | Table · Divider · Code block · Block math · Frontmatter — **greyed unless the line is empty**                                                                                      |
+| **Cut / Copy / Paste** | Clipboard                                                                                                                                                                          |
 
 A right-click with no selection first **selects the word under the pointer**, so
 the menu acts on that word. Items that can't produce valid Markdown where the
@@ -212,6 +212,13 @@ destination — the raw `(url)` or the `[[target]]`. Under `reveal: "never"` tha
 destination is otherwise never on screen, so this is the way to read it without
 turning the link into an edit. Gated by `decorations.links` /
 `decorations.wikilinks`; styled through `.cm-inplace-href-tip`.
+
+A rendered `$…$` / one-line `$$…$$` math widget gets the same treatment —
+hovering it shows its raw LaTeX, and clicking it opens the same **Math** field
+the right-click menu uses, at the pointer. Gated by `decorations.math`. A
+multi-line `$$` block is unaffected — it keeps its existing caret-reveal, the
+way a fenced code block did before it got the same treatment (ADR-007
+rollout log).
 
 ## Autoformat on type
 

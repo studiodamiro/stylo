@@ -145,14 +145,22 @@ test("reveal: 'never' keeps the ** markers hidden even with the caret on the lin
   expect(hidesAMarker(view)).toBe(true)
 })
 
-test("reveal: 'never' still lets inline $…$ math reveal its source on-caret", async () => {
+test("reveal: 'never' keeps inline $…$ math a widget with the caret on it", async () => {
   const { view } = await mount("before $x^2$ after\n\ntail", { reveal: "never" })
 
   view.dispatch({ selection: { anchor: view.state.doc.length } })
   expect(mathWidgets(view).some((w) => !w.block)).toBe(true)
 
   view.dispatch({ selection: { anchor: 9 } }) // inside the math
-  expect(mathWidgets(view).some((w) => !w.block)).toBe(false)
+  expect(mathWidgets(view).some((w) => !w.block)).toBe(true) // still a widget, no raw source
+  expect(hidesAMarker(view)).toBe(false) // the whole span is a widget, not a hidden marker
+})
+
+test("reveal: 'caret' still reveals inline $…$ math source on-caret", async () => {
+  const { view } = await mount("before $x^2$ after\n\ntail", { reveal: "caret" })
+
+  view.dispatch({ selection: { anchor: 9 } }) // inside the math
+  expect(mathWidgets(view).some((w) => !w.block)).toBe(false) // raw source shown
 })
 
 test("italic, strikethrough, and inline code each get a decoration", async () => {

@@ -27,6 +27,7 @@ import { linkHoverTooltip } from "./link-hover"
 import { embedField } from "./embed"
 import type { EmbedRegistry } from "./embed-registry"
 import { blockMathField } from "./math"
+import { mathClickEditor, mathHoverTooltip } from "./math-edit"
 import { menuOpenField } from "./menu-open"
 import { contextMenuLayer } from "./menu-plugin"
 import { inPlaceDecorations } from "./plugin"
@@ -127,6 +128,8 @@ export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
     selectionBar,
     linkClickEditor,
     linkHoverTooltip,
+    mathClickEditor,
+    mathHoverTooltip,
     Prec.high(inPlaceTheme),
     EditorView.domEventHandlers({
       mousedown(event, view) {

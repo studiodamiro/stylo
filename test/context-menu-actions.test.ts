@@ -2,8 +2,14 @@ import { markdownLanguage } from "@codemirror/lang-markdown"
 import { EditorSelection, EditorState } from "@codemirror/state"
 import { EditorView } from "@codemirror/view"
 import { expect, test } from "vitest"
-import { codeBlockRow, linkRow, menuRows, wikiLinkRow } from "../src/inplace/context-menu-actions"
-import type { MenuAction, MenuRow, MenuSubmenu } from "../src/inplace/context-menu"
+import {
+  codeBlockRow,
+  linkRow,
+  mathRow,
+  menuRows,
+  wikiLinkRow,
+} from "../src/inplace/context-menu-actions"
+import type { MenuAction, MenuField, MenuRow, MenuSubmenu } from "../src/inplace/context-menu"
 import {
   menuGroupsFacet,
   resolveContextMenu,
@@ -58,14 +64,14 @@ test("the menu keeps one shape: link rows, Format / Paragraph / Insert, clipboar
   ])
 })
 
-test("the Format submenu carries the inline marks and inline math", () => {
+test("the Format submenu carries the inline marks, inline code, and a math field", () => {
   const fmt = sub(menuRows(mkView("hello world", 0, 5)), "Format")!
   expect(labels(fmt.rows)).toEqual([
     "Bold",
     "Italic",
     "Strikethrough",
     "Inline code",
-    "Inline math",
+    "Add math", // no existing $…$ at the caret — an empty field that wraps a selection
   ])
 })
 
@@ -261,16 +267,64 @@ test("the Paragraph submenu's Body row clears a heading", () => {
   expect(view.state.doc.toString()).toBe("A Heading")
 })
 
-test("inside $math$ the Format submenu greys every mark except Math", () => {
+test("inside $math$ the Format submenu greys every mark and offers Edit math", () => {
   const doc = "wrap $x$ up"
   const view = mkView(doc, doc.indexOf("x") + 1)
   const fmt = sub(menuRows(view), "Format")!
   const byLabel = (l: string) =>
-    fmt.rows.find((r): r is MenuAction => r !== "separator" && r.label === l)!
+    fmt.rows.find((r): r is MenuAction => r !== "separator" && "onSelect" in r && r.label === l)!
   expect(byLabel("Bold").disabled).toBe(true)
   expect(byLabel("Italic").disabled).toBe(true)
   expect(byLabel("Inline code").disabled).toBe(true)
-  expect(byLabel("Inline math").disabled).toBe(false)
+
+  const field = fmt.rows.find((r): r is MenuField => r !== "separator" && "field" in r)!
+  expect(field.label).toBe("Edit math")
+  expect(field.value).toBe("x")
+})
+
+test("'Add math' wraps the selection as $…$ on submit", () => {
+  const view = mkView("wrap word here", 5, 9) // "word"
+  const row = mathRow(view)
+  expect(row.label).toBe("Add math")
+  expect(row.value).toBe("")
+  row.onSubmit("x^2")
+  expect(view.state.doc.toString()).toBe("wrap $x^2$ here")
+})
+
+test("the caret in $…$ gets a prefilled 'Edit math' field with Remove math", () => {
+  const doc = "see $e^{i\\pi}$ here"
+  const view = mkView(doc, doc.indexOf("pi") + 1)
+  const row = mathRow(view)
+  expect(row.label).toBe("Edit math")
+  expect(row.value).toBe("e^{i\\pi}")
+
+  row.onSubmit("x^2")
+  expect(view.state.doc.toString()).toBe("see $x^2$ here")
+})
+
+test("Remove math unwraps to the literal LaTeX", () => {
+  const doc = "see $e^{i\\pi}$ here"
+  const view = mkView(doc, doc.indexOf("pi") + 1)
+  mathRow(view)
+    .actions!.find((a) => a.label === "Remove math")!
+    .onSelect()
+  expect(view.state.doc.toString()).toBe("see e^{i\\pi} here")
+})
+
+test("the caret in a one-line $$…$$ block gets a prefilled field rewritten as $$…$$", () => {
+  const doc = "before $$x^2 + 1$$ after"
+  const view = mkView(doc, doc.indexOf("x^2"))
+  const row = mathRow(view)
+  expect(row.label).toBe("Edit math")
+  expect(row.value).toBe("x^2 + 1")
+  row.onSubmit("y^3")
+  expect(view.state.doc.toString()).toBe("before $$y^3$$ after")
+})
+
+test("a multi-line $$ block's opening fence has no math at the caret — an empty Add math field", () => {
+  const view = mkView("$$\nx^2\n$$", 0)
+  const row = mathRow(view)
+  expect(row.label).toBe("Add math")
 })
 
 test("Paste is disabled with a hint when async clipboard read is unavailable", () => {
