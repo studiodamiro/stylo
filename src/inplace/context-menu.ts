@@ -6,56 +6,11 @@
  */
 
 import { iconSvg } from "../toolbar/icon-paths"
+import { armDismiss, place, placeFlyout } from "./context-menu-shell"
+import { isField, isSubmenu } from "./context-menu-types"
+import type { ContextMenu, MenuAction, MenuField, MenuRow } from "./context-menu-types"
 
-export interface MenuAction {
-  label: string
-  /** Stroke-path data for a leading glyph (see `toolbar/icon-paths`). */
-  icon?: string
-  /** Rendered with emphasis when true. */
-  active?: boolean
-  /** Shown greyed and not selectable. */
-  disabled?: boolean
-  /** Native `title` tooltip — e.g. why a disabled row is disabled. */
-  title?: string
-  onSelect: () => void
-}
-
-export interface MenuSubmenu {
-  label: string
-  icon?: string
-  rows: MenuRow[]
-  /** Greyed, and its flyout never opens. */
-  disabled?: boolean
-}
-
-/** A row whose flyout is a single text input plus optional action buttons. */
-export interface MenuField {
-  field: true
-  label: string
-  icon?: string
-  value: string
-  placeholder?: string
-  onSubmit: (value: string) => void
-  actions?: MenuAction[]
-}
-
-export type MenuRow = MenuAction | MenuSubmenu | MenuField | "separator"
-
-export interface ContextMenu {
-  /** Append once to a stable container (typically `document.body`). */
-  readonly el: HTMLElement
-  readonly isOpen: boolean
-  /** Render `rows` and show the menu at a viewport point, clamped on-screen. */
-  show: (rows: MenuRow[], x: number, y: number) => void
-  /** Show a single field panel directly, with no wrapping menu row. */
-  showField: (field: MenuField, x: number, y: number) => void
-  hide: () => void
-  /** Remove the element and drop document listeners. */
-  destroy: () => void
-}
-
-const isSubmenu = (r: MenuRow): r is MenuSubmenu => typeof r !== "string" && "rows" in r
-const isField = (r: MenuRow): r is MenuField => typeof r !== "string" && "field" in r
+export type { MenuAction, MenuSubmenu, MenuField, MenuRow, ContextMenu } from "./context-menu-types"
 
 export function createContextMenu(
   doc: Document,
@@ -152,7 +107,7 @@ export function createContextMenu(
       const panel = build()
       panel.dataset.for = text
       root.appendChild(panel)
-      placeFlyout(panel, b.getBoundingClientRect())
+      placeFlyout(panel, b.getBoundingClientRect(), win)
       flyout = panel
       // `preventScroll` — a focus-induced scroll would trip the menu's own
       // dismiss-on-scroll handler and close it the instant the field opens.
@@ -205,73 +160,13 @@ export function createContextMenu(
     return panel
   }
 
-  // Place a fixed-position panel at (x, y), nudged back on-screen on overflow.
-  const place = (panel: HTMLElement, x: number, y: number) => {
-    const vw = win?.innerWidth ?? 0
-    const vh = win?.innerHeight ?? 0
-    panel.style.left = "0"
-    panel.style.top = "0"
-    const { width, height } = panel.getBoundingClientRect()
-    panel.style.left = `${Math.max(4, Math.min(x, vw - width - 4))}px`
-    panel.style.top = `${Math.max(4, Math.min(y, vh - height - 4))}px`
-  }
-
-  // A flyout sits to the right of its parent row; if it would run off-screen it
-  // flips to the left instead of being shoved back over the menu (which would
-  // leave a gap the pointer has to cross, closing it mid-approach).
-  const placeFlyout = (panel: HTMLElement, host: DOMRect) => {
-    const vw = win?.innerWidth ?? 0
-    const vh = win?.innerHeight ?? 0
-    panel.style.left = "0"
-    panel.style.top = "0"
-    const { width, height } = panel.getBoundingClientRect()
-    const right = host.right - 4
-    const left = right + width > vw - 4 ? host.left - width + 4 : right
-    panel.style.left = `${Math.max(4, left)}px`
-    panel.style.top = `${Math.max(4, Math.min(host.top - 4, vh - height - 4))}px`
-  }
-
-  const armDismiss = () => {
-    const armedAt = Date.now()
-    const outside = (e: Event) => !root.contains(e.target as Node)
-    const onDown = (e: Event) => {
-      if (outside(e)) hide()
-    }
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") hide()
-    }
-    // A scroll dismisses the menu — but not one in the first moments after it
-    // opens. A touch long-press is one continuous gesture that routinely emits
-    // an incidental scroll (iOS's own long-press handling, a hair of finger
-    // drift, a focus-driven viewport shift) in the frames right after the menu
-    // appears; without this grace it is gone before the finger lifts. A
-    // deliberate scroll-away lands well after the window. Also skips scrolls
-    // from inside the menu — e.g. the URL input scrolling its own text.
-    const onScroll = (e: Event) => {
-      if (Date.now() - armedAt < 350) return
-      if (outside(e)) hide()
-    }
-    // `pointerdown` as well as `mousedown` — a touch tap outside fires only the
-    // former, and without it the menu could not be dismissed on a touch device.
-    doc.addEventListener("pointerdown", onDown, true)
-    doc.addEventListener("mousedown", onDown, true)
-    doc.addEventListener("keydown", onKey, true)
-    doc.addEventListener("scroll", onScroll, true)
-    unbind = () => {
-      doc.removeEventListener("pointerdown", onDown, true)
-      doc.removeEventListener("mousedown", onDown, true)
-      doc.removeEventListener("keydown", onKey, true)
-      doc.removeEventListener("scroll", onScroll, true)
-    }
-  }
-
   const show = (rows: MenuRow[], x: number, y: number) => {
     hide()
     const main = buildPanel(rows)
     root.appendChild(main)
     root.hidden = false
-    place(main, x, y)
-    armDismiss()
+    place(main, x, y, win)
+    unbind = armDismiss(doc, root, hide)
     onOpenChange?.(true)
   }
 
@@ -282,9 +177,9 @@ export function createContextMenu(
     const panel = fieldPanel(f)
     root.appendChild(panel)
     root.hidden = false
-    place(panel, x, y)
+    place(panel, x, y, win)
     ;(panel.querySelector("input") as HTMLInputElement | null)?.focus({ preventScroll: true })
-    armDismiss()
+    unbind = armDismiss(doc, root, hide)
     onOpenChange?.(true)
   }
 

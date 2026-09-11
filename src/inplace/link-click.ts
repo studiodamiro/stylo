@@ -15,7 +15,7 @@
 import { ViewPlugin, type EditorView, type PluginValue } from "@codemirror/view"
 import { inPlaceConfigFacet, revealModeFacet } from "./config"
 import { createContextMenu, type ContextMenu } from "./context-menu"
-import { linkRow } from "./context-menu-actions"
+import { linkRow } from "./link-row"
 
 class LinkClickEditor implements PluginValue {
   private menu: ContextMenu

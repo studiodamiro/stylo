@@ -138,16 +138,17 @@ construct per PR.
   never matches. `decorate.ts` flipped `scanInlineMath` to `revealed`. ADR-007
   rollout log, 2026-09-11.
 
-### 10 — (optional) split the files over 200 LOC · size L in aggregate · deps: none
+### 10 — split the files over 200 LOC · size L in aggregate · deps: none
 
-Not consumer-facing — nobody downstream imports these. Split by responsibility,
-no behaviour change; one file per PR, same cadence as items 1–9. Re-surveyed
-2026-09-11 after item 9 (`context-menu-actions.ts` in particular grew a lot from
-the math work) — 11 files over the ceiling now, not the original 6:
+**Done, with one deliberate exception (table-widget.ts).** Not consumer-facing —
+nobody downstream imports these. Split by responsibility, no behaviour change.
+Re-surveyed 2026-09-11 after item 9 (`context-menu-actions.ts` in particular grew
+a lot from the math work) — 11 files over the ceiling, not the original 6. Landed
+as a full sweep, smallest to largest, 10a on its own branch/PR and 10b–10k
+together on one (mechanical, low-behaviour-risk reorganisation, reviewed and
+tested as a batch rather than ten separate review cycles):
 
-**Order (smallest first):**
-
-- **10a — `toolbar/block.ts`** (was 201). _Done._ Split into `block.ts` (kept:
+- **10a — `toolbar/block.ts`** (was 201). Split into `block.ts` (kept:
   `selectedLines`, `LinePrefixSpec`/`toggleLinePrefix`/`linePrefixActive` — the
   generic line-prefix machinery list/quote/task share), `heading.ts`
   (`toggleHeading`/`clearHeading`), `rule.ts`
@@ -155,19 +156,66 @@ the math work) — 11 files over the ceiling now, not the original 6:
   (`toggleFrontmatter`/`frontmatterActive`) — one file per block-level
   construct's toggle command, the pattern `fence.ts` already set for code /
   math blocks. All four land under 80 LOC.
-- **10b — `inplace/selection-bar.ts`** (was 214).
-- **10c — `toolbar/table.ts`** (was 239).
-- **10d — `inplace/edit-boundaries.ts`** (was 267).
-- **10e — `inplace/nodes.ts`** (was 291).
-- **10f — `toolbar/commands.ts`** (was 297).
-- **10g — `inplace/context-menu.ts`** (was 304).
-- **10h — `toolbar/inline-ops.ts`** (was 330).
-- **10i — `inplace/theme.ts`** (was 459).
-- **10j — `inplace/table-widget.ts`** (was 467).
-- **10k — `inplace/context-menu-actions.ts`** (was 522, the worst offender —
-  tripled from item 9's math-menu work). Likely split: pull `linkRow` /
-  `wikiLinkRow` / `mathRow` / `codeBlockRow` / `dividerRow` (the individual
-  menu-row builders) out to sit beside their construct's own file, leaving
-  `context-menu-actions.ts` as pure assembly (`menuRows`, the groups,
-  `cellSelectionRows`, the generic `toAction`/`actions`/`clipboardRows`
-  helpers).
+- **10b — `inplace/selection-bar.ts`** (was 214 → 139). The pure geometry
+  (`selectionBox`, `measureBarPlacement`) split to `selection-bar-position.ts`;
+  the `ViewPlugin` class keeps the wiring.
+- **10c — `toolbar/table.ts`** (was 239 → 144). The parsing/position math
+  (`findTable`, `locate`, `resolve`, `cellSourcePos`) split to
+  `table-position.ts`; `table.ts` keeps the editing commands and keymap.
+- **10d — `inplace/edit-boundaries.ts`** (was 267 → 163). The construct
+  detection (`wrapAt`, `markersHidden`, the `Wrap` type) split to `wrap-at.ts` —
+  used by `edit-insert-assoc.ts`, `edit-line-prefix.ts`, `edit-divider.ts`, and
+  `menu-plugin.ts` too, not just the Backspace/Delete/arrow keymap that stays
+  here.
+- **10e — `inplace/nodes.ts`** (was 291 → 112). The `decorateNode` dispatch and
+  heading/setext handling stay; the inline-mark/link branches moved to
+  `nodes-inline.ts`, the block-level branches (rule, blockquote, list, task,
+  fenced code) to `nodes-blocks.ts`. Each branch's body copied verbatim — only
+  the file it lives in changed.
+- **10f — `toolbar/commands.ts`** (was 297 → 173). The context predicates,
+  `ToolbarCommand` type, and the `history`/`wrap`/`heading`/`prefix` factories
+  split to `command-helpers.ts`; `commands.ts` keeps just the
+  `BUILTIN_COMMANDS` registry.
+- **10g — `inplace/context-menu.ts`** (was 304 → 199). Row/shell types
+  (`MenuAction`, `MenuField`, …) split to `context-menu-types.ts` (re-exported,
+  so no importer changed); viewport placement and dismiss-wiring split to
+  `context-menu-shell.ts`. `createContextMenu`'s DOM-building closure — tightly
+  coupled to its own mutable `flyout` state — stayed put.
+- **10h — `toolbar/inline-ops.ts`** (was 330 → 179). Link / wikilink / underline
+  ops split to `link-ops.ts` / `wikilink-ops.ts` / `underline-ops.ts`, all
+  re-exported from `inline-ops.ts` so the many mixed-import call sites needed no
+  changes. The generic wrap-mark machinery (`wrapOp`, `markedContentAt`, …)
+  stayed.
+- **10i — `inplace/theme.ts`** (was 459 → 33). The one `EditorView.theme(...)`
+  call now spreads together `theme-canvas.ts`, `theme-callout.ts`,
+  `theme-table.ts`, `theme-table-gizmos.ts`, `theme-menu.ts`, and
+  `theme-popups.ts` (font tokens shared via `theme-fonts.ts`) — verified no
+  selector key collides across files (spreading two objects with the same
+  top-level key would silently drop one), then confirmed visually in real
+  Chrome (headings, a callout, marks, a rule, a table) alongside the full
+  browser suite.
+- **10j — `inplace/table-widget.ts`** (was 467 → 439, still over).
+  **Deliberate exception.** The pure grid-to-DOM rendering (`paintCell`,
+  `renderTableCells`) split to `table-widget-render.ts` and the pure
+  DOM-selection read (`caretInCell`) to `table-widget-caret.ts` — genuine,
+  low-risk wins. The rest of `EditableTableWidget` is one cohesive
+  `WidgetType` subclass whose methods share deeply mutable state (`table`,
+  `rows`, `editing`, `syncing`, `pendingOffset`, `gizmos`) — keyboard
+  navigation, focus/blur sequencing, IME composition, long-press, structural
+  edits. Splitting further would mean turning nearly every private method into
+  a free function taking an explicit "host" object exposing that same mutable
+  state — LOC-shuffling, not a cohesion improvement, and real regression risk
+  in the most interaction-heavy surface in the codebase. `CONTRIBUTING.md`
+  calls 200 lines a hard ceiling, and this knowingly stays over it — flagged
+  here rather than quietly left, so it's a decision on record, not a miss.
+  Revisit if the class actually gets harder to work in, or if a natural seam
+  appears (e.g. the keyboard-navigation state machine outgrows inline
+  handling), not just to satisfy the count.
+- **10k — `inplace/context-menu-actions.ts`** (was 522 → 186, the worst
+  offender — tripled from item 9's math-menu work). `linkRow` / `wikiLinkRow`
+  moved to `link-row.ts`; `mathRow` moved into `math-edit.ts` (beside the math
+  click/hover handlers it's already paired with); `dividerRow` moved into
+  `edit-divider.ts` (beside `onHiddenRule`). The generic
+  `toAction`/`actions`/`clipboardRows`/`submenu`/`pushGroup` helpers moved to
+  `context-menu-helpers.ts`. `context-menu-actions.ts` is now pure assembly:
+  `menuRows` and the group builders.

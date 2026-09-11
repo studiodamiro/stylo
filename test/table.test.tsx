@@ -5,8 +5,9 @@ import { EditorView } from "@codemirror/view"
 import { markdownLanguage } from "@codemirror/lang-markdown"
 import { Stylo } from "../src/Stylo"
 import { BUILTIN_BY_ID } from "../src/toolbar/commands"
-import { cellSourcePos, tableKeymap, tableRealign } from "../src/toolbar/table"
+import { tableKeymap, tableRealign } from "../src/toolbar/table"
 import { parseGrid, serializeGrid } from "../src/toolbar/table-grid"
+import { cellSourcePos } from "../src/toolbar/table-position"
 
 afterEach(cleanup)
 

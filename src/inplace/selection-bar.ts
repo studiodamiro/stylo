@@ -16,17 +16,11 @@ import type { ToolbarCommandId } from "../types"
 import { activeTableCell } from "../toolbar/cell-inline"
 import { BUILTIN_BY_ID } from "../toolbar/commands"
 import { ICON_PATHS, iconSvg } from "../toolbar/icon-paths"
-import { selectionBarItemsFacet, selectionUIFacet } from "./config"
+import { selectionBarItemsFacet } from "./config"
 import { createContextMenu, type ContextMenu } from "./context-menu"
-import { cellHasSelection, linkRow, wikiLinkRow } from "./context-menu-actions"
+import { linkRow, wikiLinkRow } from "./link-row"
 import { menuOpenField } from "./menu-open"
-
-interface Box {
-  left: number
-  right: number
-  top: number
-  bottom: number
-}
+import { measureBarPlacement, type Placement } from "./selection-bar-position"
 
 class SelectionBar implements PluginValue {
   private bar: HTMLElement
@@ -115,70 +109,8 @@ class SelectionBar implements PluginValue {
     })
   }
 
-  /** The screen box of the current text selection — editor or table cell. */
-  private selectionBox(): { box: Box; inCell: boolean } | null {
-    const { view } = this
-    const sel = view.state.selection.main
-    if (!sel.empty) {
-      const from = view.coordsAtPos(sel.from)
-      const to = view.coordsAtPos(sel.to)
-      if (!from || !to) return null
-      return {
-        inCell: false,
-        box: {
-          left: Math.min(from.left, to.left),
-          right: Math.max(from.right, to.right),
-          top: Math.min(from.top, to.top),
-          bottom: Math.max(from.bottom, to.bottom),
-        },
-      }
-    }
-    if (!cellHasSelection(view)) return null
-    const dom = view.dom.ownerDocument.getSelection()
-    if (!dom || dom.rangeCount === 0) return null
-    const r = dom.getRangeAt(0).getBoundingClientRect()
-    return { inCell: true, box: { left: r.left, right: r.right, top: r.top, bottom: r.bottom } }
-  }
-
   private measure(): Placement {
-    const { view } = this
-    if (view.state.facet(selectionUIFacet) !== "bar") return null
-    // The right-click menu is up — yield to it rather than stack two popups.
-    // The bar re-measures and returns when `menuOpenField` clears.
-    if (view.state.field(menuOpenField, false)) return null
-    const found = this.selectionBox()
-    if (!found) return null
-    const { box, inCell } = found
-    // The editor-selection path needs editor focus; the cell path is already
-    // gated on the cell being `document.activeElement` (via `cellHasSelection`).
-    if (!inCell && !view.hasFocus) return null
-
-    const barRect = this.bar.getBoundingClientRect() // `[hidden]` hides visibility only
-    const vw = view.dom.ownerDocument.defaultView?.innerWidth ?? 0
-    const midX = (box.left + box.right) / 2
-    const editorTop = view.dom.getBoundingClientRect().top
-    const aboveTop = box.top - barRect.height - 6
-    const belowTop = box.bottom + 6
-
-    const disabled: Record<string, boolean> = {}
-    const active: Record<string, boolean> = {}
-    for (const id of this.ids) {
-      const cmd = BUILTIN_BY_ID[id]!
-      // Every mark applies to a non-empty cell selection; `isActive` / `disabled`
-      // read `state.selection`, which is collapsed there, so skip them.
-      const off = inCell ? false : Boolean(cmd.disabled?.(view.state))
-      disabled[id] = off
-      active[id] = !off && !inCell && Boolean(cmd.isActive?.(view.state))
-    }
-    // Nothing the bar offers applies here (a fenced code / `$$` / frontmatter
-    // selection) — show no bar rather than a row of dead buttons.
-    if (this.ids.every((id) => disabled[id])) return null
-    return {
-      left: Math.max(4, Math.min(midX - barRect.width / 2, vw - barRect.width - 4)),
-      top: aboveTop < editorTop + 2 ? belowTop : aboveTop,
-      disabled,
-      active,
-    }
+    return measureBarPlacement(this.view, this.bar, this.ids)
   }
 
   private apply(m: Placement) {
@@ -202,13 +134,6 @@ class SelectionBar implements PluginValue {
     this.linkMenu.destroy()
     this.bar.remove()
   }
-}
-
-type Placement = null | {
-  left: number
-  top: number
-  disabled: Record<string, boolean>
-  active: Record<string, boolean>
 }
 
 export const selectionBar = ViewPlugin.fromClass(SelectionBar)
