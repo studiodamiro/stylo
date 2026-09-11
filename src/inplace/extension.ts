@@ -18,6 +18,7 @@ import {
 } from "./config"
 import { inPlaceEditBoundaries } from "./edit-boundaries"
 import { inPlaceAutoformat } from "./autoformat"
+import { inPlaceDividerEdit } from "./edit-divider"
 import { inPlaceInsertAssociation } from "./edit-insert-assoc"
 import { inPlaceLinePrefixEdit } from "./edit-line-prefix"
 import { frontmatterField } from "./frontmatter"
@@ -108,9 +109,11 @@ export function inPlaceExtension(opts: InPlaceOptions = {}): Extension {
     selectionUIFacet.of(opts.inPlace?.selectionUI ?? "menu"),
     selectionBarItemsFacet.of(resolveSelectionBarItems(opts.inPlace?.selectionBarItems)),
     inPlaceDecorations(),
-    // Backspace: the line-prefix unwrap gets first refusal, then the
-    // step-over-markers handler, then CodeMirror's default.
+    // Backspace: the line-prefix unwrap gets first refusal, then removing a
+    // rendered thematic break, then the step-over-markers handler, then
+    // CodeMirror's default.
     inPlaceLinePrefixEdit,
+    inPlaceDividerEdit,
     inPlaceEditBoundaries,
     inPlaceTableEnter,
     inPlaceInsertAssociation,

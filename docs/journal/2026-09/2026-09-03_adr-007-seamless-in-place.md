@@ -482,6 +482,25 @@ n }` to the line decoration they already emit. No new dependency; `role` +
   (fences stay hidden with the caret in the block; body-less block still
   reveals) and `in-place-canvas.spec.ts`.
 
+- **2026-09-11 — Seamless exceptions, 2 of 3: thematic breaks.** A `---` / `***`
+  / `___` line no longer reveals its source on caret entry under
+  `reveal: "never"` — `nodes.ts` reads `revealed` instead of `caretRevealed`
+  for `HorizontalRule`, so the rendered `<hr>` stays put with the caret on the
+  line. There is nothing to _edit_ in a rule, so the affordance it needs is
+  removal, and it gets two: a `Prec.high` Backspace / Delete keymap
+  (`edit-divider.ts` — `removeHiddenRule`, gated on `markersHidden` and a
+  `HorizontalRule` syntax node so a Setext underline and `reveal: "caret"` are
+  both left alone) and a **Remove divider** row in the right-click menu (a
+  focused context like the fenced-code one; `menu-plugin.ts` places the caret on
+  the rule line explicitly on a right-click of the `<hr>`, since `posAtCoords`
+  over a block widget is unreliable). Both routes call the existing
+  `toggleHorizontalRule`, which already removes the rule the caret is on.
+  Clicking the `<hr>` still lands the caret on the rule line (the existing
+  `REVEAL_WIDGET` mousedown path), so Backspace works straight after a click.
+  Coverage: `edit-divider.test.ts`, `inplace.test.tsx` (widget kept with the
+  caret on it; `removeHiddenRule` removes; no-op under `reveal: "caret"`),
+  `context-menu.test.tsx`, `in-place-canvas.spec.ts`.
+
 ## Consequences
 
 ### Positive

@@ -16,6 +16,7 @@ import { ICON_PATHS } from "../toolbar/icon-paths"
 import { linkPartsIn, wikiLinkAtIn, wikiLinkPartsIn } from "../toolbar/inline-ops"
 import { linkOpenFacet, menuGroupsFacet, selectionUIFacet } from "./config"
 import type { MenuAction, MenuField, MenuRow, MenuSubmenu } from "./context-menu"
+import { onHiddenRule } from "./edit-divider"
 import { selectionOffsets } from "./table-cell-dom"
 
 /** Menu glyph for a command id — headings share one, the rest map by id. */
@@ -330,6 +331,22 @@ export function codeBlockRow(view: EditorView): MenuField {
   }
 }
 
+/**
+ * The single row shown when the caret is on a rendered thematic break: its
+ * source is hidden under `reveal: "never"` and there is nothing to edit in a
+ * rule, so removal is the only action.
+ */
+export function dividerRow(view: EditorView): MenuAction {
+  return {
+    label: "Remove divider",
+    icon: ICON_PATHS.hr,
+    onSelect: () => {
+      BUILTIN_BY_ID.hr?.run(view) // the caret is on the rule, so this removes it
+      view.focus()
+    },
+  }
+}
+
 /** Bold / Italic / Strikethrough, then inline code + inline math. */
 const formatGroup = (view: EditorView, inCell = false): MenuRow[] => [
   ...actions(view, FORMAT_MARK_IDS, false, inCell),
@@ -397,6 +414,14 @@ export function menuRows(view: EditorView): MenuRow[] {
   // unwrap, plus clipboard.
   if (fencedCodeActive(state)) {
     const rows: MenuRow[] = [codeBlockRow(view)]
+    if (has("clipboard")) pushGroup(rows, clipboardRows(view))
+    return rows
+  }
+
+  // A rendered thematic break — nothing to format or insert on it, so offer a
+  // plain removal plus clipboard.
+  if (onHiddenRule(state)) {
+    const rows: MenuRow[] = [dividerRow(view)]
     if (has("clipboard")) pushGroup(rows, clipboardRows(view))
     return rows
   }

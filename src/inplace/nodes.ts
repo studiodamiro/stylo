@@ -149,11 +149,13 @@ export function decorateNode(node: SyntaxNodeRef, ctx: NodeCtx): boolean | undef
   if (node.name === "HorizontalRule") {
     if (!toggles.horizontalRule) return false
     const line = doc.lineAt(node.from)
-    // `caretRevealed`, not `revealed`: with the caret on the rule line the raw
-    // `---` shows again (even under `reveal: "never"`), so there is a visible
-    // caret to sit on and the marker is editable — the same exception fenced
-    // code and `$$` math make.
-    if (!caretRevealed.has(line.number)) {
+    // `revealed`, not `caretRevealed`: under `reveal: "never"` the rule no
+    // longer shows its `---` on caret entry — there is nothing to edit in a
+    // thematic break, so the affordance is removal instead (Backspace / Delete
+    // on the line, or the "Remove divider" menu row; see `edit-divider.ts` and
+    // the ADR-007 rollout log). Under `reveal: "caret"` `revealed` equals the
+    // caret set, so that mode is unchanged.
+    if (!revealed.has(line.number)) {
       // Zero the line's own text-row strut; the widget alone sets the height.
       out.push(Decoration.line({ class: "cm-inplace-hr-line" }).range(line.from))
       out.push(Decoration.replace({ widget: new HrWidget() }).range(line.from, line.to))

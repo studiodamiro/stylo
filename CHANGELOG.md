@@ -45,6 +45,12 @@ Notable changes to Stylo. The format follows
   fences on caret entry, as the only way to see or delete it. No effect under
   the default `reveal: "caret"`.
 
+- **`inPlace.reveal: "never"` — a `---` / `***` thematic break no longer shows
+  its source when the caret is on it.** The rendered `<hr>` stays put; to remove
+  the rule, press Backspace or Delete on the line, or right-click it for
+  **Remove divider**. Clicking the rule places the caret on it, so Backspace
+  works straight after. No effect under the default `reveal: "caret"`.
+
 ## [0.9.0] - 2026-09-11
 
 ### Added

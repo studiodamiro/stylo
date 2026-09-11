@@ -4,6 +4,7 @@ import { EditorView, type WidgetType } from "@codemirror/view"
 import { Stylo } from "../src/Stylo"
 import { frontmatterField } from "../src/inplace/frontmatter"
 import { blockMathField } from "../src/inplace/math"
+import { removeHiddenRule } from "../src/inplace/edit-divider"
 import { inPlacePlugin } from "../src/inplace/plugin"
 import { tableField } from "../src/inplace/tables"
 import { BulletWidget, CheckboxWidget, HrWidget } from "../src/inplace/widgets"
@@ -302,14 +303,27 @@ test("a horizontal rule becomes a widget off-line, source on-line", async () => 
   expect(countWidgets(view, HrWidget)).toBe(0)
 })
 
-test("reveal: 'never' still shows the rule's source when the caret is on it", async () => {
+test("reveal: 'never' keeps the rule a widget with the caret on it, and Backspace removes it", async () => {
   const { view } = await mount("above\n\n---\n\nbelow", { reveal: "never" })
 
   view.dispatch({ selection: { anchor: view.state.doc.length } })
   expect(countWidgets(view, HrWidget)).toBe(1) // widget off-caret
 
   view.dispatch({ selection: { anchor: view.state.doc.line(3).from } }) // onto the `---`
-  expect(countWidgets(view, HrWidget)).toBe(0) // raw `---` back, a visible caret to sit on
+  expect(countWidgets(view, HrWidget)).toBe(1) // still a widget — no raw source
+  expect(hidesAMarker(view)).toBe(false) // the whole line is a widget, not a hidden marker
+
+  expect(removeHiddenRule(view)).toBe(true) // Backspace / Delete on the rule
+  expect(view.state.doc.toString()).toBe("above\n\n\nbelow")
+  expect(countWidgets(view, HrWidget)).toBe(0)
+})
+
+test("reveal: 'caret' still reveals the rule's source on the line — removeHiddenRule no-ops", async () => {
+  const { view } = await mount("above\n\n---\n\nbelow", { reveal: "caret" })
+
+  view.dispatch({ selection: { anchor: view.state.doc.line(3).from } }) // onto the `---`
+  expect(countWidgets(view, HrWidget)).toBe(0) // raw `---` shown for editing
+  expect(removeHiddenRule(view)).toBe(false) // the keymap yields to a normal edit
 })
 
 test("a Setext heading (text then `---`) styles the text and hides the underline", async () => {
