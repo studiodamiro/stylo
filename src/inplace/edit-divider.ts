@@ -14,7 +14,7 @@
 import { syntaxTree } from "@codemirror/language"
 import { Prec, type EditorState, type Extension } from "@codemirror/state"
 import { type Command, type EditorView, keymap } from "@codemirror/view"
-import { toggleHorizontalRule } from "../toolbar/block"
+import { toggleHorizontalRule } from "../toolbar/rule"
 import { activeTableCell } from "../toolbar/cell-inline"
 import { markersHidden } from "./edit-boundaries"
 

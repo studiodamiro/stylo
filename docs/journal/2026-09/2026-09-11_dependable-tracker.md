@@ -140,9 +140,34 @@ construct per PR.
 
 ### 10 — (optional) split the files over 200 LOC · size L in aggregate · deps: none
 
-Not consumer-facing — nobody downstream imports these. `inplace/table-widget.ts`
-(~463), `inplace/theme.ts` (~456), `inplace/context-menu-actions.ts` (~428),
-`toolbar/inline-ops.ts` (~330), `inplace/context-menu.ts` (~304),
-`toolbar/commands.ts` (~297), and a few more. Split by responsibility, no
-behaviour change. Do opportunistically alongside item 7–9 work that touches the
-same file, rather than as a standalone push.
+Not consumer-facing — nobody downstream imports these. Split by responsibility,
+no behaviour change; one file per PR, same cadence as items 1–9. Re-surveyed
+2026-09-11 after item 9 (`context-menu-actions.ts` in particular grew a lot from
+the math work) — 11 files over the ceiling now, not the original 6:
+
+**Order (smallest first):**
+
+- **10a — `toolbar/block.ts`** (was 201). _Done._ Split into `block.ts` (kept:
+  `selectedLines`, `LinePrefixSpec`/`toggleLinePrefix`/`linePrefixActive` — the
+  generic line-prefix machinery list/quote/task share), `heading.ts`
+  (`toggleHeading`/`clearHeading`), `rule.ts`
+  (`toggleHorizontalRule`/`horizontalRuleActive`), `frontmatter-toggle.ts`
+  (`toggleFrontmatter`/`frontmatterActive`) — one file per block-level
+  construct's toggle command, the pattern `fence.ts` already set for code /
+  math blocks. All four land under 80 LOC.
+- **10b — `inplace/selection-bar.ts`** (was 214).
+- **10c — `toolbar/table.ts`** (was 239).
+- **10d — `inplace/edit-boundaries.ts`** (was 267).
+- **10e — `inplace/nodes.ts`** (was 291).
+- **10f — `toolbar/commands.ts`** (was 297).
+- **10g — `inplace/context-menu.ts`** (was 304).
+- **10h — `toolbar/inline-ops.ts`** (was 330).
+- **10i — `inplace/theme.ts`** (was 459).
+- **10j — `inplace/table-widget.ts`** (was 467).
+- **10k — `inplace/context-menu-actions.ts`** (was 522, the worst offender —
+  tripled from item 9's math-menu work). Likely split: pull `linkRow` /
+  `wikiLinkRow` / `mathRow` / `codeBlockRow` / `dividerRow` (the individual
+  menu-row builders) out to sit beside their construct's own file, leaving
+  `context-menu-actions.ts` as pure assembly (`menuRows`, the groups,
+  `cellSelectionRows`, the generic `toAction`/`actions`/`clipboardRows`
+  helpers).
