@@ -6,7 +6,23 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-11
+
 ### Added
+
+- **`![[ref]]` transclusion on the in-place canvas.** `embedSource` now resolves
+  embeds on all three surfaces, not just `preview` / `split`. An off-caret
+  lone-line `![[ref]]` renders as a block: `EmbedWidget` contributes an inert
+  slot element, and `InPlaceView` portals the same `<Embed>` component used by
+  `preview` into every live slot through a small `EmbedRegistry` +
+  `useSyncExternalStore` bridge — one React tree, so the async path, the
+  `![[ref]]` fallbacks, Suspense, and error boundaries all carry over. Put the
+  caret on the line to reveal the raw source; interactive host content keeps its
+  own clicks. New `inPlace={{ decorations: { embeds: false } }}` toggle. On the
+  canvas `embedSource` is read once at mount, like `wikiLinkSource`. See
+  [ADR-009](docs/journal/2026-09/2026-09-11_adr-009-react-nodes-in-the-in-place-canvas.md).
+- New style hook `.cm-inplace-embed` (the canvas slot); `.stylo-embed-content`
+  and `--stylo-embed-accent` are shared with the `preview` embed.
 
 - **Inline `![[ref]]` embeds.** A `![[ref]]` mid-sentence now renders as inline
   phrasing content flowing with the text, on `preview`, `split`, and the
@@ -58,24 +74,6 @@ Notable changes to Stylo. The format follows
   field at the pointer; hovering one shows the raw LaTeX in a tooltip. A
   multi-line `$$` block is unaffected — it keeps its existing caret-reveal. No
   effect under the default `reveal: "caret"`.
-
-## [0.9.0] - 2026-09-11
-
-### Added
-
-- **`![[ref]]` transclusion on the in-place canvas.** `embedSource` now resolves
-  embeds on all three surfaces, not just `preview` / `split`. An off-caret
-  lone-line `![[ref]]` renders as a block: `EmbedWidget` contributes an inert
-  slot element, and `InPlaceView` portals the same `<Embed>` component used by
-  `preview` into every live slot through a small `EmbedRegistry` +
-  `useSyncExternalStore` bridge — one React tree, so the async path, the
-  `![[ref]]` fallbacks, Suspense, and error boundaries all carry over. Put the
-  caret on the line to reveal the raw source; interactive host content keeps its
-  own clicks. New `inPlace={{ decorations: { embeds: false } }}` toggle. On the
-  canvas `embedSource` is read once at mount, like `wikiLinkSource`. See
-  [ADR-009](docs/journal/2026-09/2026-09-11_adr-009-react-nodes-in-the-in-place-canvas.md).
-- New style hook `.cm-inplace-embed` (the canvas slot); `.stylo-embed-content`
-  and `--stylo-embed-accent` are shared with the `preview` embed.
 
 ### Fixed
 
