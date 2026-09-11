@@ -1,5 +1,4 @@
 import { redo, undo } from "@codemirror/commands"
-import { openSearchPanel } from "@codemirror/search"
 import type { ToolbarCommandId } from "../types"
 import { runInlineInCell } from "./cell-inline"
 import {
@@ -36,6 +35,7 @@ import { linkString, underlineString, wikiLinkString, wrapString } from "./inlin
 import { horizontalRuleActive, toggleHorizontalRule } from "./rule"
 import { insertTable, tableActive } from "./table"
 import { runSave, saveHandler } from "../editor/save"
+import { toggleSearchPanel } from "../editor/search-panel"
 
 /** Every built-in command, in a stable order. The toolbar picks from these by id. */
 export const BUILTIN_COMMANDS: ToolbarCommand[] = [
@@ -54,13 +54,14 @@ export const BUILTIN_COMMANDS: ToolbarCommand[] = [
     disabled: (state) => state.facet(saveHandler) == null,
   },
   {
-    // Opens the find / replace panel (`@codemirror/search`). `Mod-f` is bound on
-    // every surface via `keys`, so the panel works without the visible toolbar;
-    // the button is opt-in — not in `DEFAULT_TOOLBAR_ITEMS`. Focus moves into
-    // the panel's field, so no `view.focus()` here.
+    // Opens or (if already open) slide-closes the find / replace panel
+    // (`@codemirror/search`, see `../editor/search-panel`). `Mod-f` is bound
+    // on every surface via `keys`, so the panel works without the visible
+    // toolbar; the button is opt-in — not in `DEFAULT_TOOLBAR_ITEMS`. Focus
+    // moves into the panel's field on open, so no `view.focus()` here.
     id: "search",
     title: "Find / replace",
-    run: (view) => openSearchPanel(view),
+    run: (view) => toggleSearchPanel(view),
     keys: ["Mod-f"],
   },
   heading(1),

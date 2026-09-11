@@ -8,6 +8,7 @@ import { tableKeymap, tableRealign } from "../toolbar/table"
 import type { CodeLanguages, ResolveErrorInfo, WikiLinkSource } from "../types"
 import { styloHighlighting } from "./highlight"
 import { saveHandler } from "./save"
+import { animatedSearchClose } from "./search-panel"
 import { styloTheme } from "./theme"
 import { wikilinkCompletion } from "./wikilink-complete"
 
@@ -39,6 +40,9 @@ export function baseExtensions(
     // the visible toolbar is mounted. Panel docks at the top, editor-style.
     search({ top: true }),
     keymap.of(searchKeymap),
+    // Slide-up close animation for the panel's × button and `Escape` — see
+    // `search-panel.ts` for why this needs to intercept both.
+    animatedSearchClose,
     markdown({ base: markdownLanguage, codeLanguages }),
     styloHighlighting,
     // `[[wikilink]]` autocomplete — a no-op unless the host passes a source.
