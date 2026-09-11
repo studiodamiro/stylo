@@ -117,6 +117,24 @@ flush immediately instead of waiting out the debounce.
 - **Debounce + interval ceiling.** Debounce for responsiveness, but force a
   flush at least every N seconds so a user who never pauses still gets saved.
 
+## Conflict detection is not built in
+
+`useAutosave` above is last-write-wins: nothing here notices if the same
+document was written from somewhere else — another tab, another device, a
+backend process — between the load and this save. Stylo has no version or
+timestamp attached to `value`, so it cannot know either.
+
+If that risk is real for a given host, the shape that fits without any change
+to Stylo's API is a version stamp kept alongside the persisted content —
+whatever the store already offers: an `updatedAt`, an ETag, a monotonic
+revision. Capture it when `value` is loaded, and check it again in the `save`
+function passed to `useAutosave` (or right before an `onSave` write) against
+the store's current stamp. A mismatch means the note moved underneath this
+session; how to resolve it — warn and overwrite anyway, block the save and
+prompt to reload, attempt a merge — is a product decision, same as every other
+policy in this guide. `value` / `onChange` / `onSave` already give a host
+everything it needs to intercept a save and act on that before it happens.
+
 ## Gotchas
 
 - **Don't feed the debounced value back into `value`.** `value` stays driven by

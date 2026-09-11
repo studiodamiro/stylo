@@ -89,10 +89,23 @@ customizer) additionally needs `@dnd-kit/core @dnd-kit/sortable
 
 ## Why
 
-Most React "Markdown editors" are either a bare `<textarea>` with a preview pane,
-or a full ProseMirror/Lexical rich-text stack that turns your document into an
-in-memory model you must serialize back to Markdown — lossy for frontmatter,
-wikilinks, and math, and hostile to files other tools also edit.
+Round-trip fidelity — plain Markdown in, the same plain Markdown out — rules out
+most of the field before features even enter it:
+
+- **TipTap, Milkdown, BlockNote** (all ProseMirror) and **Lexical** keep their
+  own document tree as the source of truth and serialize to Markdown on save —
+  exactly where frontmatter, `[[wikilinks]]` (not standard Markdown; needs a
+  custom node type), and math risk silently mangling on a round-trip.
+  **Toast UI Editor** is the same shape under different branding, and
+  considerably less themeable.
+- **EasyMDE / SimpleMDE** get the one axis that matters most right — genuinely
+  canonical Markdown in and out — but on CodeMirror 5, with no in-place live
+  rendering (raw source or a separate preview pane, not an Obsidian-style
+  live-preview feel), no wikilinks, no embeds, no frontmatter handling.
+  Adopting one means rebuilding most of what Stylo already does.
+- **Raw CodeMirror 6, no wrapper** is what's left after ruling those out — and
+  building the decoration canvas, the wikilink/embed/frontmatter layer, and a
+  theming contract from scratch is the reinvention Stylo exists to avoid.
 
 Stylo takes the Obsidian stance instead: **the Markdown string is the source of
 truth.** The editor is a thin, composable surface over it.

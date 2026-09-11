@@ -64,6 +64,24 @@ The rationale for keeping `inPlace` mount-time (rather than a
 live-reconfiguration path) is in the
 [ADR-005 config-lifecycle amendment](../../journal/2026-09/2026-09-01_adr-005-in-place-decoration-toggles.md).
 
+**A `key` remount is the wrong tool when the backing data changes often.** It
+fits `inPlace` and `codeLanguages` — configuration that rarely changes and is
+cheap to reconstruct. `wikiLinkSource` and `embedSource` are usually backed by
+something that changes on every edit or a background refetch (a note index, a
+file tree); keying on it would remount the editor on every change and drop
+cursor position, undo history, and scroll. Keep the resolver's identity stable
+instead — hold the live data in a ref and read through it from a
+`useCallback` with an empty dependency array:
+
+```tsx
+const treeRef = useRef(tree)
+treeRef.current = tree // always current; the callback below never changes
+
+const wikiLinkSource = useCallback((query: string) => searchTree(treeRef.current, query), [])
+
+return <Stylo value={doc} onChange={setDoc} wikiLinkSource={wikiLinkSource} />
+```
+
 ## Wikilink autocomplete
 
 Pass `wikiLinkSource` to complete `[[wikilinks]]` from your own index. Stylo owns
