@@ -6,6 +6,43 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-09-12
+
+### Added
+
+- **`canvasHeader` prop.** Dock host content — a frontmatter card, say —
+  inside the editing surface itself, after the find/replace panel and
+  before the document body. `toolbar.render` can't reach this seam: it
+  wraps content before the whole canvas, while the search panel is
+  CodeMirror's own internal top panel. Built on the same `showPanel`
+  mechanism as the search panel, ordered to dock under it. Available on
+  `source`, `in-place`, and `split`'s source pane; never `preview`.
+
+### Changed
+
+- **The formatting bar wraps by group, not mid-group.** It already wrapped
+  onto multiple lines on a narrow host; now each `"|"`-delimited run of
+  buttons wraps as one unit, using the grouping a consumer's `items` array
+  already expresses — no new config.
+- **`search` shows pressed while the find/replace panel is open**, like
+  every other toggle button.
+
+### Fixed
+
+- **The caret could land back inside a table when arrowing or tabbing out
+  of its last cell**, if the table was followed with no blank line by
+  plain text — GFM swallows that line into the table, and the editable
+  table widget's own range calculation disagreed with the real parse.
+- **Clicking below a `![[ref]]` embed could misplace the caret.** The
+  embed's vertical spacing used `margin`, which sits outside the box
+  CodeMirror measures for click-to-position — the same bug class fixed for
+  every other block. Interactive content inside a resolved embed (a
+  button, say) now reliably keeps its own clicks too, through the
+  technique the editable table widget already used for the same problem.
+- **A self-styled embed card's accent rail could sit apart from the
+  card**, if the card had its own margin — it used to collapse straight
+  through stylo's wrapper.
+
 ## [0.10.1] - 2026-09-12
 
 ### Fixed
@@ -422,6 +459,7 @@ consumable from git.
 - `inPlace` config is read once at mount; changing it needs a remount. (Now
   documented as an intentional contract — see `[Unreleased]`.)
 
+[0.11.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.11.0
 [0.10.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.10.0
 [0.9.1]: https://github.com/studiodamiro/stylo/releases/tag/v0.9.1
 [0.4.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.4.0
