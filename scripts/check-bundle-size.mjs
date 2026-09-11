@@ -25,6 +25,7 @@ const BUDGETS = {
   wikilink: 2_000,
   callout: 2_000,
   embed: 2_000, // <Embed> — the ![[ref]] resolver shared by preview and the in-place canvas
+  frontmatter: 2_000, // frontmatterRange / splitFrontmatter — shared by the entry, in-place, and preview
 }
 
 // CodeMirror and Lezer are peer dependencies (ADR-008) — externalised from the

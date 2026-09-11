@@ -16,7 +16,10 @@ import { Prec, type EditorState, type Extension } from "@codemirror/state"
 import { type Command, type EditorView, keymap } from "@codemirror/view"
 import { toggleHorizontalRule } from "../toolbar/rule"
 import { activeTableCell } from "../toolbar/cell-inline"
-import { markersHidden } from "./edit-boundaries"
+import { ICON_PATHS } from "../toolbar/icon-paths"
+import { BUILTIN_BY_ID } from "../toolbar/commands"
+import type { MenuAction } from "./context-menu"
+import { markersHidden } from "./wrap-at"
 
 /** The primary caret's line is a thematic break whose source is currently hidden. */
 export function onHiddenRule(state: EditorState): boolean {
@@ -44,3 +47,19 @@ export const inPlaceDividerEdit: Extension = Prec.high(
     { key: "Delete", run: removeHiddenRule },
   ]),
 )
+
+/**
+ * The single row shown when the caret is on a rendered thematic break: its
+ * source is hidden under `reveal: "never"` and there is nothing to edit in a
+ * rule, so removal is the only action.
+ */
+export function dividerRow(view: EditorView): MenuAction {
+  return {
+    label: "Remove divider",
+    icon: ICON_PATHS.hr,
+    onSelect: () => {
+      BUILTIN_BY_ID.hr?.run(view) // the caret is on the rule, so this removes it
+      view.focus()
+    },
+  }
+}

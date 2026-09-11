@@ -3,7 +3,10 @@ import { EditorView, WidgetType } from "@codemirror/view"
 import { handleCellShortcut } from "../toolbar/cell-inline"
 import { type Align, serializeGrid } from "../toolbar/table-grid"
 import { cellHasSelection, cellSelectionRows } from "./context-menu-actions"
-import { renderInline } from "./inline-md"
+import { attachLongPress, type LongPressHandle } from "./long-press"
+import { createTableGizmos, type StructOp, type TableGizmos } from "./table-gizmos"
+import { caretInCell } from "./table-widget-caret"
+import { paintCell, renderTableCells } from "./table-widget-render"
 import {
   gridOf,
   offsetFromPoint,
@@ -11,10 +14,7 @@ import {
   renderedCaretOffset,
   selectWordAtPoint,
   trimGrid,
-  unescapePipe,
 } from "./table-cell-dom"
-import { attachLongPress, type LongPressHandle } from "./long-press"
-import { createTableGizmos, type StructOp, type TableGizmos } from "./table-gizmos"
 import {
   deleteColumn,
   deleteRow,
@@ -119,39 +119,16 @@ export class EditableTableWidget extends WidgetType {
 
   /** Draw `cell` from `rows[r][c]` — raw text when `raw`, rendered otherwise. */
   private paint(cell: HTMLTableCellElement, raw: boolean) {
-    const { r, c } = this.coords(cell)
-    const text = this.rows[r]?.[c] ?? ""
-    cell.replaceChildren(
-      raw ? cell.ownerDocument.createTextNode(text) : renderInline(unescapePipe(text), this.embeds),
-    )
-  }
-
-  private mkCell(r: number, c: number, header: boolean): HTMLTableCellElement {
-    const el = document.createElement(header ? "th" : "td")
-    el.className = "cm-inplace-tcell"
-    // The attribute (not just the IDL prop) makes the cell a focus target, so
-    // `document.activeElement` becomes the cell and CodeMirror's `updateSelection`
-    // stops forcing the DOM caret back to the (atomic) widget boundary.
-    el.setAttribute("contenteditable", "true")
-    el.dataset.r = String(r)
-    el.dataset.c = String(c)
-    const a = this.data.aligns[c]
-    if (a) el.style.textAlign = a
-    this.paint(el, false)
-    return el
+    paintCell(cell, { rows: this.rows, aligns: this.data.aligns, embeds: this.embeds }, raw)
   }
 
   /** Rebuild `<thead>` / `<tbody>` from the current grid model. */
   private renderCells() {
-    const table = this.table!
-    table.replaceChildren()
-    const hr = table.createTHead().insertRow()
-    for (let c = 0; c < this.cols(); c++) hr.appendChild(this.mkCell(0, c, true))
-    const tbody = table.createTBody()
-    for (let r = 1; r < this.rows.length; r++) {
-      const tr = tbody.insertRow()
-      for (let c = 0; c < this.cols(); c++) tr.appendChild(this.mkCell(r, c, false))
-    }
+    renderTableCells(this.table!, {
+      rows: this.rows,
+      aligns: this.data.aligns,
+      embeds: this.embeds,
+    })
   }
 
   private appendRow() {
@@ -219,12 +196,7 @@ export class EditableTableWidget extends WidgetType {
   private readCaret(): { r: number; c: number; offset: number; head: number } | null {
     if (!this.editing) return null
     const { r, c } = this.coords(this.editing)
-    const sel = this.editing.ownerDocument.getSelection()
-    const text = this.editing.firstChild
-    const end = (this.editing.textContent ?? "").length
-    const offset = sel?.anchorNode === text ? (sel?.anchorOffset ?? 0) : end
-    const head = sel?.focusNode === text ? (sel?.focusOffset ?? offset) : offset
-    return { r, c, offset, head }
+    return { r, c, ...caretInCell(this.editing) }
   }
 
   private writeCaret(caret: { r: number; c: number; offset: number; head: number }) {

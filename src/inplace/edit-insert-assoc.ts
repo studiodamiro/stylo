@@ -15,7 +15,7 @@
 
 import { syntaxTree } from "@codemirror/language"
 import { EditorState, type Extension } from "@codemirror/state"
-import { markersHidden, wrapAt } from "./edit-boundaries"
+import { markersHidden, wrapAt } from "./wrap-at"
 import type { Tree } from "./scan"
 import { fromTableWidget } from "./table-widget"
 

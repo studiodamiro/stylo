@@ -19,7 +19,7 @@
 import { Prec, type Extension } from "@codemirror/state"
 import { type Command, type EditorView, keymap } from "@codemirror/view"
 import { activeTableCell } from "../toolbar/cell-inline"
-import { markersHidden } from "./edit-boundaries"
+import { markersHidden } from "./wrap-at"
 
 interface PrefixEdit {
   /** Length of the whole hidden prefix — the caret at visual column 0 sits here. */

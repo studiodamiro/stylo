@@ -9,7 +9,7 @@ import { ViewPlugin, type EditorView, type PluginValue } from "@codemirror/view"
 import { contextMenuEnabled } from "./config"
 import { createContextMenu, type ContextMenu } from "./context-menu"
 import { menuRows } from "./context-menu-actions"
-import { wrapAt } from "./edit-boundaries"
+import { wrapAt } from "./wrap-at"
 import { attachLongPress, type LongPressHandle } from "./long-press"
 import { setMenuOpen } from "./menu-open"
 

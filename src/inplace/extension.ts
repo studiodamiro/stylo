@@ -1,6 +1,6 @@
 import { Prec, type Extension } from "@codemirror/state"
 import { EditorView } from "@codemirror/view"
-import { cellSourcePos } from "../toolbar/table"
+import { cellSourcePos } from "../toolbar/table-position"
 import type { InPlaceConfig } from "../types"
 import {
   contextMenuEnabled,

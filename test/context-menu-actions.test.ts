@@ -2,13 +2,7 @@ import { markdownLanguage } from "@codemirror/lang-markdown"
 import { EditorSelection, EditorState } from "@codemirror/state"
 import { EditorView } from "@codemirror/view"
 import { expect, test } from "vitest"
-import {
-  codeBlockRow,
-  linkRow,
-  mathRow,
-  menuRows,
-  wikiLinkRow,
-} from "../src/inplace/context-menu-actions"
+import { codeBlockRow, menuRows } from "../src/inplace/context-menu-actions"
 import type { MenuAction, MenuField, MenuRow, MenuSubmenu } from "../src/inplace/context-menu"
 import {
   menuGroupsFacet,
@@ -16,6 +10,8 @@ import {
   resolveSelectionBarItems,
   selectionUIFacet,
 } from "../src/inplace/config"
+import { linkRow, wikiLinkRow } from "../src/inplace/link-row"
+import { mathRow } from "../src/inplace/math-edit"
 import type { MenuGroupId, SelectionUI } from "../src/types"
 import { linkPartsIn, wikiLinkPartsIn } from "../src/toolbar/inline-ops"
 
