@@ -4,20 +4,12 @@ import type { EditorState } from "@codemirror/state"
 import type { EditorView } from "@codemirror/view"
 import { runSave, saveHandler } from "../editor/save"
 import type { ToolbarCommandId } from "../types"
-import {
-  clearHeading,
-  frontmatterActive,
-  horizontalRuleActive,
-  linePrefixActive,
-  toggleFrontmatter,
-  toggleHeading,
-  toggleHorizontalRule,
-  toggleLinePrefix,
-  type LinePrefixSpec,
-} from "./block"
+import { linePrefixActive, toggleLinePrefix, type LinePrefixSpec } from "./block"
 import { frontmatterRange } from "../frontmatter"
 import { runInlineInCell } from "./cell-inline"
 import { fencedCodeActive, mathBlockActive, toggleFencedCode, toggleMathBlock } from "./fence"
+import { frontmatterActive, toggleFrontmatter } from "./frontmatter-toggle"
+import { clearHeading, toggleHeading } from "./heading"
 import {
   linkActive,
   toggleLink,
@@ -29,6 +21,7 @@ import {
   wrapActive,
 } from "./inline"
 import { linkString, underlineString, wikiLinkString, wrapString } from "./inline-ops"
+import { horizontalRuleActive, toggleHorizontalRule } from "./rule"
 import { insertTable, tableActive } from "./table"
 
 // --- context predicates: where a command can't sensibly apply ---
