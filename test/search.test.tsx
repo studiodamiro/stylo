@@ -33,12 +33,12 @@ function pressModF(el: Element) {
 
 test("Mod-f opens the find panel and suppresses the browser default", () => {
   const { container } = render(<Harness initial="alpha beta alpha" />)
-  expect(container.querySelector(".cm-panel.cm-search")).toBeNull()
+  expect(container.querySelector(".cm-panel.stylo-search-panel")).toBeNull()
 
   const ev = pressModF(container.querySelector(".cm-content")!)
 
   expect(ev.defaultPrevented).toBe(true)
-  expect(container.querySelector(".cm-panel.cm-search")).not.toBeNull()
+  expect(container.querySelector(".cm-panel.stylo-search-panel")).not.toBeNull()
 })
 
 test("the find panel is available on the in-place canvas too", async () => {
@@ -50,7 +50,7 @@ test("the find panel is available on the in-place canvas too", async () => {
 
   pressModF(container.querySelector(".cm-content")!)
 
-  expect(container.querySelector(".cm-panel.cm-search")).not.toBeNull()
+  expect(container.querySelector(".cm-panel.stylo-search-panel")).not.toBeNull()
 })
 
 test("findNext walks the matches", () => {
@@ -80,9 +80,31 @@ test("replaceAll rewrites every match", () => {
   expect(view.state.doc.toString()).toBe("ALPHA beta ALPHA")
 })
 
+test("the panel's fields sit in the order they read, so Tab follows the visual layout", () => {
+  const { container } = render(<Harness initial="alpha beta alpha" />)
+  pressModF(container.querySelector(".cm-content")!)
+
+  const panel = container.querySelector(".stylo-search-panel")!
+  const names = [...panel.querySelectorAll("input, button")].map((el) => el.getAttribute("name"))
+
+  expect(names).toEqual([
+    "search",
+    "next",
+    "prev",
+    "select",
+    "replace",
+    "replace",
+    "replaceAll",
+    "case",
+    "re",
+    "word",
+    "close",
+  ])
+})
+
 test("preview mode has no editor, so Mod-f does nothing", () => {
   const { container } = render(<Harness initial="alpha beta alpha" mode="preview" />)
 
   expect(container.querySelector(".cm-content")).toBeNull()
-  expect(container.querySelector(".cm-panel.cm-search")).toBeNull()
+  expect(container.querySelector(".cm-panel.stylo-search-panel")).toBeNull()
 })

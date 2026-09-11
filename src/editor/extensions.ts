@@ -8,7 +8,7 @@ import { tableKeymap, tableRealign } from "../toolbar/table"
 import type { CodeLanguages, ResolveErrorInfo, WikiLinkSource } from "../types"
 import { styloHighlighting } from "./highlight"
 import { saveHandler } from "./save"
-import { animatedSearchClose } from "./search-panel"
+import { createStyloSearchPanel } from "./search-panel"
 import { styloTheme } from "./theme"
 import { wikilinkCompletion } from "./wikilink-complete"
 
@@ -33,16 +33,15 @@ export function baseExtensions(
     Prec.high(tableKeymap),
     markdownKeymap,
     tableRealign,
-    // Find / replace. `search` supplies the panel and its state; `searchKeymap`
-    // carries in-panel navigation (`Mod-g` next, `Shift-Mod-g` previous,
-    // `Mod-Alt-g` replace, `Escape` close). Opening on `Mod-f` also comes from
-    // the `search` toolbar command's `keys`, so the panel opens whether or not
-    // the visible toolbar is mounted. Panel docks at the top, editor-style.
-    search({ top: true }),
+    // Find / replace. `createPanel` swaps in stylo's own panel (`search-panel.ts`) so
+    // its DOM is built in reading order instead of restyled after the fact; `search`
+    // still owns the query state, and `searchKeymap` carries in-panel navigation
+    // (`Mod-g` next, `Shift-Mod-g` previous, `Escape` close) via `runScopeHandlers`
+    // inside the panel itself. Opening on `Mod-f` also comes from the `search` toolbar
+    // command's `keys`, so the panel opens whether or not the visible toolbar is
+    // mounted. Panel docks at the top, editor-style.
+    search({ top: true, createPanel: createStyloSearchPanel }),
     keymap.of(searchKeymap),
-    // Slide-up close animation for the panel's × button and `Escape` — see
-    // `search-panel.ts` for why this needs to intercept both.
-    animatedSearchClose,
     markdown({ base: markdownLanguage, codeLanguages }),
     styloHighlighting,
     // `[[wikilink]]` autocomplete — a no-op unless the host passes a source.
