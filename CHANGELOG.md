@@ -6,19 +6,33 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-09-12
+
+### Fixed
+
+- **Find/replace panel's Tab order now matches its layout.** 0.10.0's
+  single-line panel was still `@codemirror/search`'s default markup
+  reordered from outside with CSS `order`, so Tab followed the library's
+  internal field order regardless of the new visual layout. The panel is
+  now built directly through the `search()` extension's `createPanel` hook
+  in the order it reads — find, next/prev/all, replace, replace/replace
+  all, then match case/regexp/by word and close — so Tab order matches the
+  screen by construction. Closing (the panel's × button and `Escape`) now
+  animates via a plain listener on stylo's own elements instead of
+  intercepting the library's click/keydown in the capture phase.
+
 ## [0.10.0] - 2026-09-12
 
 ### Changed
 
-- **Find/replace panel is one toolbar-height row, built and owned by
-  stylo.** Rather than restyling `@codemirror/search`'s fixed panel markup
-  from outside, stylo now supplies its own panel through the `search()`
-  extension's `createPanel` hook — find field, next/previous/all, replace,
-  replace/replace all, then match case/regexp/by word and close, built in
-  that exact order. Buttons are borderless to match the main toolbar's own,
-  so the row reads as one more part of the toolbar rather than a separate
-  floating panel, and Tab now follows the same left-to-right layout that's
-  on screen instead of the library's own internal field order.
+- **Find/replace panel is one toolbar-height row.** `@codemirror/search`'s
+  fixed panel markup (find field, next/previous/all, three checkboxes, then
+  the replace row) is reordered with flex `order` onto a single line — find,
+  next/previous/all, replace, replace/replace all, then match
+  case/regexp/by word — with borderless buttons matching the main toolbar's
+  own, so it reads as one more row of the toolbar rather than a separate
+  floating panel. Tab order still follows the library's underlying DOM
+  order, not the new visual layout.
 - **The panel slides open and closed.** The toolbar's "search" command now
   toggles the panel instead of only opening it, and both the panel's own ×
   button and `Escape` animate it shut instead of removing it instantly.
