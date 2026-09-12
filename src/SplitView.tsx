@@ -9,6 +9,7 @@ import type {
   EmbedSource,
   FrontmatterDisplay,
   ResolveErrorInfo,
+  TagSource,
   WikiLinkSource,
 } from "./types"
 
@@ -20,6 +21,7 @@ export interface SplitViewProps {
   placeholder?: string
   codeLanguages?: CodeLanguages
   wikiLinkSource?: WikiLinkSource
+  tagSource?: TagSource
   embedSource?: EmbedSource
   onResolveError?: (error: unknown, info: ResolveErrorInfo) => void
   frontmatter?: FrontmatterDisplay
@@ -45,6 +47,7 @@ export function SplitView({
   placeholder,
   codeLanguages,
   wikiLinkSource,
+  tagSource,
   embedSource,
   onResolveError,
   frontmatter,
@@ -97,6 +100,7 @@ export function SplitView({
           placeholder={placeholder}
           codeLanguages={codeLanguages}
           wikiLinkSource={wikiLinkSource}
+          tagSource={tagSource}
           onResolveError={onResolveError}
           onSave={onSave}
           onViewChange={handleView}

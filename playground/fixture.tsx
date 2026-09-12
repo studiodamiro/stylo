@@ -7,6 +7,7 @@ import {
   type SelectionUI,
   type StyloMode,
   type TableEditing,
+  type TagSource,
   type WikiLinkSource,
 } from "../src/index"
 import "katex/dist/katex.min.css"
@@ -25,6 +26,7 @@ import "katex/dist/katex.min.css"
  *   ?theme=dark                           (default light)
  *   ?doc=basic|math|code|rule|table|long|embed (default basic)
  *   ?wikilinks=1                          (canned wikiLinkSource; default off)
+ *   ?tags=1                               (canned tagSource; default off)
  *   ?embed=1                              (canned embedSource; default off)
  */
 
@@ -33,6 +35,12 @@ const WIKI_TARGETS = ["Getting Started", "Guide/Setup", "Guide/API Reference", "
 const cannedWikiLinkSource: WikiLinkSource = (query) => {
   const q = query.trim().toLowerCase()
   return WIKI_TARGETS.filter((t) => t.toLowerCase().includes(q)).map((target) => ({ target }))
+}
+
+const TAG_CANDIDATES = ["project", "project/urgent", "recipe", "reading-list"]
+const cannedTagSource: TagSource = (query) => {
+  const q = query.trim().toLowerCase()
+  return TAG_CANDIDATES.filter((t) => t.toLowerCase().includes(q)).map((tag) => ({ tag }))
 }
 
 /**
@@ -124,6 +132,7 @@ const reveal = (params.get("reveal") as RevealMode) ?? "caret"
 const sticky = params.get("sticky") as "top" | "bottom" | null
 const toolbar = params.get("toolbar") !== "0"
 const wikiLinkSource = params.get("wikilinks") === "1" ? cannedWikiLinkSource : undefined
+const tagSource = params.get("tags") === "1" ? cannedTagSource : undefined
 const embedSource = params.get("embed") === "1" ? cannedEmbedSource : undefined
 const doc = DOCS[params.get("doc") ?? "basic"] ?? DOCS.basic!
 
@@ -139,6 +148,7 @@ function Fixture() {
       inPlace={{ selectionUI, table, reveal }}
       toolbar={sticky ? { sticky } : toolbar}
       wikiLinkSource={wikiLinkSource}
+      tagSource={tagSource}
       embedSource={embedSource}
     />
   )

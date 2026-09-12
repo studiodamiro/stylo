@@ -12,6 +12,7 @@ import type {
   EmbedSource,
   InPlaceConfig,
   ResolveErrorInfo,
+  TagSource,
   WikiLinkSource,
 } from "../types"
 import { EmbedRegistry } from "./embed-registry"
@@ -34,9 +35,11 @@ export interface InPlaceViewProps {
   codeLanguages?: CodeLanguages
   /** `[[wikilink]]` autocomplete source. Read once. */
   wikiLinkSource?: WikiLinkSource
+  /** `#tag` autocomplete source. Read once. */
+  tagSource?: TagSource
   /** Resolves `![[ref]]` embeds. Read once, at mount — see ADR-009. */
   embedSource?: EmbedSource
-  /** Notified when `embedSource` or `wikiLinkSource` rejects. */
+  /** Notified when `embedSource`, `wikiLinkSource`, or `tagSource` rejects. */
   onResolveError?: (error: unknown, info: ResolveErrorInfo) => void
   /** Called with the doc string on `Mod-s`. */
   onSave?: (value: string) => void
@@ -70,6 +73,7 @@ export function InPlaceView({
   inPlace,
   codeLanguages,
   wikiLinkSource,
+  tagSource,
   embedSource,
   onResolveError,
   onSave,
@@ -119,6 +123,7 @@ export function InPlaceView({
     extensions,
     codeLanguages,
     wikiLinkSource,
+    tagSource,
     onResolveError,
     onSave,
     onViewChange: handleViewChange,

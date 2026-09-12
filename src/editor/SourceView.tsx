@@ -4,7 +4,7 @@ import { createPortal } from "react-dom"
 import { showPanel } from "@codemirror/view"
 import type { EditorView } from "@codemirror/view"
 import styles from "../styles/stylo.module.css"
-import type { CodeLanguages, ResolveErrorInfo, WikiLinkSource } from "../types"
+import type { CodeLanguages, ResolveErrorInfo, TagSource, WikiLinkSource } from "../types"
 import { CanvasHeaderHost } from "./canvas-header-panel"
 import { useCodeMirror } from "./useCodeMirror"
 
@@ -20,7 +20,9 @@ export interface SourceViewProps {
   codeLanguages?: CodeLanguages
   /** `[[wikilink]]` autocomplete source. Read once. */
   wikiLinkSource?: WikiLinkSource
-  /** Notified when `wikiLinkSource` rejects. */
+  /** `#tag` autocomplete source. Read once. */
+  tagSource?: TagSource
+  /** Notified when `wikiLinkSource` or `tagSource` rejects. */
   onResolveError?: (error: unknown, info: ResolveErrorInfo) => void
   /** Called with the doc string on `Mod-s`. */
   onSave?: (value: string) => void
@@ -38,6 +40,7 @@ export function SourceView({
   placeholder,
   codeLanguages,
   wikiLinkSource,
+  tagSource,
   onResolveError,
   onSave,
   onViewChange,
@@ -70,6 +73,7 @@ export function SourceView({
     placeholder,
     codeLanguages,
     wikiLinkSource,
+    tagSource,
     onResolveError,
     onSave,
     onViewChange: handleViewChange,

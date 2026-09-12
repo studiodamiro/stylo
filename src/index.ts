@@ -14,6 +14,8 @@ export type {
   StyloMode,
   StyloProps,
   TableEditing,
+  TagCompletion,
+  TagSource,
   ToolbarCommandId,
   ToolbarConfig,
   ToolbarCustomItem,

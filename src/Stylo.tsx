@@ -37,6 +37,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
     inPlace,
     codeLanguages,
     wikiLinkSource,
+    tagSource,
     embedSource,
     onResolveError,
     toolbar,
@@ -144,6 +145,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
           placeholder={placeholder}
           codeLanguages={codeLanguages}
           wikiLinkSource={wikiLinkSource}
+          tagSource={tagSource}
           onResolveError={resolveError}
           onSave={onSave}
           onViewChange={setView}
@@ -172,6 +174,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
           placeholder={placeholder}
           codeLanguages={codeLanguages}
           wikiLinkSource={wikiLinkSource}
+          tagSource={tagSource}
           embedSource={embedSource}
           onResolveError={resolveError}
           frontmatter={frontmatter}
@@ -193,6 +196,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
             inPlace={inPlace}
             codeLanguages={codeLanguages}
             wikiLinkSource={wikiLinkSource}
+            tagSource={tagSource}
             embedSource={embedSource}
             onResolveError={resolveError}
             onSave={onSave}

@@ -28,6 +28,8 @@ built in.
 - **`[[wikilinks]]`** — recognised, styled, and clickable, with an
   `onWikiLinkClick` callback and opt-in `[[` autocomplete from an index you
   supply (`wikiLinkSource`).
+- **`#tags`** — opt-in `#` autocomplete from an index you supply (`tagSource`),
+  mirroring `wikiLinkSource`'s trigger-while-typing UX.
 - **`![[embed]]` transclusion** — opt-in on every rendered surface (`preview`,
   `split`, and the in-place canvas): pass `embedSource` and Stylo hands you the
   reference, you return the node to render in its place.
@@ -176,14 +178,19 @@ editing surface itself, below the find/replace panel and above the document
 body, a seam `toolbar.render` can't reach since it wraps content before the
 whole canvas. See [Canvas header](./docs/wiki/reference/props.md#canvas-header).
 
-`inPlace`, `codeLanguages`, and `wikiLinkSource` are read once, when the editing
-surface mounts — give `<Stylo>` a `key` derived from the config to apply a
-change. Every other prop is fully reactive. See
+`inPlace`, `codeLanguages`, `wikiLinkSource`, and `tagSource` are read once,
+when the editing surface mounts — give `<Stylo>` a `key` derived from the
+config to apply a change. Every other prop is fully reactive. See
 [props · applied at mount](./docs/wiki/reference/props.md#config-applied-at-mount).
 
 Pass `wikiLinkSource` — `(query) => { target, label? }[]`, sync or async — to
 turn on `[[wikilink]]` autocomplete backed by your own index. See
 [Wikilink autocomplete](./docs/wiki/reference/props.md#wikilink-autocomplete).
+
+Pass `tagSource` — `(query) => { tag }[]`, sync or async — to turn on `#tag`
+autocomplete backed by your own index, the same trigger-while-typing UX as
+`wikiLinkSource`. See
+[Tag autocomplete](./docs/wiki/reference/props.md#tag-autocomplete).
 
 Pass `embedSource` — `(ref) => ReactNode`, sync or async — to resolve
 `![[embed]]` transclusion on every rendered surface, the in-place canvas

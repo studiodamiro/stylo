@@ -36,8 +36,9 @@ import "@damiro/stylo/katex.css" // only if you use math in preview
 | `frontmatter`     | `"hidden" \| "code"`                                                                            | `"hidden"`   | How `preview` (and `split`'s preview pane) shows the leading `---` YAML block. `"hidden"` drops it; `"code"` renders the raw block as `<div class="stylo-frontmatter">` above the body. Restyle it with your own CSS (see below). For structured data use `onFrontmatter`; Stylo bundles no YAML parser ([ADR-001](../../journal/2026-09/2026-09-01_adr-001-editor-architecture.md)).                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `codeLanguages`   | `readonly LanguageDescription[] \| ((info: string) => Language \| LanguageDescription \| null)` | —            | Grammars for fenced-code sub-highlighting, forwarded verbatim to `@codemirror/lang-markdown`. Stylo bundles none — pass your own set (`codeLanguages={languages}` from `@codemirror/language-data`, or a hand-built list). Affects the CodeMirror surfaces (`source`, `split`, `in-place`); `preview` is unaffected. Read once, at mount. See [fenced-code highlighting](./code-languages.md).                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `wikiLinkSource`  | `(query: string) => readonly WikiLinkCompletion[] \| Promise<…>`                                | —            | Enables `[[wikilink]]` autocomplete on the CodeMirror surfaces. Called with the target typed so far while the caret is inside an unclosed `[[…`; return your index's matches, already ordered (Stylo does not re-rank or filter). May be async. Off when omitted. Read once, at mount. See [Wikilink autocomplete](#wikilink-autocomplete).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `tagSource`       | `(query: string) => readonly TagCompletion[] \| Promise<…>`                                     | —            | Enables `#tag` autocomplete on the CodeMirror surfaces, mirroring `wikiLinkSource`'s contract exactly. Called with the tag typed so far while the caret is inside an unclosed `#…`; return your index's matches, already ordered. May be async. Off when omitted. Read once, at mount. See [Tag autocomplete](#tag-autocomplete).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `embedSource`     | `(ref: string) => ReactNode \| Promise<ReactNode>`                                              | —            | Resolves `![[ref]]` embeds for `preview`, `split`, and the in-place canvas. Called with the raw reference (`Note#Heading`, `pic.png\|320` — suffixes intact); return a node to render in its place, or `null` to keep it literal. May be async. Off when omitted. Recognised only when the `![[…]]` is alone on its line. See [Embeds](#embeds).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| `onResolveError`  | `(error: unknown, info: ResolveErrorInfo) => void`                                              | —            | Called when `embedSource` or `wikiLinkSource` throws or rejects. `info.source` names which one; `info.input` is the `![[ref]]` reference or the `[[` query. Observation only — the resolver still falls back (literal text, or no completions). A `null` return is not an error. Reactive.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `onResolveError`  | `(error: unknown, info: ResolveErrorInfo) => void`                                              | —            | Called when `embedSource`, `wikiLinkSource`, or `tagSource` throws or rejects. `info.source` names which one; `info.input` is the `![[ref]]` reference or the `[[` / `#` query. Observation only — the resolver still falls back (literal text, or no completions). A `null` return is not an error. Reactive.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `readOnly`        | `boolean`                                                                                       | `false`      | Render the source surface read-only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `placeholder`     | `string`                                                                                        | —            | Shown when the document is empty (source surface).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `className`       | `string`                                                                                        | —            | Added to the root element alongside the internal classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -45,9 +46,10 @@ import "@damiro/stylo/katex.css" // only if you use math in preview
 
 ## Config applied at mount
 
-Three props feed the CodeMirror extension configuration and are read **once**,
-when the editing surface is constructed: **`inPlace`**, **`codeLanguages`**, and
-**`wikiLinkSource`**. Changing any of them on a live `<Stylo>` has no effect. To
+Four props feed the CodeMirror extension configuration and are read **once**,
+when the editing surface is constructed: **`inPlace`**, **`codeLanguages`**,
+**`wikiLinkSource`**, and **`tagSource`**. Changing any of them on a live
+`<Stylo>` has no effect. To
 apply a change, give the component a `key` derived from the config so React
 remounts it:
 
@@ -67,7 +69,7 @@ live-reconfiguration path) is in the
 
 **A `key` remount is the wrong tool when the backing data changes often.** It
 fits `inPlace` and `codeLanguages` — configuration that rarely changes and is
-cheap to reconstruct. `wikiLinkSource` and `embedSource` are usually backed by
+cheap to reconstruct. `wikiLinkSource`, `tagSource`, and `embedSource` are usually backed by
 something that changes on every edit or a background refetch (a note index, a
 file tree); keying on it would remount the editor on every change and drop
 cursor position, undo history, and scroll. Keep the resolver's identity stable
@@ -110,6 +112,38 @@ type WikiLinkCompletion = { target: string; label?: string }
   separate prop — see [Embeds](#embeds).
 - Uses `@codemirror/autocomplete`, a regular dependency that dedupes onto the
   host's CodeMirror copy.
+
+## Tag autocomplete
+
+Pass `tagSource` to complete `#tags` from your own index — the same
+trigger-while-typing UX as `wikiLinkSource`, retriggered on `#` instead of `[[`.
+
+```tsx
+type TagCompletion = { tag: string }
+;<Stylo
+  value={doc}
+  onChange={setDoc}
+  tagSource={(query) => tagIndex.search(query).map((tag) => ({ tag }))}
+/>
+```
+
+- Called with the text typed after `#`. Return matches **already ordered** —
+  `filter: false` is set, so Stylo shows them verbatim. Return `[]` for no
+  matches (the popup closes).
+- May be `async`; debouncing a network source is the host's call.
+- On accept: the query is replaced with `tag` — no closing delimiter, unlike
+  `[[wikilink]]`. No `label`/alias field either: tags have no `#tag|alias`
+  syntax.
+- Never fires on a `# Heading` marker — the space right after `#` breaks the
+  match before any heading text is typed — or mid-word (`word#word`, a URL
+  fragment such as `page.md#section`), since the trigger requires `#` to sit at
+  the start of a line or after whitespace. Also skips a `#` immediately
+  followed by a digit (`#1234`), which reads as an issue or anchor reference,
+  not a tag.
+- Works on `source`, `split`, and the `in-place` canvas. Inert inside fenced
+  code, for the same reason `wikiLinkSource` is.
+- Shares the `autocompletion()` extension and its tooltip styling with
+  `wikiLinkSource` — no separate CSS to theme.
 
 ## Embeds
 
@@ -200,10 +234,11 @@ for the reasoning behind the seam and how it composes with `toolbar.render`.
 
 ## Resolver errors
 
-`embedSource` and `wikiLinkSource` fail quietly by design — a rejected
-`embedSource` leaves the literal `![[ref]]`, a rejected `wikiLinkSource` shows no
-completions. Pass **`onResolveError(error, info)`** to observe those failures
-(log them, show a toast) without changing the fallback:
+`embedSource`, `wikiLinkSource`, and `tagSource` fail quietly by design — a
+rejected `embedSource` leaves the literal `![[ref]]`, a rejected
+`wikiLinkSource` or `tagSource` shows no completions. Pass
+**`onResolveError(error, info)`** to observe those failures (log them, show a
+toast) without changing the fallback:
 
 ```tsx
 <Stylo
@@ -217,10 +252,10 @@ completions. Pass **`onResolveError(error, info)`** to observe those failures
 />
 ```
 
-`info.source` is `"embedSource"` or `"wikiLinkSource"`; `info.input` is the
-reference or query it was called with. A resolver that returns `null` has not
-failed — that is the "keep it literal" result — and does not fire this. The
-callback is reactive; swap it freely.
+`info.source` is `"embedSource"`, `"wikiLinkSource"`, or `"tagSource"`;
+`info.input` is the reference or query it was called with. A resolver that
+returns `null` has not failed — that is the "keep it literal" result — and
+does not fire this. The callback is reactive; swap it freely.
 
 ## Ref — imperative handle
 

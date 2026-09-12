@@ -48,6 +48,13 @@ const demoWikiLinkSource = (query: string) => {
   return DEMO_PAGES.filter((p) => p.toLowerCase().includes(q)).map((target) => ({ target }))
 }
 
+// Demo `tagSource` — same shape, a fixed tag list.
+const DEMO_TAGS = ["project", "project/urgent", "recipe", "reading-list", "todo"]
+const demoTagSource = (query: string) => {
+  const q = query.trim().toLowerCase()
+  return DEMO_TAGS.filter((t) => t.toLowerCase().includes(q)).map((tag) => ({ tag }))
+}
+
 // Demo `embedSource` — resolves `![[ref]]` to a node. A real host would look the
 // reference up in its vault: return the note's rendered body, an <img>, a PDF
 // viewer, a "not found" card. Here: a placeholder image for a `.png` ref, a stub
@@ -535,6 +542,7 @@ function App() {
           frontmatter={frontmatter}
           codeLanguages={languages}
           wikiLinkSource={demoWikiLinkSource}
+          tagSource={demoTagSource}
           embedSource={demoEmbedSource}
           className={mode === "split" ? "playground-editor is-split" : "playground-editor"}
         />

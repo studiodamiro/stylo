@@ -142,6 +142,24 @@ export type WikiLinkSource = (
   query: string,
 ) => readonly WikiLinkCompletion[] | Promise<readonly WikiLinkCompletion[]>
 
+/** One `#tag` autocomplete candidate returned by `tagSource`. */
+export interface TagCompletion {
+  /** Written verbatim after `#`. No alias — tags have no `#tag|label` syntax. */
+  tag: string
+}
+
+/**
+ * Supplies `#tag` autocomplete candidates. Called with the text typed after `#`
+ * while the caret sits inside an unclosed `#…` word; return the matches your
+ * index finds, already ordered — Stylo does not re-rank or filter. May be async
+ * (e.g. a tag-index lookup). Pass it to enable the feature; omit it and there is
+ * no tag completion. Read once, at mount. Never fires on a `# Heading` marker
+ * (the space breaks the match) or mid-word (`word#word`, a URL fragment).
+ */
+export type TagSource = (
+  query: string,
+) => readonly TagCompletion[] | Promise<readonly TagCompletion[]>
+
 /**
  * Resolves an `![[ref]]` embed (transclusion) to something to render. Called
  * with the raw reference — everything between `![[` and `]]`, trimmed, with any
@@ -170,7 +188,7 @@ export type EmbedSource = (ref: string) => ReactNode | Promise<ReactNode>
 /** Which host resolver rejected, and the argument it was called with. */
 export interface ResolveErrorInfo {
   /** The prop whose function threw or returned a rejected promise. */
-  source: "embedSource" | "wikiLinkSource"
+  source: "embedSource" | "wikiLinkSource" | "tagSource"
   /** What it was asked to resolve — an `![[ref]]` reference, or the `[[` query. */
   input: string
 }
@@ -322,6 +340,12 @@ export interface StyloProps {
    */
   wikiLinkSource?: WikiLinkSource
   /**
+   * Enables `#tag` autocomplete on the CodeMirror surfaces. Called with the tag
+   * typed so far; return your index's matches, ordered. Off when omitted. Read
+   * once, at mount. See `TagSource`.
+   */
+  tagSource?: TagSource
+  /**
    * Resolves `![[ref]]` embeds (transclusion) for `preview` and `split`. Called
    * with the raw reference; return a node to render in its place, or `null` to
    * leave it as literal text. May be async. Off when omitted. See
@@ -329,11 +353,11 @@ export interface StyloProps {
    */
   embedSource?: EmbedSource
   /**
-   * Called when `embedSource` or `wikiLinkSource` throws or returns a rejected
-   * promise. Purely for observation — logging, a toast — the resolver still
-   * falls back (literal `![[ref]]` text, or no completions) either way. A `null`
-   * return is a valid result, not an error, and does not fire this. Reactive;
-   * see {@link ResolveErrorInfo}.
+   * Called when `embedSource`, `wikiLinkSource`, or `tagSource` throws or
+   * returns a rejected promise. Purely for observation — logging, a toast — the
+   * resolver still falls back (literal `![[ref]]` text, or no completions)
+   * either way. A `null` return is a valid result, not an error, and does not
+   * fire this. Reactive; see {@link ResolveErrorInfo}.
    */
   onResolveError?: (error: unknown, info: ResolveErrorInfo) => void
   /**
