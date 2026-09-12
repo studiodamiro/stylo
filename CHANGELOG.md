@@ -6,6 +6,23 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-09-13
+
+### Added
+
+- **`tagSource`** — a prop that turns on `#tag` autocomplete on the CodeMirror
+  surfaces (`source`, `split`, `in-place`), mirroring `wikiLinkSource`'s
+  contract exactly. It takes `(query: string) => TagCompletion[] | Promise<…>`,
+  where `TagCompletion` is `{ tag: string }`; the host owns the index and the
+  ordering, Stylo owns the trigger and the insert. The trigger only fires on a
+  `#` at the start of a line or after whitespace, and never on a `# Heading`
+  marker (the space after `#` breaks the match before any heading text is
+  typed) or mid-word (`word#word`, a URL fragment); it also skips a `#`
+  immediately followed by a digit (`#1234`, an issue or anchor reference).
+  Registered alongside the wikilink source through the same Markdown-language
+  completion machinery, so it shares the same tooltip and is inert in fenced
+  code. Off unless the prop is passed; read once, at mount.
+
 ## [0.11.0] - 2026-09-12
 
 ### Added
@@ -459,6 +476,7 @@ consumable from git.
 - `inPlace` config is read once at mount; changing it needs a remount. (Now
   documented as an intentional contract — see `[Unreleased]`.)
 
+[0.12.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.12.0
 [0.11.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.11.0
 [0.10.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.10.0
 [0.9.1]: https://github.com/studiodamiro/stylo/releases/tag/v0.9.1
