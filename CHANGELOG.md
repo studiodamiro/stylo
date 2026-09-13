@@ -6,6 +6,8 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.15.2] - 2026-09-14
+
 ### Fixed
 
 - **`preview`'s table never actually stretched past its own content width,
