@@ -280,6 +280,9 @@
    it tracks the base font size instead of going visually oversized against a
    host-set smaller one. */
 .preview {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
   padding: 0.8em 1.0666667em;
   font-size: var(--stylo-font-size, 0.9375rem);
   line-height: 1.75;

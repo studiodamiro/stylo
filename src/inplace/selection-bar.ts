@@ -93,7 +93,13 @@ class SelectionBar implements PluginValue {
     // rather than re-chasing the selection.
     const menuToggled =
       u.startState.field(menuOpenField, false) !== u.state.field(menuOpenField, false)
-    if (u.selectionSet || u.docChanged || u.focusChanged || menuToggled) this.schedule()
+    // A live `readOnly` flip (no remount) needs its own trigger: it changes
+    // neither the selection, the doc, nor focus, so none of the other checks
+    // would otherwise catch a bar left showing over a selection made just
+    // before `readOnly` turned on.
+    const readOnlyToggled = u.startState.readOnly !== u.state.readOnly
+    if (u.selectionSet || u.docChanged || u.focusChanged || menuToggled || readOnlyToggled)
+      this.schedule()
   }
 
   /**

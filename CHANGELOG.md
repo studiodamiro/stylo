@@ -6,6 +6,25 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-09-13
+
+### Fixed
+
+- **`preview` had no scroll container.** In a host that gives `<Stylo>` a
+  bounded height, a note longer than the visible panel was clipped by
+  `.root`'s `overflow: hidden` with nothing in between to catch the overflow
+  instead — `.preview` was the one surface in `stylo.module.css` missing the
+  `flex: 1 1 auto; min-height: 0; overflow: auto` pattern `source` and
+  `in-place` already had.
+- **`readOnly` didn't stop the in-place canvas's right-click menu or floating
+  selection bar from editing.** `EditorState.readOnly` only gates
+  DOM-originated input (keyboard/paste/IME); it doesn't block a plain
+  programmatic `view.dispatch(...)`, and the menu and selection bar's buttons
+  call one unconditionally. Both now check `view.state.readOnly` — the menu
+  no longer opens (the browser's own context menu shows instead, same as
+  today's `contextMenu: false`), and the selection bar no longer appears —
+  and both react to a live `readOnly` change with no remount needed.
+
 ## [0.13.0] - 2026-09-13
 
 ### Added
@@ -498,6 +517,7 @@ consumable from git.
 - `inPlace` config is read once at mount; changing it needs a remount. (Now
   documented as an intentional contract — see `[Unreleased]`.)
 
+[0.13.1]: https://github.com/studiodamiro/stylo/releases/tag/v0.13.1
 [0.13.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.13.0
 [0.12.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.12.0
 [0.11.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.11.0
