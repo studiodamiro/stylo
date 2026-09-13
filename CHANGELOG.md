@@ -6,6 +6,8 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-09-13
+
 ### Added
 
 - **`softBreaks` prop.** Opt in and a single line ending in `preview` (and
