@@ -60,6 +60,9 @@ export function measureBarPlacement(
   ids: ToolbarCommandId[],
 ): Placement {
   if (view.state.facet(selectionUIFacet) !== "bar") return null
+  // Every button here dispatches a real edit — nothing left to offer once the
+  // canvas is read-only.
+  if (view.state.readOnly) return null
   // The right-click menu is up — yield to it rather than stack two popups.
   // The bar re-measures and returns when `menuOpenField` clears.
   if (view.state.field(menuOpenField, false)) return null

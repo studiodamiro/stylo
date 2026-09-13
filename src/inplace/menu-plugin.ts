@@ -53,7 +53,7 @@ class ContextMenuController implements PluginValue {
 
     this.onContextMenu = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null
-      if (!view.state.facet(contextMenuEnabled)) return
+      if (!view.state.facet(contextMenuEnabled) || view.state.readOnly) return
 
       // Editable tables run their own context menu (structural rows, plus the
       // format group when a cell has a selection) and stop propagation before
@@ -86,7 +86,7 @@ class ContextMenuController implements PluginValue {
    *  Reconciles the selection first so the menu offers the right rows. */
   private openMenuAt(clientX: number, clientY: number, target: HTMLElement | null) {
     const view = this.view
-    if (!view.state.facet(contextMenuEnabled)) return
+    if (!view.state.facet(contextMenuEnabled) || view.state.readOnly) return
     if (target?.closest(".cm-inplace-table-edit")) return
 
     // A right-click on a rendered thematic break: `posAtCoords` over a block
