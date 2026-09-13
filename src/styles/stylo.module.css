@@ -382,6 +382,8 @@
   border-radius: var(--stylo-radius);
   background: color-mix(in srgb, var(--stylo-border) 35%, transparent);
   overflow-x: auto;
+  white-space: var(--stylo-preview-code-white-space, pre-wrap);
+  overflow-wrap: break-word;
 }
 
 .preview pre code {

@@ -6,6 +6,24 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.13.6] - 2026-09-13
+
+### Fixed
+
+- **`preview`'s fenced code blocks scrolled horizontally on a long line; the
+  in-place canvas wrapped the same line.** `.preview pre` never set
+  `white-space`, so it fell back to `<pre>`'s UA default of `pre`, which
+  suppresses wrapping regardless of available break points — confirmed live
+  against a real document opened in both modes in the same panel. In-place's
+  wrap was never a deliberate per-construct choice either: `EditorView.lineWrapping`
+  applies to the whole CodeMirror document, prose and fenced code alike.
+  `preview` now sets `white-space: pre-wrap` and `overflow-wrap: break-word`
+  to match, with `overflow-x: auto` kept as a safety net for an unbroken run
+  with no whitespace at all. A new **`--stylo-preview-code-white-space`**
+  token (default `pre-wrap`) restores the old horizontal-scroll behaviour for
+  anyone who wants it back — set it to `pre`. `preview`-only: in-place has no
+  equivalent whole-document toggle to parameterize the same way.
+
 ## [0.13.5] - 2026-09-13
 
 ### Fixed
@@ -572,6 +590,7 @@ consumable from git.
 - `inPlace` config is read once at mount; changing it needs a remount. (Now
   documented as an intentional contract — see `[Unreleased]`.)
 
+[0.13.6]: https://github.com/studiodamiro/stylo/releases/tag/v0.13.6
 [0.13.5]: https://github.com/studiodamiro/stylo/releases/tag/v0.13.5
 [0.13.4]: https://github.com/studiodamiro/stylo/releases/tag/v0.13.4
 [0.13.3]: https://github.com/studiodamiro/stylo/releases/tag/v0.13.3

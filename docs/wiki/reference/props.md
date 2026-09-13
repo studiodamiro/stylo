@@ -315,6 +315,14 @@ properties you can set on `.stylo` or any ancestor:
 Defaults follow shadcn/ui's neutral conventions as a visual reference; no
 Tailwind or shadcn code is bundled.
 
+`--stylo-preview-code-white-space` (default `pre-wrap`) controls only
+`preview`'s fenced code blocks, wrapping long lines the same way the in-place
+canvas already does. Set it to `pre` to restore the horizontal-scroll
+convention most other markdown renderers use instead. It is `preview`-only by
+necessity, not by choice: in-place's wrapping comes from one document-wide
+CodeMirror extension with no per-construct control, so there is no matching
+token to expose there — see ADR-002 §3's surface-parity amendment.
+
 `--stylo-surface-floating` is a concrete colour, not an alias of `--stylo-bg`:
 setting `--stylo-bg: transparent` to embed the editor in an existing card leaves
 the context menu, selection bar, URL input, and link-hover tooltip opaque. Set

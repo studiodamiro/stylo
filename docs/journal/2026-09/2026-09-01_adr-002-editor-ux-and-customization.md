@@ -667,6 +667,25 @@ untouched, and must not gate v1.
   > open; no shared token can fix it, since the two are structurally
   > different computations, not two copies of one number. See the
   > [rhythm-shared-values note](./2026-09-13_rhythm-shared-values.md).
+  >
+  > **Amended 2026-09-13 (a preview-only token, reach decided the other
+  > direction):** every token above was introduced against the in-place
+  > canvas first, with `preview`'s reach decided afterward. A request filed
+  > against a real Sympose document flipped that: `preview`'s fenced code
+  > blocks scrolled horizontally on a long line where in-place's identical
+  > document wrapped, purely because `EditorView.lineWrapping` in
+  > `baseExtensions` applies to the whole document with no concept of "this
+  > line is inside a code fence" — in-place's wrap was never a deliberate
+  > per-construct choice to begin with. **`--stylo-preview-code-white-space`**
+  > (default `pre-wrap`) closes the visible gap on `.preview pre` and is
+  > recorded here, not left to the same silence the rule above exists to
+  > catch, as **not reaching in-place**: there is no whole-document
+  > `white-space` toggle to parameterize on that side, and building
+  > per-construct wrap control into the CodeMirror extension is a
+  > structurally different, larger change than this request asked for. See
+  > the [preview-code-wrap note](./2026-09-13_preview-code-wrap-token.md) and
+  > the originating
+  > [request](../../requests/2026-09-13_preview-code-blocks-dont-wrap.md).
 
 #### 4. Icons: inline SVG, no icon dependency
 
