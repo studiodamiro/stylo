@@ -57,6 +57,32 @@
   --stylo-syntax-property: #0f766e;
   --stylo-syntax-tag: #cf222e;
   --stylo-syntax-invalid: #dc2626;
+
+  /* Internal rhythm values shared between the in-place canvas
+     (inplace/theme-canvas.ts, inplace/theme-callout.ts, inplace/list-guides.ts)
+     and preview (stylo.module.css), so a number picked for one surface cannot
+     silently drift from the other's copy of the same value the way heading
+     h5/h6 sizing, list-item spacing, and callout padding/radius each already
+     had (see ADR-002 §3, 2026-09-13 amendment). Not part of the public
+     theming contract in props.md's token tables — a host restyling rhythm
+     overrides the resulting CSS classes directly (see the theming guide),
+     not these variables, which may change shape without notice. */
+  --stylo-rhythm-h1-size: 2.25em;
+  --stylo-rhythm-h1-line: 1.1111111;
+  --stylo-rhythm-h2-size: 1.5em;
+  --stylo-rhythm-h2-line: 1.3333333;
+  --stylo-rhythm-h3-size: 1.25em;
+  --stylo-rhythm-h3-line: 1.6;
+  --stylo-rhythm-h4-size: 1em;
+  --stylo-rhythm-h4-line: 1.5;
+  --stylo-rhythm-h5-size: 0.9em;
+  --stylo-rhythm-h5-line: 1.5;
+  --stylo-rhythm-h6-size: 0.9em;
+  --stylo-rhythm-h6-line: 1.5;
+  --stylo-rhythm-list-item-gap: 0.5em;
+  --stylo-rhythm-list-item-gap-nested: 0.75em;
+  --stylo-rhythm-callout-padding-x: 1rem;
+  --stylo-rhythm-callout-padding-y: 0.7em;
 }
 
 /*

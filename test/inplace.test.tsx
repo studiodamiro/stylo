@@ -71,6 +71,19 @@ function hasClass(view: EditorView, className: string): boolean {
   return found
 }
 
+/** Every line-decoration class applied to a given 1-based line, merged into one string. */
+function lineClasses(view: EditorView, lineNumber: number): string {
+  const set = view.plugin(inPlacePlugin)?.decorations
+  if (!set) return ""
+  const { from } = view.state.doc.line(lineNumber)
+  const classes: string[] = []
+  set.between(from, from, (_f, _t, deco) => {
+    const c = deco.spec.class
+    if (typeof c === "string") classes.push(c)
+  })
+  return classes.join(" ")
+}
+
 test("in-place mounts a CodeMirror surface, no warnings", async () => {
   const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
   const { container } = await mount("# Title\n\nbody")
@@ -177,6 +190,22 @@ test("nested list lines get an indent-guide decoration; a flat list gets none", 
 
   const nested = await mount("- a\n  - b\n    - c")
   expect(hasClass(nested.view, "cm-inplace-li")).toBe(true)
+})
+
+test("every list item but the first in its own list gets a gap above it", async () => {
+  const { view } = await mount("- a\n- b\n  - b1\n  - b2\n- c")
+  // "- a" (line 1): first item of the top-level list — no gap.
+  expect(lineClasses(view, 1)).not.toMatch(/cm-inplace-item-gap/)
+  // "- b" (line 2): second top-level item — the plain gap.
+  expect(lineClasses(view, 2)).toContain("cm-inplace-item-gap")
+  expect(lineClasses(view, 2)).not.toContain("cm-inplace-item-gap-nested")
+  // "  - b1" (line 3): first item of a nested list — the larger nested gap.
+  expect(lineClasses(view, 3)).toContain("cm-inplace-item-gap-nested")
+  // "  - b2" (line 4): second item of that nested list — the plain gap again.
+  expect(lineClasses(view, 4)).toContain("cm-inplace-item-gap")
+  expect(lineClasses(view, 4)).not.toContain("cm-inplace-item-gap-nested")
+  // "- c" (line 5): back at the top level, not first — the plain gap.
+  expect(lineClasses(view, 5)).toContain("cm-inplace-item-gap")
 })
 
 test("emphasis inside a heading is still decorated", async () => {

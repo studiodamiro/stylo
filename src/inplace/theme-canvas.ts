@@ -30,12 +30,39 @@ export const canvasTheme = {
   "& .cm-line": { paddingLeft: "0", paddingRight: "0" },
 
   ".cm-inplace-heading": { fontWeight: "600" },
-  ".cm-inplace-h1": { fontSize: "2.25em", lineHeight: "1.1111111", paddingTop: "0.35em" },
-  ".cm-inplace-h2": { fontSize: "1.5em", lineHeight: "1.3333333", paddingTop: "0.7em" },
-  ".cm-inplace-h3": { fontSize: "1.25em", lineHeight: "1.6", paddingTop: "0.6em" },
-  ".cm-inplace-h4": { fontSize: "1em", lineHeight: "1.5", paddingTop: "0.5em" },
-  ".cm-inplace-h5": { fontSize: "0.9em" },
-  ".cm-inplace-h6": { fontSize: "0.9em", color: "var(--stylo-text-muted)" },
+  // Sizes and line-heights come from the same --stylo-rhythm-* custom
+  // properties preview reads (tokens.css) — h5/h6 previously had no
+  // line-height set here at all, inheriting the canvas's own 1.75 rather than
+  // matching preview's 1.5 (2026-09-13).
+  ".cm-inplace-h1": {
+    fontSize: "var(--stylo-rhythm-h1-size, 2.25em)",
+    lineHeight: "var(--stylo-rhythm-h1-line, 1.1111111)",
+    paddingTop: "0.35em",
+  },
+  ".cm-inplace-h2": {
+    fontSize: "var(--stylo-rhythm-h2-size, 1.5em)",
+    lineHeight: "var(--stylo-rhythm-h2-line, 1.3333333)",
+    paddingTop: "0.7em",
+  },
+  ".cm-inplace-h3": {
+    fontSize: "var(--stylo-rhythm-h3-size, 1.25em)",
+    lineHeight: "var(--stylo-rhythm-h3-line, 1.6)",
+    paddingTop: "0.6em",
+  },
+  ".cm-inplace-h4": {
+    fontSize: "var(--stylo-rhythm-h4-size, 1em)",
+    lineHeight: "var(--stylo-rhythm-h4-line, 1.5)",
+    paddingTop: "0.5em",
+  },
+  ".cm-inplace-h5": {
+    fontSize: "var(--stylo-rhythm-h5-size, 0.9em)",
+    lineHeight: "var(--stylo-rhythm-h5-line, 1.5)",
+  },
+  ".cm-inplace-h6": {
+    fontSize: "var(--stylo-rhythm-h6-size, 0.9em)",
+    lineHeight: "var(--stylo-rhythm-h6-line, 1.5)",
+    color: "var(--stylo-text-muted)",
+  },
 
   ".cm-inplace-strong": { fontWeight: "700" },
   ".cm-inplace-em": { fontStyle: "italic" },
@@ -169,6 +196,12 @@ export const canvasTheme = {
     backgroundPosition: "0.35em 0",
     backgroundSize: "calc(var(--sl-li-depth, 0) * 1.5em) 100%",
   },
+  // Gap above every list item but the first in its own list — a flat text
+  // canvas has no `<li>` box to hang a margin on, so this is `list-guides.ts`'s
+  // approximation of preview's `li` / `li > :is(ul, ol)` margins, matching its
+  // spacing between items rather than its box model (2026-09-13).
+  ".cm-inplace-item-gap": { paddingTop: "var(--stylo-rhythm-list-item-gap, 0.5em)" },
+  ".cm-inplace-item-gap-nested": { paddingTop: "var(--stylo-rhythm-list-item-gap-nested, 0.75em)" },
   ".cm-inplace-checkbox": {
     margin: "0 0.4em 0 0",
     verticalAlign: "middle",
