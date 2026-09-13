@@ -6,6 +6,8 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-09-13
+
 ### Added
 
 - **`onTaskToggle` prop.** Opt in and `preview` (and `split`'s preview pane)
