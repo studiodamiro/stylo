@@ -44,6 +44,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
     icons,
     frontmatter,
     softBreaks,
+    onTaskToggle,
     canvasHeader,
   },
   ref,
@@ -164,6 +165,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
             frontmatter={frontmatter}
             codeLanguages={codeLanguages}
             softBreaks={softBreaks}
+            onTaskToggle={onTaskToggle}
           />
         </Suspense>
       )}
@@ -182,6 +184,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
           onResolveError={resolveError}
           frontmatter={frontmatter}
           softBreaks={softBreaks}
+          onTaskToggle={onTaskToggle}
           onSave={onSave}
           onViewChange={setView}
           canvasHeader={canvasHeader}

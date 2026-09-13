@@ -36,6 +36,7 @@ import "@damiro/stylo/katex.css" // only if you use math in preview
 | `frontmatter`     | `"hidden" \| "code"`                                                                            | `"hidden"`   | How `preview` (and `split`'s preview pane) shows the leading `---` YAML block. `"hidden"` drops it; `"code"` renders the raw block as `<div class="stylo-frontmatter">` above the body. Restyle it with your own CSS (see below). For structured data use `onFrontmatter`; Stylo bundles no YAML parser ([ADR-001](../../journal/2026-09/2026-09-01_adr-001-editor-architecture.md)).                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `codeLanguages`   | `readonly LanguageDescription[] \| ((info: string) => Language \| LanguageDescription \| null)` | —            | Grammars for fenced-code sub-highlighting. Stylo bundles none — pass your own set (`codeLanguages={languages}` from `@codemirror/language-data`, or a hand-built list). Forwarded verbatim to `@codemirror/lang-markdown` for the CodeMirror surfaces (`source`, `split`, `in-place`; read once, at mount); resolved the same way and coloured with the same `--stylo-syntax-*` tokens in `preview` (and `split`'s preview pane), reactively. See [fenced-code highlighting](./code-languages.md).                                                                                                                                                                                                                                                                                                                                                         |
 | `softBreaks`      | `boolean`                                                                                       | `false`      | Turns a single line ending into a real `<br>` in `preview` (and `split`'s preview pane), instead of CommonMark's default — a blank line required to start a new paragraph. Obsidian's Live Preview reads this way. `false` keeps today's paragraph-joining render for every existing consumer; opt in for the Obsidian-style behaviour. No effect on `in-place` / `source` — CodeMirror already decorates each source line independently there, with nothing to opt out of. Fenced code and table cells are unaffected either way (not prose text nodes). Fully reactive, like `frontmatter`.                                                                                                                                                                                                                                                              |
+| `onTaskToggle`    | `(info: TaskToggleInfo) => void`                                                                | —            | Makes `preview` (and `split`'s preview pane) task-list checkboxes clickable instead of `disabled`. Off when omitted — every checkbox renders `disabled`, today's behaviour. See [Clickable task checkboxes](#clickable-task-checkboxes).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `wikiLinkSource`  | `(query: string) => readonly WikiLinkCompletion[] \| Promise<…>`                                | —            | Enables `[[wikilink]]` autocomplete on the CodeMirror surfaces. Called with the target typed so far while the caret is inside an unclosed `[[…`; return your index's matches, already ordered (Stylo does not re-rank or filter). May be async. Off when omitted. Read once, at mount. See [Wikilink autocomplete](#wikilink-autocomplete).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `tagSource`       | `(query: string) => readonly TagCompletion[] \| Promise<…>`                                     | —            | Enables `#tag` autocomplete on the CodeMirror surfaces, mirroring `wikiLinkSource`'s contract exactly. Called with the tag typed so far while the caret is inside an unclosed `#…`; return your index's matches, already ordered. May be async. Off when omitted. Read once, at mount. See [Tag autocomplete](#tag-autocomplete).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `embedSource`     | `(ref: string) => ReactNode \| Promise<ReactNode>`                                              | —            | Resolves `![[ref]]` embeds for `preview`, `split`, and the in-place canvas. Called with the raw reference (`Note#Heading`, `pic.png\|320` — suffixes intact); return a node to render in its place, or `null` to keep it literal. May be async. Off when omitted. Recognised only when the `![[…]]` is alone on its line. See [Embeds](#embeds).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -210,6 +211,47 @@ class="cm-inplace-embed-inline">…` (canvas). `.stylo-embed-content`,
   points; zero the padding and border to drop the block frame.
 - Off entirely when `embedSource` is omitted — `![[ref]]` then renders as it did
   before (the leading `!` as text, `[[ref]]` as a wikilink).
+
+## Clickable task checkboxes
+
+`remark-gfm` renders a `- [ ]` / `- [x]` task-list item as an `<input
+type="checkbox" disabled>` — a faithful, read-only render of the source, not
+something a host can click. Pass **`onTaskToggle`** and stylo drops the
+`disabled` attribute for that render pass and reports a click instead of
+silently doing nothing:
+
+```tsx
+type TaskToggleInfo = { start: number; end: number; checked: boolean }
+;<Stylo
+  value={doc}
+  onChange={setDoc}
+  onTaskToggle={({ start, end, checked }) => {
+    setDoc(doc.slice(0, start) + (checked ? "[x]" : "[ ]") + doc.slice(end))
+  }}
+/>
+```
+
+- `start` / `end` bracket the marker itself in `value` (`end - start === 3`) —
+  splice in `"[x]"` or `"[ ]"` and hand the result to your own `onChange`, the
+  same division of labour `onWikiLinkClick` and `embedSource` already use.
+  Stylo never touches `value` on its own; it only stops disabling the box and
+  tells you what changed.
+- `checked` is the box's **new** state (what to write), not what it was before
+  the click.
+- The offsets come from `remark-gfm`'s own parse position for that list item,
+  not from counting checkboxes in the rendered DOM against a regex scan of
+  `value` — a DOM-order/regex-order correlation silently desyncs the moment an
+  item's own text could itself be misread as another marker, or a
+  multi-paragraph item shifts the two orderings out of step. Stylo already has
+  the real position; it uses it.
+- **`preview`-only, by construction** — `in-place` and `source` have no
+  rendered checkbox element to click; a task marker there is plain source text
+  under the caret already.
+- Off by default: every checkbox stays `disabled` exactly as before until a
+  host opts in. Fully reactive, like `frontmatter`.
+
+See [the checkbox-toggle journal entry](../../journal/2026-09/2026-09-13_preview-task-checkboxes.md)
+for the DOM-position mechanism this is built on.
 
 ## Canvas header
 

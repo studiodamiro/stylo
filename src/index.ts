@@ -16,6 +16,7 @@ export type {
   TableEditing,
   TagCompletion,
   TagSource,
+  TaskToggleInfo,
   ToolbarCommandId,
   ToolbarConfig,
   ToolbarCustomItem,

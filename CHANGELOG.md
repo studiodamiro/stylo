@@ -6,6 +6,20 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **`onTaskToggle` prop.** Opt in and `preview` (and `split`'s preview pane)
+  task-list checkboxes render clickable instead of `disabled`. Fired with
+  `{ start, end, checked }` — raw offsets into `value` bracketing the clicked
+  `[ ]` / `[x]` marker and its new state — so a host can splice the marker
+  and pass the result to its own `onChange`, the same division of labour
+  `onWikiLinkClick` and `embedSource` already use. The offsets come from
+  `remark-gfm`'s own parse position for that list item, not a DOM-order/
+  regex-scan correlation, which would desync the moment an item's own text
+  could be misread as another marker. Off by default: every checkbox stays
+  `disabled`, exactly as before, until a host opts in. `preview`-only — `in-
+place` and `source` have no rendered checkbox element to click.
+
 ## [0.14.0] - 2026-09-13
 
 ### Added

@@ -197,6 +197,23 @@ export interface ResolveErrorInfo {
 }
 
 /**
+ * Reported by `onTaskToggle` when a `preview` task-list checkbox is clicked.
+ * `start`/`end` are raw offsets into `value` bracketing the `[ ]` / `[x]`
+ * marker itself (`end - start === 3`); splice in the new marker text to apply
+ * the toggle: `value.slice(0, start) + (checked ? "[x]" : "[ ]") +
+ * value.slice(end)`. `checked` is the box's new state, not its state before
+ * the click.
+ */
+export interface TaskToggleInfo {
+  /** Offset of the marker's opening `[` in `value`. */
+  start: number
+  /** Offset just past the marker's closing `]` in `value`. */
+  end: number
+  /** The checkbox's new state. */
+  checked: boolean
+}
+
+/**
  * Per-construct on/off switches for the in-place canvas. Each key defaults to
  * `true`; setting one `false` leaves that construct as plain source — no
  * decoration, no cursor-reveal behaviour. See ADR-005.
@@ -341,6 +358,16 @@ export interface StyloProps {
    * decorates each source line independently there.
    */
   softBreaks?: boolean
+  /**
+   * Makes `preview` (and `split`'s preview pane) task-list checkboxes
+   * clickable instead of `disabled`. Fired with a {@link TaskToggleInfo} — raw
+   * offsets into `value` bracketing the clicked `[ ]` / `[x]` marker, and its
+   * new state. Stylo never mutates `value` itself; splice the marker and pass
+   * the result to `onChange`, same division of labour as `onWikiLinkClick`.
+   * Off by default: every checkbox stays `disabled`, exactly like today,
+   * until a host opts in.
+   */
+  onTaskToggle?: (info: TaskToggleInfo) => void
   /**
    * Grammars for fenced-code sub-highlighting on the CodeMirror surfaces
    * (`source`, `split`, `in-place`). None by default. Read once, at mount.

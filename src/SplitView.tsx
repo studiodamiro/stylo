@@ -10,6 +10,7 @@ import type {
   FrontmatterDisplay,
   ResolveErrorInfo,
   TagSource,
+  TaskToggleInfo,
   WikiLinkSource,
 } from "./types"
 
@@ -26,6 +27,7 @@ export interface SplitViewProps {
   onResolveError?: (error: unknown, info: ResolveErrorInfo) => void
   frontmatter?: FrontmatterDisplay
   softBreaks?: boolean
+  onTaskToggle?: (info: TaskToggleInfo) => void
   /** Called with the doc string on `Mod-s`. */
   onSave?: (value: string) => void
   /** Forwarded the source pane's `EditorView` for the shared toolbar. */
@@ -53,6 +55,7 @@ export function SplitView({
   onResolveError,
   frontmatter,
   softBreaks,
+  onTaskToggle,
   onSave,
   onViewChange,
   canvasHeader,
@@ -119,6 +122,7 @@ export function SplitView({
             frontmatter={frontmatter}
             codeLanguages={codeLanguages}
             softBreaks={softBreaks}
+            onTaskToggle={onTaskToggle}
           />
         </Suspense>
       </div>
