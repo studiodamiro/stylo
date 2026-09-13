@@ -6,6 +6,19 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **`softBreaks` prop.** Opt in and a single line ending in `preview` (and
+  `split`'s preview pane) becomes a real `<br>` instead of CommonMark's
+  default — a blank line required to start a new paragraph, which otherwise
+  joins consecutive lines (a callout title and body written the ordinary
+  way, for one) into a single run. Obsidian's Live Preview reads this way,
+  via the same `remark-breaks` plugin. Off by default: this is a visible
+  change to existing rendered output, not a bug fix, so nothing changes for
+  a consumer that doesn't pass it. `preview`-only, like `codeLanguages`'s
+  asymmetry — `in-place`/`source` have no paragraph-joining behaviour to
+  opt out of. Fenced code and table cells are unaffected either way.
+
 ## [0.13.6] - 2026-09-13
 
 ### Fixed

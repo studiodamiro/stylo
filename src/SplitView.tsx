@@ -25,6 +25,7 @@ export interface SplitViewProps {
   embedSource?: EmbedSource
   onResolveError?: (error: unknown, info: ResolveErrorInfo) => void
   frontmatter?: FrontmatterDisplay
+  softBreaks?: boolean
   /** Called with the doc string on `Mod-s`. */
   onSave?: (value: string) => void
   /** Forwarded the source pane's `EditorView` for the shared toolbar. */
@@ -51,6 +52,7 @@ export function SplitView({
   embedSource,
   onResolveError,
   frontmatter,
+  softBreaks,
   onSave,
   onViewChange,
   canvasHeader,
@@ -116,6 +118,7 @@ export function SplitView({
             onResolveError={onResolveError}
             frontmatter={frontmatter}
             codeLanguages={codeLanguages}
+            softBreaks={softBreaks}
           />
         </Suspense>
       </div>

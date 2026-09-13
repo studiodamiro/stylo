@@ -177,6 +177,27 @@ test("embedSource is resolved once across a remount, and re-mounts show no loadi
   expect(embedSource).toHaveBeenCalledTimes(1)
 })
 
+test("softBreaks defaults to false: consecutive lines join into one paragraph", () => {
+  const { container } = render(<Preview value={"line one\nline two"} />)
+  const paragraph = container.querySelector("p")
+  expect(paragraph?.querySelector("br")).toBeNull()
+  expect(paragraph?.textContent).toBe("line one\nline two")
+})
+
+test("softBreaks turns a single line ending into a <br>", () => {
+  const { container } = render(<Preview value={"line one\nline two"} softBreaks />)
+  const paragraph = container.querySelector("p")
+  expect(paragraph?.querySelector("br")).not.toBeNull()
+})
+
+test("softBreaks leaves a fenced code block's internal newlines untouched", () => {
+  const md = ["```", "line one", "line two", "```"].join("\n")
+  const { container } = render(<Preview value={md} softBreaks />)
+  const code = container.querySelector("pre code")
+  expect(code?.querySelector("br")).toBeNull()
+  expect(code?.textContent).toBe("line one\nline two\n")
+})
+
 test("a normal link is left alone and does not trigger the wikilink handler", () => {
   const onWikiLinkClick = vi.fn()
   const { container } = render(

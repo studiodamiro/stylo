@@ -1,6 +1,7 @@
 import { useMemo } from "react"
 import Markdown, { type Components } from "react-markdown"
 import rehypeKatex from "rehype-katex"
+import remarkBreaks from "remark-breaks"
 import remarkFrontmatter from "remark-frontmatter"
 import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
@@ -31,6 +32,16 @@ export interface PreviewProps {
    * un-highlighted text — today's behaviour.
    */
   codeLanguages?: CodeLanguages
+  /**
+   * Turn a single line ending into a real line break (`<br>`) instead of
+   * CommonMark's default — a blank line required to start a new paragraph,
+   * otherwise consecutive lines join into one run. Obsidian's Live Preview
+   * reads this way. Off by default: every existing `preview` render keeps
+   * today's paragraph-joining behaviour unless a host opts in. Has no effect
+   * on `in-place` / `source` — CodeMirror already decorates each source line
+   * independently there.
+   */
+  softBreaks?: boolean
 }
 
 /** Rendered Markdown + KaTeX view. A pure function of the string. */
@@ -41,6 +52,7 @@ export function Preview({
   onResolveError,
   frontmatter = "hidden",
   codeLanguages,
+  softBreaks,
 }: PreviewProps) {
   const fm = frontmatter === "code" ? splitFrontmatter(value) : null
 
@@ -52,11 +64,12 @@ export function Preview({
       remarkFrontmatter,
       remarkGfm,
       remarkMath,
+      ...(softBreaks ? [remarkBreaks] : []),
       ...(embedSource ? [remarkEmbed] : []),
       remarkWikilink,
       remarkCallout,
     ],
-    [embedSource],
+    [embedSource, softBreaks],
   )
 
   const components: Components = {

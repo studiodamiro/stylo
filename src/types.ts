@@ -332,6 +332,16 @@ export interface StyloProps {
    */
   frontmatter?: FrontmatterDisplay
   /**
+   * Turn a single line ending into a real `<br>` in `preview` (and `split`'s
+   * preview pane), instead of CommonMark's default — a blank line required to
+   * start a new paragraph, so consecutive lines join into one run. Obsidian's
+   * Live Preview reads this way. Off by default: a real, visible change to
+   * every existing render, so a host opts in deliberately rather than
+   * inheriting it. No effect on `in-place` / `source` — CodeMirror already
+   * decorates each source line independently there.
+   */
+  softBreaks?: boolean
+  /**
    * Grammars for fenced-code sub-highlighting on the CodeMirror surfaces
    * (`source`, `split`, `in-place`). None by default. Read once, at mount.
    */

@@ -43,6 +43,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
     toolbar,
     icons,
     frontmatter,
+    softBreaks,
     canvasHeader,
   },
   ref,
@@ -162,6 +163,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
             onResolveError={resolveError}
             frontmatter={frontmatter}
             codeLanguages={codeLanguages}
+            softBreaks={softBreaks}
           />
         </Suspense>
       )}
@@ -179,6 +181,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
           embedSource={embedSource}
           onResolveError={resolveError}
           frontmatter={frontmatter}
+          softBreaks={softBreaks}
           onSave={onSave}
           onViewChange={setView}
           canvasHeader={canvasHeader}
