@@ -46,9 +46,13 @@ export function insertTable(view: EditorView): boolean {
   const { from, to } = view.state.selection.main
   const line = view.state.doc.lineAt(from)
   const lead = line.text.slice(0, from - line.from).trim() ? "\n\n" : ""
+  // A blank line always follows too — without one, a table landing as the
+  // document's last block has no line for the caret to move into (the same
+  // gap that made exiting it downward via the arrow keys land back above it
+  // instead — see table-widget.ts's `exitBelow`).
   const cellAt = from + lead.length + 2 // past "| "
   view.dispatch({
-    changes: { from, to, insert: lead + SKELETON + "\n" },
+    changes: { from, to, insert: lead + SKELETON + "\n\n" },
     selection: EditorSelection.range(cellAt, cellAt + 8), // "Column 1"
     scrollIntoView: true,
   })

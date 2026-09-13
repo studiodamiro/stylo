@@ -274,7 +274,17 @@ export class EditableTableWidget extends WidgetType {
     const exitBelow = () => {
       const { to } = this.bounds(view)
       view.focus()
-      view.dispatch({ selection: { anchor: Math.min(to + 1, view.state.doc.length) } })
+      // With the table as the last content in the document, `to` is already
+      // `doc.length` — there is no line after it to land the caret on, and a
+      // selection placed exactly at the atomic table range's own edge can
+      // resolve to the *other* side of it (landing above the table instead of
+      // below). Insert the line that "exit below" needs first, same as a
+      // fresh `insertTable` already gets, then move into it.
+      if (to >= view.state.doc.length) {
+        view.dispatch({ changes: { from: to, insert: "\n" }, selection: { anchor: to + 1 } })
+        return
+      }
+      view.dispatch({ selection: { anchor: to + 1 } })
     }
     const exitAbove = () => {
       const { from } = this.bounds(view)
