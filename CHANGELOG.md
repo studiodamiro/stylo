@@ -6,6 +6,8 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.15.1] - 2026-09-13
+
 ### Fixed
 
 - **An in-place editable table stayed inset from its wrapper's full width,
