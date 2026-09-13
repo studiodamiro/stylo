@@ -7,6 +7,13 @@
  *
  * Only a list item's *own* lines are decorated — the range stops before its
  * first nested list — so each line's depth is its innermost item's.
+ *
+ * The same per-`ListItem` walk also gives every item but the first in its own
+ * list a small `paddingTop` gap (`cm-inplace-item-gap`), so consecutive items
+ * read with some separation instead of butting straight into the shared
+ * 1.75 line-height like two lines of one paragraph — preview's `<li>` already
+ * carries a real margin; a flat text canvas had no equivalent at all before
+ * this (2026-09-13).
  */
 
 import type { Range, Text } from "@codemirror/state"
@@ -40,22 +47,36 @@ export function scanListGuides(
     to,
     enter: (node) => {
       if (node.name !== "ListItem") return
-      const guides = depthOf(node) - 1
-      if (guides < 1) return
+      const depth = depthOf(node)
+      const guides = depth - 1
 
       const firstLine = doc.lineAt(node.from).number
       const nested = node.node.getChild("BulletList") ?? node.node.getChild("OrderedList")
       const lastLine = doc.lineAt(nested ? nested.from - 1 : Math.min(node.to, doc.length)).number
 
+      // Not the first item of its own (immediate) list — give its first line a
+      // gap. Depth > 1 means it's the first item of a *nested* list, which
+      // gets the larger nested-gap value instead, approximating preview's
+      // `li > :is(ul, ol)` margin on the sublist as a whole.
+      const gapClass = node.node.prevSibling
+        ? "cm-inplace-item-gap"
+        : depth > 1
+          ? "cm-inplace-item-gap-nested"
+          : null
+
       for (let n = firstLine; n <= lastLine; n++) {
-        if (seen.has(n)) continue
-        seen.add(n)
-        out.push(
-          Decoration.line({
-            class: "cm-inplace-li",
-            attributes: { style: `--sl-li-depth:${guides}` },
-          }).range(doc.line(n).from),
-        )
+        if (guides >= 1 && !seen.has(n)) {
+          seen.add(n)
+          out.push(
+            Decoration.line({
+              class: "cm-inplace-li",
+              attributes: { style: `--sl-li-depth:${guides}` },
+            }).range(doc.line(n).from),
+          )
+        }
+        if (n === firstLine && gapClass) {
+          out.push(Decoration.line({ class: gapClass }).range(doc.line(n).from))
+        }
       }
     },
   })

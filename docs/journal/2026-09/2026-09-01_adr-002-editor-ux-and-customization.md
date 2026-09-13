@@ -642,6 +642,31 @@ untouched, and must not gate v1.
   > anything extra. See the
   > [surface-parity note](./2026-09-13_surface-parity-rule.md) and
   > [fenced-code highlighting](../../wiki/reference/code-languages.md).
+  >
+  > **Amended 2026-09-13 (internal rhythm values, shared instead of
+  > duplicated):** the surface-parity rule above governs a token's reach once
+  > it exists; it does not stop two surfaces each _inventing_ the same
+  > constant independently in the first place, which is exactly how heading
+  > h5/h6 size, list-item spacing, and callout padding/radius had each
+  > already drifted — none of the six was ever a `--stylo-*` token, so the
+  > rule never applied to them. Six new **internal** custom properties
+  > (`--stylo-rhythm-h1-size` … `-h6-line`, `-list-item-gap[-nested]`,
+  > `-callout-padding-x`/`-y`) now back both `stylo.module.css` and
+  > `inplace/theme-canvas.ts` / `theme-callout.ts`, closing the three drifts
+  > found and adding list-item spacing to the in-place canvas for the first
+  > time. Deliberately **not** added to the public token table in
+  > `props.md` — unlike every other token amendment above, these have no
+  > host-facing role; they exist purely so the two surfaces cannot silently
+  > re-diverge, which "one token per real role, no shadcn-style sprawl" does
+  > not license growing the documented set for. A fourth divergence claimed
+  > in the same report — in-place forcing table `width: 100%` against
+  > preview's shrink-to-fit — did not check out on inspection; both already
+  > agree, and no change was made there. A fifth, the deepest one — in-place
+  > heading/callout spacing being a function of how many blank source lines
+  > precede a block, where preview's is a fixed margin regardless — remains
+  > open; no shared token can fix it, since the two are structurally
+  > different computations, not two copies of one number. See the
+  > [rhythm-shared-values note](./2026-09-13_rhythm-shared-values.md).
 
 #### 4. Icons: inline SVG, no icon dependency
 

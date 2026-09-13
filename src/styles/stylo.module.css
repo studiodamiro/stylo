@@ -303,25 +303,40 @@
 
 .preview h1 {
   margin: 0 0 0.8888889em;
-  font-size: 2.25em;
-  line-height: 1.1111111;
+  font-size: var(--stylo-rhythm-h1-size, 2.25em);
+  line-height: var(--stylo-rhythm-h1-line, 1.1111111);
 }
 
 .preview h2 {
   margin: 2em 0 1em;
-  font-size: 1.5em;
-  line-height: 1.3333333;
+  font-size: var(--stylo-rhythm-h2-size, 1.5em);
+  line-height: var(--stylo-rhythm-h2-line, 1.3333333);
 }
 
 .preview h3 {
   margin: 1.6em 0 0.6em;
-  font-size: 1.25em;
-  line-height: 1.6;
+  font-size: var(--stylo-rhythm-h3-size, 1.25em);
+  line-height: var(--stylo-rhythm-h3-line, 1.6);
 }
 
+/* h4/h5/h6 share a margin and line-height, but each needs its own font-size —
+   previously unset here, so h5/h6 silently fell back to the browser's UA
+   default instead of matching the in-place canvas (2026-09-13). */
 .preview :is(h4, h5, h6) {
   margin: 1.5em 0 0.5em;
-  line-height: 1.5;
+  line-height: var(--stylo-rhythm-h4-line, 1.5);
+}
+
+.preview h4 {
+  font-size: var(--stylo-rhythm-h4-size, 1em);
+}
+
+.preview h5 {
+  font-size: var(--stylo-rhythm-h5-size, 0.9em);
+}
+
+.preview h6 {
+  font-size: var(--stylo-rhythm-h6-size, 0.9em);
 }
 
 .preview p {
@@ -334,11 +349,11 @@
 }
 
 .preview li {
-  margin: 0.5em 0;
+  margin: var(--stylo-rhythm-list-item-gap, 0.5em) 0;
 }
 
 .preview li > :is(ul, ol) {
-  margin: 0.75em 0;
+  margin: var(--stylo-rhythm-list-item-gap-nested, 0.75em) 0;
 }
 
 .preview a {
@@ -476,9 +491,14 @@
    `--stylo-callout-<bucket>` (or `--stylo-callout-accent` per type) to reskin. */
 .preview :global(.stylo-callout) {
   margin: 1.6em 0;
-  padding: 0.6em 1em;
+  padding: var(--stylo-rhythm-callout-padding-y, 0.7em) var(--stylo-rhythm-callout-padding-x, 1rem);
   border-left: 0.25rem solid var(--stylo-callout-accent, var(--stylo-border));
-  border-radius: var(--stylo-radius);
+  /* Right corners only, matching the in-place canvas: its callout is built
+     from several stacked lines carrying their own border-left, so its left
+     edge can't be rounded either — round preview's the same way rather than
+     the two surfaces drawing a different shape (2026-09-13). */
+  border-top-right-radius: var(--stylo-radius);
+  border-bottom-right-radius: var(--stylo-radius);
   background: color-mix(in srgb, var(--stylo-callout-accent, var(--stylo-border)) 10%, transparent);
   color: var(--stylo-text);
 }

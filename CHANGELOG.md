@@ -6,6 +6,29 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.13.4] - 2026-09-13
+
+### Fixed
+
+- **`preview` and the in-place canvas each hard-coded their own copy of the
+  same six rhythm values, and three had already drifted apart.** `preview`'s
+  heading rule never set a `font-size` for h5/h6 at all — a silent fallback to
+  the browser's UA default (~0.83em / ~0.67em) instead of the in-place
+  canvas's 0.9em; its callout rounded all four corners where the in-place
+  canvas's per-line construction can only round two; and its callout padding
+  was `0.6em` against in-place's `0.7em`. Both surfaces now read the same
+  internal `--stylo-rhythm-*` custom properties (`tokens.css`) for heading
+  sizes/line-heights, list-item spacing, and callout padding, instead of each
+  authoring its own copy — a value defined once can't silently re-diverge the
+  way these had. Not a change to the public token set: these are internal,
+  not documented in the styling-tokens reference; a host restyling rhythm
+  still overrides the resulting CSS classes directly.
+- **The in-place canvas had no list-item spacing at all.** A list item there
+  was just one more line at the shared line-height, with nothing like
+  preview's `<li>` margin. Every item but the first in its own list now gets
+  a small gap above it (`cm-inplace-item-gap`), sourced from the same shared
+  value as preview's `<li>` margin.
+
 ## [0.13.3] - 2026-09-13
 
 ### Fixed
@@ -535,6 +558,7 @@ consumable from git.
 - `inPlace` config is read once at mount; changing it needs a remount. (Now
   documented as an intentional contract — see `[Unreleased]`.)
 
+[0.13.4]: https://github.com/studiodamiro/stylo/releases/tag/v0.13.4
 [0.13.3]: https://github.com/studiodamiro/stylo/releases/tag/v0.13.3
 [0.13.1]: https://github.com/studiodamiro/stylo/releases/tag/v0.13.1
 [0.13.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.13.0

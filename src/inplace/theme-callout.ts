@@ -9,7 +9,7 @@ export const calloutTheme = {
   // is set per bucket and can be overridden per type.
   ".cm-inplace-callout": {
     borderLeft: "0.25rem solid var(--stylo-callout-accent, var(--stylo-border))",
-    padding: "0 1rem",
+    padding: "0 var(--stylo-rhythm-callout-padding-x, 1rem)",
     background:
       "color-mix(in srgb, var(--stylo-callout-accent, var(--stylo-border)) 10%, transparent)",
     color: "var(--stylo-text)",
@@ -17,13 +17,15 @@ export const calloutTheme = {
   // First / last line of the box carry the vertical breathing room and the
   // rounded outer corners (left stays a straight accent rule). Padding only —
   // `margin` on a `.cm-line` escapes CodeMirror's height map and clicks land on
-  // the wrong line (2026-09-02 click-mapping).
+  // the wrong line (2026-09-02 click-mapping). The vertical padding is the same
+  // --stylo-rhythm-callout-padding-y preview reads, so the two can't drift
+  // apart the way they had (0.7em here vs 0.6em there) before 2026-09-13.
   ".cm-inplace-callout-head": {
-    paddingTop: "0.7em",
+    paddingTop: "var(--stylo-rhythm-callout-padding-y, 0.7em)",
     borderTopRightRadius: "var(--stylo-radius)",
   },
   ".cm-inplace-callout-foot": {
-    paddingBottom: "0.7em",
+    paddingBottom: "var(--stylo-rhythm-callout-padding-y, 0.7em)",
     borderBottomRightRadius: "var(--stylo-radius)",
   },
   ".cm-inplace-callout-note": { "--stylo-callout-accent": "var(--stylo-callout-note, #3b82f6)" },
