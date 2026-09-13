@@ -220,6 +220,13 @@ export function Preview({
       }
       return <li {...rest}>{children}</li>
     },
+    table({ node: _node, children, ...rest }) {
+      return (
+        <div className="stylo-table-wrap">
+          <table {...rest}>{children}</table>
+        </div>
+      )
+    },
     code({ node: _node, className, children, ...rest }) {
       const language = /language-(\w+)/.exec(className || "")?.[1]
       if (language && codeLanguages) {

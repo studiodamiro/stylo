@@ -23,6 +23,17 @@ test("renders GFM and keeps YAML frontmatter out of the body", () => {
   expect(container.textContent).not.toContain("title: Hidden")
 })
 
+test("a table renders wrapped in .stylo-table-wrap, so a host's width on <table> reaches a real table-layout box", () => {
+  const md = ["| a | b |", "| - | - |", "| 1 | 2 |"].join("\n")
+  const { container } = render(<Preview value={md} />)
+
+  const wrap = container.querySelector(".stylo-table-wrap")
+  expect(wrap).not.toBeNull()
+  const table = wrap!.querySelector("table")
+  expect(table).not.toBeNull()
+  expect(table!.parentElement).toBe(wrap)
+})
+
 test('frontmatter="code" renders the raw block under a stable class', () => {
   const md = "---\ntitle: Shown\ntags: [x]\n---\n\n# Head"
   const { container } = render(<Preview value={md} frontmatter="code" />)

@@ -547,11 +547,22 @@
   margin-bottom: 0;
 }
 
-.preview table {
+/* A GFM table renders wrapped in `<div class="stylo-table-wrap">`, which
+   carries the block/scroll behaviour a table wider than its column needs —
+   `display: block` directly on `<table>` disables its own table-layout
+   algorithm entirely (the rendered grid then sizes to its content,
+   independent of the outer box's width), so a host's `width: 100%` on the
+   table itself would only ever stretch a box disconnected from the grid it's
+   trying to resize. `.stylo-table-wrap` is a stable override point, matching
+   `.cm-inplace-table-wrap` on the in-place canvas. */
+.preview :global(.stylo-table-wrap) {
   display: block;
   margin: 2em 0;
-  border-collapse: collapse;
   overflow-x: auto;
+}
+
+.preview table {
+  border-collapse: collapse;
 }
 
 .preview :is(th, td) {

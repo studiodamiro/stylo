@@ -32,6 +32,7 @@ milestones and Architectural Decision Records, newest first.
 
 | Date       | Entry                                                                                                                                                                                   |
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-14 | [`preview`'s table gets a real wrapper — `display: block` was disabling its own layout algorithm](./journal/2026-09/2026-09-14_preview-table-wrapper.md)                                |
 | 2026-09-13 | [In-place table reaches the wrap's full width — gizmo gutter moved off the table's own box](./journal/2026-09/2026-09-13_inplace-table-full-width.md)                                   |
 | 2026-09-13 | [Clickable task checkboxes in preview — `onTaskToggle`](./journal/2026-09/2026-09-13_preview-task-checkboxes.md)                                                                        |
 | 2026-09-13 | [`readOnly` reaches editable table cells too — the same gap, one layer deeper](./journal/2026-09/2026-09-13_readonly-table-cells.md)                                                    |

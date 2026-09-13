@@ -6,6 +6,21 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- **`preview`'s table never actually stretched past its own content width,
+  even when a host set `width: 100%` on it.** `table { display: block; ... }`
+  in `Preview.tsx`'s module CSS disabled the `<table>` element's native
+  table-layout algorithm — the rendered grid underneath sized itself to
+  content, completely disconnected from the outer block box a host's
+  `width` was actually resizing. The table now renders inside a
+  `.stylo-table-wrap` div, which carries the block/scroll behaviour instead,
+  leaving `<table>` at its native `display: table` so a host's width reaches
+  the real layout algorithm — the same shape `0.15.1` already gave the
+  in-place canvas's table. Verified in a real Chromium that the rendered
+  grid (not just the table's own box) now stretches, and that an over-wide
+  table still scrolls on the wrapper rather than blowing out its container.
+
 ## [0.15.1] - 2026-09-13
 
 ### Fixed
