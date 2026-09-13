@@ -8,12 +8,22 @@ export const tableGizmosTheme = {
     position: "relative",
     display: "inline-block",
     maxWidth: "100%",
-    // Reserve the right / bottom gutters the edge strips occupy. `border-collapse`
-    // makes the browser ignore padding on the `<table>` itself, so without this
-    // the wrapper is sized to the bare grid and the strips overflow it — the row
-    // strip spilling into the block below. Padding (not margin) so CodeMirror's
-    // height map still measures the widget correctly.
-    padding: "0 calc(1.15em + 4px) calc(1.15em + 4px) 0",
+    // Overflow stays visible so the add-column strip (positioned past the
+    // table's own right edge in `table-gizmos.ts` `layout()`) never gets
+    // clipped now that no padding reserves room for it in-flow — see below.
+    overflow: "visible",
+    // Reserve the bottom gutter the row strip occupies. `border-collapse` makes
+    // the browser ignore padding on the `<table>` itself, so without this the
+    // wrapper is sized to the bare grid and the row strip spills into the block
+    // below. Padding (not margin) so CodeMirror's height map still measures the
+    // widget correctly. The column strip needs no matching right-hand
+    // reservation: a host that stretches `.cm-inplace-table-wrap` and its
+    // `<table>` to the same 100% width (matching `preview`'s unwrapped table)
+    // would otherwise have the table itself sit inset by this amount, even
+    // though the strip's own position is computed live off the table's
+    // rendered edge, not this padding — nothing but `overflow: visible` above
+    // actually depends on it being here.
+    padding: "0 0 calc(1.15em + 4px) 0",
   },
   ".cm-inplace-table-gizmos": {
     position: "absolute",

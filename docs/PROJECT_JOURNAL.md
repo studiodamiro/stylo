@@ -32,6 +32,7 @@ milestones and Architectural Decision Records, newest first.
 
 | Date       | Entry                                                                                                                                                                                   |
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-13 | [In-place table reaches the wrap's full width — gizmo gutter moved off the table's own box](./journal/2026-09/2026-09-13_inplace-table-full-width.md)                                   |
 | 2026-09-13 | [Clickable task checkboxes in preview — `onTaskToggle`](./journal/2026-09/2026-09-13_preview-task-checkboxes.md)                                                                        |
 | 2026-09-13 | [`readOnly` reaches editable table cells too — the same gap, one layer deeper](./journal/2026-09/2026-09-13_readonly-table-cells.md)                                                    |
 | 2026-09-13 | [Preview and the in-place canvas now share their rhythm values, instead of each authoring their own copy](./journal/2026-09/2026-09-13_rhythm-shared-values.md)                         |

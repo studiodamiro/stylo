@@ -6,6 +6,21 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- **An in-place editable table stayed inset from its wrapper's full width,
+  even when a host stretched the wrapper itself to fill its container.**
+  `.cm-inplace-table-wrap` reserved its right-hand gizmo gutter as in-flow
+  padding, so the wrap's own `width: 100%` never reached the `<table>` inside
+  it — a child's percentage width always resolves against its parent's
+  content box, padding excluded. That padding turned out not to be load-
+  bearing for the add-column strip's own position (computed live off the
+  table's rendered edge in `table-gizmos.ts`), so it's dropped to `0`; the
+  bottom padding stays, since it _is_ load-bearing for CodeMirror's line-
+  height measurement of the row strip below the table. Verified in a real
+  Chromium that the column strip still renders past the table's edge and is
+  genuinely hit-testable there, not clipped.
+
 ## [0.15.0] - 2026-09-13
 
 ### Added
