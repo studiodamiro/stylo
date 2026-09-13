@@ -6,6 +6,20 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.13.5] - 2026-09-13
+
+### Fixed
+
+- **`readOnly` didn't reach editable table cells either.** `inPlace={{ table:
+"cells" }}` renders cells as a native `contenteditable` DOM region, entirely
+  outside CodeMirror's own `editable` / `readOnly` control — the same class of
+  gap as the right-click menu and selection bar fixed in `0.13.1`, one layer
+  deeper. `readOnly` now falls the canvas back to the plain (non-editable)
+  table rendering instead, the same one `source` mode already uses, and
+  reacts to a live `readOnly` change with no remount. Not triggered by
+  anything shipped so far — `table: "cells"` is opt-in and defaults off — but
+  closing it now rather than waiting for it to surface downstream.
+
 ## [0.13.4] - 2026-09-13
 
 ### Fixed
@@ -558,6 +572,7 @@ consumable from git.
 - `inPlace` config is read once at mount; changing it needs a remount. (Now
   documented as an intentional contract — see `[Unreleased]`.)
 
+[0.13.5]: https://github.com/studiodamiro/stylo/releases/tag/v0.13.5
 [0.13.4]: https://github.com/studiodamiro/stylo/releases/tag/v0.13.4
 [0.13.3]: https://github.com/studiodamiro/stylo/releases/tag/v0.13.3
 [0.13.1]: https://github.com/studiodamiro/stylo/releases/tag/v0.13.1
