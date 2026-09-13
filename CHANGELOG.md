@@ -6,15 +6,7 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
-### Changed
-
-- **`preview`'s base typography now tracks `--stylo-font-size`** instead of a
-  hardcoded `0.9375rem`. Its whole reading scale (headings, lists, code,
-  spacing) is `em`-based off that one value, so a host that has already set
-  `--stylo-font-size` for the in-place canvas gets a matching `preview` size
-  instead of a second, independently-sized scale. Visual change for any
-  consumer that overrides `--stylo-font-size` away from the default — no
-  change for anyone still on the default.
+## [0.13.0] - 2026-09-13
 
 ### Added
 
@@ -25,6 +17,16 @@ Notable changes to Stylo. The format follows
   block looks identical read or edited. Opt-in, like `codeLanguages` always
   was — omit it and fenced code stays plain text, today's behaviour. No new
   dependency.
+
+### Changed
+
+- **`preview`'s base typography now tracks `--stylo-font-size`** instead of a
+  hardcoded `0.9375rem`. Its whole reading scale (headings, lists, code,
+  spacing) is `em`-based off that one value, so a host that has already set
+  `--stylo-font-size` for the in-place canvas gets a matching `preview` size
+  instead of a second, independently-sized scale. Visual change for any
+  consumer that overrides `--stylo-font-size` away from the default — no
+  change for anyone still on the default.
 
 ## [0.12.0] - 2026-09-13
 
@@ -496,6 +498,7 @@ consumable from git.
 - `inPlace` config is read once at mount; changing it needs a remount. (Now
   documented as an intentional contract — see `[Unreleased]`.)
 
+[0.13.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.13.0
 [0.12.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.12.0
 [0.11.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.11.0
 [0.10.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.10.0
