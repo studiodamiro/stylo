@@ -87,7 +87,11 @@ function parseTable(node: SyntaxNode, doc: Text): ParsedTable | null {
 
 function build(state: EditorState): DecorationSet {
   if (!state.facet(inPlaceConfigFacet).tables) return Decoration.none
-  const editable = state.facet(tableEditingFacet) === "cells"
+  // `EditableTableWidget`'s cells are a native `contenteditable` DOM region
+  // (table-widget-render.ts), entirely outside CodeMirror's own `editable`/
+  // `readOnly` control — falling back to the plain `TableWidget` is what
+  // actually keeps a read-only document read-only.
+  const editable = state.facet(tableEditingFacet) === "cells" && !state.readOnly
   const embeds = state.facet(embedRegistryFacet) != null && state.facet(inPlaceConfigFacet).embeds
   const tree = syntaxTree(state)
   const fm = frontmatterRange(state.doc)
@@ -136,15 +140,20 @@ export const tableField = StateField.define<DecorationSet>({
     // its `from` side is negative (→ change start), its `to` side positive
     // (→ change end) — so the mapped span is exactly the new table.
     if (tr.annotation(fromTableWidget)) return value.map(tr.changes)
+    // A live `readOnly` flip changes which widget `build` picks (editable vs.
+    // plain) even with no doc change, so it needs its own rebuild trigger —
+    // same reason `selection-bar.ts` added one for the same prop.
+    const readOnlyToggled = tr.startState.readOnly !== tr.state.readOnly
     // In "cells" mode the editable widget is always mounted and owns live DOM
     // (contentEditable cells, an open context menu). A selection-only
     // transaction must not rebuild it — that swaps the widget instance behind
     // the mounted DOM and orphans an in-flight structural edit. Only a real
-    // external document change reloads it.
+    // external document change (or `readOnly` turning the whole mode off)
+    // reloads it.
     if (tr.state.facet(tableEditingFacet) === "cells") {
-      return tr.docChanged ? build(tr.state) : value.map(tr.changes)
+      return tr.docChanged || readOnlyToggled ? build(tr.state) : value.map(tr.changes)
     }
-    return tr.docChanged || tr.selection ? build(tr.state) : value
+    return tr.docChanged || tr.selection || readOnlyToggled ? build(tr.state) : value
   },
   provide: (field) => [
     EditorView.decorations.from(field),

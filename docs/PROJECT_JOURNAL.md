@@ -32,6 +32,7 @@ milestones and Architectural Decision Records, newest first.
 
 | Date       | Entry                                                                                                                                                                                   |
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-13 | [`readOnly` reaches editable table cells too — the same gap, one layer deeper](./journal/2026-09/2026-09-13_readonly-table-cells.md)                                                    |
 | 2026-09-13 | [Preview and the in-place canvas now share their rhythm values, instead of each authoring their own copy](./journal/2026-09/2026-09-13_rhythm-shared-values.md)                         |
 | 2026-09-13 | [Exiting an editable table downward could land the caret above it; `insertTable` now leaves room to move past one](./journal/2026-09/2026-09-13_table-exit-caret-and-insert-spacing.md) |
 | 2026-09-13 | [`preview` gets a scroll container; `readOnly` actually blocks the in-place menu and selection bar](./journal/2026-09/2026-09-13_preview-scroll-and-readonly-guards.md)                 |

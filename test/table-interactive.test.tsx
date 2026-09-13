@@ -11,7 +11,7 @@ afterEach(() => {
   cleanup()
 })
 
-async function mount(value: string, inPlace?: InPlaceConfig) {
+async function mount(value: string, inPlace?: InPlaceConfig, readOnly?: boolean) {
   let latest = value
   const result = render(
     <Stylo
@@ -21,6 +21,7 @@ async function mount(value: string, inPlace?: InPlaceConfig) {
       }}
       mode="in-place"
       inPlace={inPlace}
+      readOnly={readOnly}
     />,
   )
   await vi.waitFor(() => {
@@ -52,6 +53,33 @@ test('table: "cells" renders contentEditable cells; the default does not', async
   plain.view.dispatch({ selection: { anchor: plain.view.state.doc.length } })
   expect(plain.view.contentDOM.querySelector(".cm-inplace-table-edit")).toBeNull()
   expect(plain.view.contentDOM.querySelector("table [contenteditable]")).toBeNull()
+})
+
+test('readOnly falls back to the plain table even with table: "cells" requested', async () => {
+  const { view } = await mount(T, { table: "cells" }, true)
+  view.dispatch({ selection: { anchor: view.state.doc.length } })
+  expect(view.contentDOM.querySelector(".cm-inplace-table-edit")).toBeNull()
+  expect(view.contentDOM.querySelector("table [contenteditable]")).toBeNull()
+})
+
+test("flipping readOnly live swaps an already-mounted editable table back to plain", async () => {
+  const { view, rerender } = await mount(T, { table: "cells" }, false)
+  await editCells(view) // confirms the editable widget mounted while writable
+
+  rerender(
+    <Stylo
+      value={T}
+      onChange={() => {}}
+      mode="in-place"
+      inPlace={{ table: "cells" }}
+      readOnly={true}
+    />,
+  )
+  await vi.waitFor(() => {
+    if (view.contentDOM.querySelector(".cm-inplace-table-edit"))
+      throw new Error("editable widget still mounted")
+  })
+  expect(view.contentDOM.querySelector("table [contenteditable]")).toBeNull()
 })
 
 test("editing a cell reserializes the whole table back into the document", async () => {
