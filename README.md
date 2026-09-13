@@ -180,7 +180,9 @@ whole canvas. See [Canvas header](./docs/wiki/reference/props.md#canvas-header).
 
 `inPlace`, `codeLanguages`, `wikiLinkSource`, and `tagSource` are read once,
 when the editing surface mounts — give `<Stylo>` a `key` derived from the
-config to apply a change. Every other prop is fully reactive. See
+config to apply a change. (`codeLanguages` is the exception in `preview`,
+which is a pure function of its props and picks up a change immediately, no
+`key` needed.) Every other prop is fully reactive. See
 [props · applied at mount](./docs/wiki/reference/props.md#config-applied-at-mount).
 
 Pass `wikiLinkSource` — `(query) => { target, label? }[]`, sync or async — to
@@ -208,9 +210,10 @@ full grammar set is ~110 lazy chunks). See
 Every colour is a `--stylo-*` custom property; override any of them on `.stylo`
 or an ancestor. A dark palette ships built in and activates under a `.dark` or
 `[data-theme="dark"]` ancestor — the `next-themes` / shadcn convention.
-`--stylo-font-size` (default `0.9375rem`) sets the base editor size and
-everything inside scales from it; `--stylo-font-family` and
-`--stylo-font-family-mono` set the prose and code fonts.
+`--stylo-font-size` (default `0.9375rem`) sets the base size for the in-place
+canvas, `source`, and `preview` alike — everything inside each scales from it;
+`--stylo-font-family` and `--stylo-font-family-mono` set the prose and code
+fonts.
 
 ---
 

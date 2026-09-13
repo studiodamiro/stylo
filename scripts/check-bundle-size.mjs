@@ -25,6 +25,7 @@ const BUDGETS = {
   wikilink: 2_000,
   callout: 2_000,
   embed: 2_000, // <Embed> — the ![[ref]] resolver shared by preview and the in-place canvas
+  highlight: 2_000, // SYNTAX_TAG_GROUPS + styloHighlightStyle — shared by the in-place canvas and preview's highlightCode.ts
   frontmatter: 2_000, // frontmatterRange / splitFrontmatter — shared by the entry, in-place, and preview
 }
 

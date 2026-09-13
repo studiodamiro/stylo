@@ -37,6 +37,13 @@ install, so every change is weighed against the cost it imposes on consumers.
   `@lezer/*` import must be added to both `peerDependencies` and
   `devDependencies`, never to `dependencies`. See
   [ADR-008](./docs/journal/2026-09/2026-09-04_adr-008-codemirror-peer-dependency.md).
+- **Design tokens are introduced against the in-place canvas, and `preview`'s
+  reach is decided in the same change.** A new `--stylo-*` token targets the
+  in-place canvas first. Before it ships, its applicability to `preview` (and
+  `split`, which is just `source` + `preview` side by side) must be recorded —
+  either wired in too, or the amendment says why not. Silence is what let
+  `--stylo-font-size` and the `--stylo-syntax-*` set reach the in-place canvas
+  only, unnoticed, for days. See ADR-002 §3's 2026-09-13 amendment.
 
 ## Making changes
 

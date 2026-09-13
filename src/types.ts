@@ -109,12 +109,15 @@ export interface ToolbarConfig {
 }
 
 /**
- * Grammars for fenced-code sub-highlighting, forwarded verbatim to
- * `@codemirror/lang-markdown`. Stylo ships none by default — a consumer opts in
- * with exactly the set they want (`codeLanguages={languages}` from
- * `@codemirror/language-data`, or a hand-built list). Affects the CodeMirror
- * surfaces only (`source`, `split`, `in-place`); `preview` is a separate
- * pipeline. See the ADR-001 amendment.
+ * Grammars for fenced-code sub-highlighting. Stylo ships none by default — a
+ * consumer opts in with exactly the set they want (`codeLanguages={languages}`
+ * from `@codemirror/language-data`, or a hand-built list). Forwarded verbatim
+ * to `@codemirror/lang-markdown` for the CodeMirror surfaces (`source`,
+ * `split`, `in-place`); `preview` resolves a fence's language the same way
+ * (same fuzzy `LanguageDescription` match, or the function form called with
+ * the same name) and colours it with the same `--stylo-syntax-*` tokens, so a
+ * block reads identically whether it's being read or edited. See the ADR-001
+ * amendment and ADR-002 §3's 2026-09-13 amendment.
  */
 export type CodeLanguages =
   readonly LanguageDescription[] | ((info: string) => Language | LanguageDescription | null)

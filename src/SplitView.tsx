@@ -115,6 +115,7 @@ export function SplitView({
             embedSource={embedSource}
             onResolveError={onResolveError}
             frontmatter={frontmatter}
+            codeLanguages={codeLanguages}
           />
         </Suspense>
       </div>

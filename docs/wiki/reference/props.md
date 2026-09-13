@@ -34,7 +34,7 @@ import "@damiro/stylo/katex.css" // only if you use math in preview
 | `toolbar`         | `boolean \| { items?: (ToolbarCommandId \| "\|")[] }`                                           | `true`       | The formatting bar above the editing surface (`source`, `in-place`, `split`; never `preview`). Omit or `true` for the full default set, `false` to hide it, or `{ items }` to pick and order the buttons. Keyboard shortcuts (`Mod-b`/`i`/`k`, `Mod-Alt-1..3`, `Mod-f` for find / replace) stay bound regardless. See [formatting toolbar](./toolbar.md) ([ADR-002 §2](../../journal/2026-09/2026-09-01_adr-002-editor-ux-and-customization.md)).                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `icons`           | `Partial<Record<ToolbarCommandId, ReactNode>>`                                                  | —            | Replace individual toolbar glyphs, keyed by command id. Any id left out keeps its built-in inline-SVG icon — Stylo ships no icon dependency.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `frontmatter`     | `"hidden" \| "code"`                                                                            | `"hidden"`   | How `preview` (and `split`'s preview pane) shows the leading `---` YAML block. `"hidden"` drops it; `"code"` renders the raw block as `<div class="stylo-frontmatter">` above the body. Restyle it with your own CSS (see below). For structured data use `onFrontmatter`; Stylo bundles no YAML parser ([ADR-001](../../journal/2026-09/2026-09-01_adr-001-editor-architecture.md)).                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| `codeLanguages`   | `readonly LanguageDescription[] \| ((info: string) => Language \| LanguageDescription \| null)` | —            | Grammars for fenced-code sub-highlighting, forwarded verbatim to `@codemirror/lang-markdown`. Stylo bundles none — pass your own set (`codeLanguages={languages}` from `@codemirror/language-data`, or a hand-built list). Affects the CodeMirror surfaces (`source`, `split`, `in-place`); `preview` is unaffected. Read once, at mount. See [fenced-code highlighting](./code-languages.md).                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `codeLanguages`   | `readonly LanguageDescription[] \| ((info: string) => Language \| LanguageDescription \| null)` | —            | Grammars for fenced-code sub-highlighting. Stylo bundles none — pass your own set (`codeLanguages={languages}` from `@codemirror/language-data`, or a hand-built list). Forwarded verbatim to `@codemirror/lang-markdown` for the CodeMirror surfaces (`source`, `split`, `in-place`; read once, at mount); resolved the same way and coloured with the same `--stylo-syntax-*` tokens in `preview` (and `split`'s preview pane), reactively. See [fenced-code highlighting](./code-languages.md).                                                                                                                                                                                                                                                                                                                                                         |
 | `wikiLinkSource`  | `(query: string) => readonly WikiLinkCompletion[] \| Promise<…>`                                | —            | Enables `[[wikilink]]` autocomplete on the CodeMirror surfaces. Called with the target typed so far while the caret is inside an unclosed `[[…`; return your index's matches, already ordered (Stylo does not re-rank or filter). May be async. Off when omitted. Read once, at mount. See [Wikilink autocomplete](#wikilink-autocomplete).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `tagSource`       | `(query: string) => readonly TagCompletion[] \| Promise<…>`                                     | —            | Enables `#tag` autocomplete on the CodeMirror surfaces, mirroring `wikiLinkSource`'s contract exactly. Called with the tag typed so far while the caret is inside an unclosed `#…`; return your index's matches, already ordered. May be async. Off when omitted. Read once, at mount. See [Tag autocomplete](#tag-autocomplete).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `embedSource`     | `(ref: string) => ReactNode \| Promise<ReactNode>`                                              | —            | Resolves `![[ref]]` embeds for `preview`, `split`, and the in-place canvas. Called with the raw reference (`Note#Heading`, `pic.png\|320` — suffixes intact); return a node to render in its place, or `null` to keep it literal. May be async. Off when omitted. Recognised only when the `![[…]]` is alone on its line. See [Embeds](#embeds).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -63,6 +63,14 @@ and needs no remount. `embedSource` in particular: the preview is a pure functio
 of its props, so keep the function identity stable or the render pipeline rebuilds
 each frame. (On the in-place canvas `embedSource` is read once at mount, like
 `wikiLinkSource` — a later change to it is not picked up there without a remount.)
+
+`codeLanguages` is the same asymmetric story as `embedSource`: mount-once on
+the three CodeMirror surfaces (it feeds `@codemirror/lang-markdown`'s
+extension config, listed above), but fully reactive in `preview` — it has no
+editor extension to reconstruct, so a changed `codeLanguages` colours the very
+next render. Give `<Stylo>` a `key` if a CodeMirror surface needs to pick up a
+different set live; `preview` never needs one.
+
 The rationale for keeping `inPlace` mount-time (rather than a
 live-reconfiguration path) is in the
 [ADR-005 config-lifecycle amendment](../../journal/2026-09/2026-09-01_adr-005-in-place-decoration-toggles.md).
@@ -300,7 +308,7 @@ properties you can set on `.stylo` or any ancestor:
 | `--stylo-link`             | `#2563eb`         | links and wikilinks (no underline)               |
 | `--stylo-ring`             | `#a1a1aa`         | focus ring                                       |
 | `--stylo-radius`           | `0.5rem`          | corner radius                                    |
-| `--stylo-font-size`        | `0.9375rem`       | base editor font size — sizes inside track it    |
+| `--stylo-font-size`        | `0.9375rem`       | base font size — in-place, source, and preview   |
 | `--stylo-font-family`      | system sans stack | prose font — in-place canvas, sticky toolbar     |
 | `--stylo-font-family-mono` | `ui-monospace, …` | code font — source mode, code spans, `pre`       |
 
@@ -315,9 +323,15 @@ focus ring only — the in-place menu's active row follows `--stylo-accent`.
 
 `--stylo-radius`, `--stylo-font-size`, `--stylo-font-family`, and
 `--stylo-font-family-mono` are not colours: one value each serves both themes, so
-they live only in the light block. `--stylo-font-family` covers the editing prose
-surface and the fixed-position sticky toolbar; the `preview` surface deliberately
-inherits its prose font from wherever you mount `<Stylo>`.
+they live only in the light block. `--stylo-font-size` sizes every surface — the
+in-place canvas, `source`, and `preview`'s whole reading scale all derive from it
+(`preview`'s own scale is `em`-based off it, so headings, lists, and spacing
+follow automatically — see ADR-002 §3's 2026-09-13 amendment). `--stylo-font-family`
+is narrower: it covers the editing prose surface and the fixed-position sticky
+toolbar only — `preview` deliberately keeps inheriting its prose font from
+wherever you mount `<Stylo>`, so a rendered document still reads in the page's
+own typography. The two tokens diverge on purpose; don't assume one implies the
+other's reach.
 
 ### Dark mode
 
@@ -356,8 +370,10 @@ finer control.
 
 Fenced code is highlighted through a token palette in the same style — set these
 on `.stylo` or any ancestor. They only take effect where a real language grammar
-runs (see [Fenced-code highlighting](./code-languages.md)); Markdown structure is
-styled separately.
+runs, on every surface that has `codeLanguages` set — the CodeMirror surfaces and
+`preview` alike, via the same grammars and the same colour mapping (see
+[Fenced-code highlighting](./code-languages.md)); Markdown structure is styled
+separately.
 
 | Token                     | Default   | Role                               |
 | ------------------------- | --------- | ---------------------------------- |

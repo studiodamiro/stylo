@@ -6,6 +6,26 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **`preview`'s base typography now tracks `--stylo-font-size`** instead of a
+  hardcoded `0.9375rem`. Its whole reading scale (headings, lists, code,
+  spacing) is `em`-based off that one value, so a host that has already set
+  `--stylo-font-size` for the in-place canvas gets a matching `preview` size
+  instead of a second, independently-sized scale. Visual change for any
+  consumer that overrides `--stylo-font-size` away from the default — no
+  change for anyone still on the default.
+
+### Added
+
+- **`preview` (and `split`'s preview pane) syntax-highlight fenced code.**
+  Pass the same `codeLanguages` prop already used for `source` / `split` /
+  `in-place`; a fence's language resolves the same way and is coloured with
+  the same `--stylo-syntax-*` tokens the in-place canvas already reads, so a
+  block looks identical read or edited. Opt-in, like `codeLanguages` always
+  was — omit it and fenced code stays plain text, today's behaviour. No new
+  dependency.
+
 ## [0.12.0] - 2026-09-13
 
 ### Added

@@ -161,6 +161,7 @@ export const Stylo = forwardRef<StyloHandle, StyloProps>(function Stylo(
             embedSource={embedSource}
             onResolveError={resolveError}
             frontmatter={frontmatter}
+            codeLanguages={codeLanguages}
           />
         </Suspense>
       )}
