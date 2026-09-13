@@ -6,6 +6,24 @@ Notable changes to Stylo. The format follows
 
 ## [Unreleased]
 
+## [0.13.3] - 2026-09-13
+
+### Fixed
+
+- **Exiting an editable table (`inPlace={{ table: "cells" }}`) downward via
+  the arrow keys could land the caret above the table instead of below it**,
+  when the table was the last block in the document. The exit dispatched a
+  selection at the atomic table decoration's own boundary with nothing past
+  it to distinguish "after" from "before" — CodeMirror could resolve that
+  position to either side. Fixed by inserting the line the exit actually
+  needs first, rather than trusting a boundary position with nothing beyond
+  it.
+- **`insertTable` left no room to move past a freshly created table.** It
+  closed the skeleton with a single newline, so a table landing at the end of
+  a document (or right before existing content, with no blank line to
+  separate them) had nothing for the caret to move into, or risked the very
+  bug above the moment it was created. A blank line now always follows.
+
 ## [0.13.1] - 2026-09-13
 
 ### Fixed
@@ -517,6 +535,7 @@ consumable from git.
 - `inPlace` config is read once at mount; changing it needs a remount. (Now
   documented as an intentional contract — see `[Unreleased]`.)
 
+[0.13.3]: https://github.com/studiodamiro/stylo/releases/tag/v0.13.3
 [0.13.1]: https://github.com/studiodamiro/stylo/releases/tag/v0.13.1
 [0.13.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.13.0
 [0.12.0]: https://github.com/studiodamiro/stylo/releases/tag/v0.12.0

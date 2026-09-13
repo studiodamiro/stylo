@@ -58,11 +58,11 @@ test("cellSourcePos points at the content start of the clicked cell", () => {
 
 // ---- insert ----
 
-test("table command inserts a skeleton and selects the first header cell", () => {
+test("table command inserts a skeleton, a trailing blank line, and selects the first header cell", () => {
   const view = mkView("", 0)
   BUILTIN_BY_ID.table!.run(view)
   expect(view.state.doc.toString()).toBe(
-    "| Column 1 | Column 2 |\n| -------- | -------- |\n|          |          |\n",
+    "| Column 1 | Column 2 |\n| -------- | -------- |\n|          |          |\n\n",
   )
   const { from, to } = view.state.selection.main
   expect(view.state.sliceDoc(from, to)).toBe("Column 1")
@@ -72,6 +72,14 @@ test("table command breaks to a new block when the line has text", () => {
   const view = mkView("intro", 5)
   BUILTIN_BY_ID.table!.run(view)
   expect(view.state.doc.toString().startsWith("intro\n\n| Column 1 |")).toBe(true)
+})
+
+test("a blank line separates the table from content immediately after it", () => {
+  const view = mkView("after", 0)
+  BUILTIN_BY_ID.table!.run(view)
+  expect(view.state.doc.toString()).toBe(
+    "| Column 1 | Column 2 |\n| -------- | -------- |\n|          |          |\n\nafter",
+  )
 })
 
 // ---- navigation ----
