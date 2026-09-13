@@ -16,8 +16,9 @@ tags:
 
 Stylo carries a built-in token palette (the `--stylo-syntax-*` custom
 properties — see [props](./props.md#syntax-colours)) and applies it on every
-CodeMirror surface (`source`, `split`, `in-place`). But it can only colour
-tokens a language grammar has identified, and **Stylo bundles no grammars**: the
+surface — the CodeMirror ones (`source`, `split`, `in-place`) and `preview`
+alike. But it can only colour tokens a language grammar has identified, and
+**Stylo bundles no grammars**: the
 full `@codemirror/language-data` set compiles to ~110 lazy chunks in the package
 tarball, which is the zero-bloat mandate inverted for a notes editor (see the
 [2026-09-01 note](../../journal/2026-09/2026-09-01_drop-codemirror-language-data.md)
@@ -64,14 +65,28 @@ const codeLanguages = [
 
 ## Scope
 
-- **CodeMirror surfaces only.** `source`, the source pane of `split`, and the
-  `in-place` canvas all build their editor through the same path, so one prop
-  covers all three.
-- **`preview` is unaffected.** It renders through `react-markdown` / rehype, a
-  separate pipeline; code highlighting there would be its own rehype plugin and
-  its own dependency decision.
-- **Read once, at mount.** Changing `codeLanguages` on a mounted `<Stylo>` has no
-  effect until it remounts. Give it a `key` if the set must change live.
+- **Every surface, one prop.** `source`, the source pane of `split`, the
+  `in-place` canvas, and `preview` (including `split`'s preview pane) all
+  resolve `codeLanguages` the same way — a fence's language name is matched
+  fuzzily against the array, or handed to the function form. A match that
+  finds a language on one surface finds it on the others too.
+- **`preview` colours with its own tokenizer, not CodeMirror's.** The
+  CodeMirror surfaces highlight live, inside an `EditorView`; `preview` has no
+  editor to attach to, so it parses each fenced block once with the resolved
+  grammar and walks the result with `@lezer/highlight`'s `highlightTree`
+  (`src/render/highlightCode.ts`) — the exact same grammars and the exact same
+  `SYNTAX_TAG_GROUPS` → `--stylo-syntax-*` mapping
+  (`src/editor/highlight.ts`) as the live editor, so a block reads
+  identically read or edited, by construction rather than by two
+  implementations agreeing today. No new dependency: `@lezer/highlight` and
+  `@codemirror/language` are peer dependencies already, for the CodeMirror
+  surfaces.
+- **Read once, at mount — on the CodeMirror surfaces only.** Changing
+  `codeLanguages` on a mounted `<Stylo>` has no effect on `source` / `split`'s
+  source pane / `in-place` until it remounts (give it a `key` if the set must
+  change live). `preview` has no such constraint: it is a pure function of its
+  props (ADR-001), so a changed `codeLanguages` takes effect on its very next
+  render.
 
 ## Type
 

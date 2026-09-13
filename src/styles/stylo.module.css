@@ -272,10 +272,16 @@
 
 /* Vertical rhythm follows Tailwind's `prose` (@tailwindcss/typography) as a
    visual reference — the em-based scale only, no plugin bundled. Consumer CSS
-   wins: `.stylo p`, `.stylo h2`, … load after and match our specificity. */
+   wins: `.stylo p`, `.stylo h2`, … load after and match our specificity.
+   `font-size` is the one base every descendant rule below sizes itself off of
+   in `em`, so deriving it from `--stylo-font-size` (the same token the
+   in-place canvas uses, ADR-002 §3) cascades the whole scale — no other rule
+   needs touching. `padding` is `em`, not a fixed `rem`, for the same reason:
+   it tracks the base font size instead of going visually oversized against a
+   host-set smaller one. */
 .preview {
-  padding: 0.75rem 1rem;
-  font-size: 0.9375rem;
+  padding: 0.8em 1.0666667em;
+  font-size: var(--stylo-font-size, 0.9375rem);
   line-height: 1.75;
   overflow-wrap: break-word;
 }
@@ -364,6 +370,49 @@
   padding: 0;
   font-size: 0.85em;
   background: none;
+}
+
+/* Fenced-code token colours — the `preview` counterpart to `src/editor/highlight.ts`'s
+   `styloHighlightStyle`. Both read the same `SYNTAX_TAG_GROUPS` list and the same
+   `--stylo-syntax-*` tokens; these are plain global classes (rather than a mounted
+   CodeMirror `StyleModule`) because `highlightCode.ts` walks a Lezer tree outside of
+   any `EditorView`. Keep this list in sync with `SYNTAX_TAG_GROUPS` in `highlight.ts`. */
+:global(.stylo-tok-keyword) {
+  color: var(--stylo-syntax-keyword);
+}
+:global(.stylo-tok-string) {
+  color: var(--stylo-syntax-string);
+}
+:global(.stylo-tok-escape) {
+  color: var(--stylo-syntax-escape);
+}
+:global(.stylo-tok-comment) {
+  color: var(--stylo-syntax-comment);
+  font-style: italic;
+}
+:global(.stylo-tok-number) {
+  color: var(--stylo-syntax-number);
+}
+:global(.stylo-tok-constant) {
+  color: var(--stylo-syntax-constant);
+}
+:global(.stylo-tok-function) {
+  color: var(--stylo-syntax-function);
+}
+:global(.stylo-tok-type) {
+  color: var(--stylo-syntax-type);
+}
+:global(.stylo-tok-property) {
+  color: var(--stylo-syntax-property);
+}
+:global(.stylo-tok-tag) {
+  color: var(--stylo-syntax-tag);
+}
+:global(.stylo-tok-meta) {
+  color: var(--stylo-syntax-comment);
+}
+:global(.stylo-tok-invalid) {
+  color: var(--stylo-syntax-invalid);
 }
 
 /* frontmatter="code": the raw `---` block, recessed. `.stylo-frontmatter` is a

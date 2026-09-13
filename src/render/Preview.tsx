@@ -6,7 +6,8 @@ import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
 import { splitFrontmatter } from "../frontmatter"
 import styles from "../styles/stylo.module.css"
-import type { EmbedSource, FrontmatterDisplay, ResolveErrorInfo } from "../types"
+import type { CodeLanguages, EmbedSource, FrontmatterDisplay, ResolveErrorInfo } from "../types"
+import { CodeBlock } from "./CodeBlock"
 import { Embed } from "./Embed"
 import { remarkCallout } from "./remark-callout"
 import { remarkEmbed } from "./remark-embed"
@@ -23,6 +24,13 @@ export interface PreviewProps {
   onResolveError?: (error: unknown, info: ResolveErrorInfo) => void
   /** `"code"` renders the `---` block as a styled `<pre>`; `"hidden"` (default) drops it. */
   frontmatter?: FrontmatterDisplay
+  /**
+   * Grammars for fenced-code syntax highlighting, matching the CodeMirror
+   * surfaces' `codeLanguages` prop exactly (same resolution rules, same
+   * `--stylo-syntax-*` colours). Omit and fenced code renders as plain,
+   * un-highlighted text — today's behaviour.
+   */
+  codeLanguages?: CodeLanguages
 }
 
 /** Rendered Markdown + KaTeX view. A pure function of the string. */
@@ -32,6 +40,7 @@ export function Preview({
   embedSource,
   onResolveError,
   frontmatter = "hidden",
+  codeLanguages,
 }: PreviewProps) {
   const fm = frontmatter === "code" ? splitFrontmatter(value) : null
 
@@ -94,6 +103,24 @@ export function Preview({
         )
       }
       return <span {...rest}>{children}</span>
+    },
+    code({ node: _node, className, children, ...rest }) {
+      const language = /language-(\w+)/.exec(className || "")?.[1]
+      if (language && codeLanguages) {
+        return (
+          <CodeBlock
+            className={className}
+            language={language}
+            code={String(children).replace(/\n$/, "")}
+            codeLanguages={codeLanguages}
+          />
+        )
+      }
+      return (
+        <code {...rest} className={className}>
+          {children}
+        </code>
+      )
     },
   }
 

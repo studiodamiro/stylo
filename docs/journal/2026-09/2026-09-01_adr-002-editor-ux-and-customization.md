@@ -584,6 +584,64 @@ untouched, and must not gate v1.
   > prose surface keeps inheriting the host font, as it already did — a rendered
   > document reads in the page's own typography. See the
   > [font-family tokens note](./2026-09-10_font-family-tokens.md).
+  >
+  > **Amended 2026-09-13 (surface-parity rule):** revisiting the tenth-token
+  > amendment above while triaging a downstream report surfaced that its claim
+  > — `--stylo-font-size` "backs that rule on every surface" — was never true:
+  > the token reached `.cm-editor` only. `preview`'s own rule kept a literal
+  > `0.9375rem`, un-derived from the token, and nothing caught the gap until a
+  > host toggling between `in-place` and `preview` on the same document could
+  > see the two surfaces drift apart. The eleventh/twelfth-token amendment
+  > avoided the same mistake for `--stylo-font-family-mono` (its `preview`
+  > reach is listed explicitly), but the practice was never written down as a
+  > rule — it depended on whoever shipped the next token remembering to check.
+  >
+  > **Rule, made explicit:** the in-place canvas is the reference surface for
+  > every `--stylo-*` design token — new tokens are introduced against it
+  > first, as every amendment above already does in practice. What was missing
+  > is that a token's reach onto `preview` (and `split`, which is just `source`
+  >
+  > - `preview` side by side) must be **decided and recorded in the same
+  >   change**, not left for someone to notice later. "Not applicable, because
+  >   preview has no equivalent concept" is an acceptable answer — see
+  >   `--stylo-ring`, `--stylo-surface-floating`, and `--stylo-guide`, none of
+  >   which preview needs, since it is not focusable, has no floating popups, and
+  >   draws no list-indent guide rail — but it has to be _said_, the way the
+  >   eleventh/twelfth-token entry said it and the tenth-token entry did not.
+  >
+  > **Not automated, yet.** Unlike the both-blocks light/dark rule (enforced by
+  > `check:theme` in CI), this is a documentation discipline only —
+  > `--stylo-font-size` and the eleven `--stylo-syntax-*` tokens both slipped
+  > through it once already, which is exactly the failure mode a lint would
+  > catch. Cross-surface consumption isn't mechanical the way light/dark
+  > pairing is, though — it takes a human judgment call about which surfaces a
+  > token's _role_ applies to, not a name match. Revisit trigger: if a third
+  > token ships without its preview applicability decided in the same commit,
+  > build that check instead of writing another paragraph. See the
+  > [surface-parity note](./2026-09-13_surface-parity-rule.md).
+  >
+  > **Amended 2026-09-13 (closing the two gaps the rule above found):**
+  > `--stylo-font-size` and the eleven `--stylo-syntax-*` tokens now reach
+  > `preview` too, the rule's first application. `.preview`'s base `font-size`
+  > (stylo.module.css) changed from a literal `0.9375rem` to
+  > `var(--stylo-font-size, 0.9375rem)` — every descendant rule in its scale is
+  > already `em`-based off that one value, so nothing else needed touching;
+  > its `padding` moved from a fixed `rem` to a matching `em` value for the
+  > same reason. Fenced code gained a highlighting pass
+  > (`src/render/highlightCode.ts`, `src/render/CodeBlock.tsx`): a fence's
+  > language resolves through the _same_ `codeLanguages` prop and matching
+  > rules `@codemirror/lang-markdown` uses, the resolved grammar parses the
+  > block once (`@lezer/highlight`'s `highlightTree`, outside of any
+  > `EditorView`), and the walk is coloured by `SYNTAX_TAG_GROUPS` — the same
+  > list `src/editor/highlight.ts`'s `styloHighlightStyle` builds the live
+  > CodeMirror extension from, now factored out as the shared source of truth
+  > for both. No new dependency: `@lezer/highlight` and `@codemirror/language`
+  > are peer dependencies already, for the CodeMirror surfaces. `codeLanguages`
+  > stays opt-in and its per-language grammars stay exactly as lazy as before;
+  > only a `preview`-only consumer who now also passes `codeLanguages` pays
+  > anything extra. See the
+  > [surface-parity note](./2026-09-13_surface-parity-rule.md) and
+  > [fenced-code highlighting](../../wiki/reference/code-languages.md).
 
 #### 4. Icons: inline SVG, no icon dependency
 
